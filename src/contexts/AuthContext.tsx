@@ -3,9 +3,7 @@ import React, { createContext, useEffect, useState } from "react";
 import { User, AuthContextType } from "./authTypes";
 import { 
   signInWithEmailAndPassword, 
-  signUpWithEmailAndPassword,
-  signInWithGoogle as googleSignIn,
-  signInWithFacebook as facebookSignIn
+  signUpWithEmailAndPassword
 } from "@/services/authService";
 
 export const AuthContext = createContext<AuthContextType>({
@@ -14,8 +12,6 @@ export const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   signIn: async () => {},
   signUp: async () => {},
-  signInWithGoogle: async () => {},
-  signInWithFacebook: async () => {},
   signOut: async () => {},
 });
 
@@ -64,28 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signInWithGoogle = async () => {
-    setIsLoading(true);
-    try {
-      const user = await googleSignIn();
-      setUser(user);
-      localStorage.setItem("matchmeadows_user", JSON.stringify(user));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signInWithFacebook = async () => {
-    setIsLoading(true);
-    try {
-      const user = await facebookSignIn();
-      setUser(user);
-      localStorage.setItem("matchmeadows_user", JSON.stringify(user));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const signOut = async () => {
     // Clear user from state and localStorage
     setUser(null);
@@ -100,8 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         signIn,
         signUp,
-        signInWithGoogle,
-        signInWithFacebook,
         signOut
       }}
     >

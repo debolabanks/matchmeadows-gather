@@ -1,10 +1,9 @@
-
 export type User = {
   id: string;
   name: string;
   email: string;
   // Add more user fields as needed
-  provider: "email" | "google" | "facebook";
+  provider: "email";
 };
 
 export type AuthContextType = {
@@ -13,7 +12,5 @@ export type AuthContextType = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
   signOut: () => Promise<void>;
 };

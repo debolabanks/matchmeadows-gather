@@ -5,7 +5,7 @@ export type MockUser = {
   name: string;
   email: string;
   password?: string;
-  provider: "email" | "google" | "facebook";
+  provider: "email";
 };
 
 export const MOCK_USERS: MockUser[] = [
