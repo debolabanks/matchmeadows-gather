@@ -1,3 +1,4 @@
+
 import React, { createContext, useEffect, useState } from "react";
 
 type User = {
@@ -5,7 +6,7 @@ type User = {
   name: string;
   email: string;
   // Add more user fields as needed
-  provider?: "email" | "google" | "facebook";
+  provider: "email" | "google" | "facebook";
 };
 
 type AuthContextType = {
@@ -30,8 +31,17 @@ export const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
+// Define our MockUser type to differentiate from the User type that is exposed to the rest of the app
+type MockUser = {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  provider: "email" | "google" | "facebook";
+};
+
 // Mock user data for demo purposes
-const MOCK_USERS = [
+const MOCK_USERS: MockUser[] = [
   {
     id: "1",
     name: "Alex Johnson",
@@ -51,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const storedUser = localStorage.getItem("matchmeadows_user");
       if (storedUser) {
         try {
-          const parsedUser = JSON.parse(storedUser);
+          const parsedUser = JSON.parse(storedUser) as User;
           setUser(parsedUser);
         } catch (error) {
           console.error("Failed to parse stored user:", error);
@@ -80,8 +90,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error("Invalid credentials");
     }
     
-    // Remove password before storing in state/localStorage
-    const { password: _, ...userWithoutPassword } = foundUser;
+    // Create a user object without the password
+    const userWithoutPassword: User = {
+      id: foundUser.id,
+      name: foundUser.name,
+      email: foundUser.email,
+      provider: foundUser.provider
+    };
     
     setUser(userWithoutPassword);
     localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
@@ -102,18 +117,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // Create new user
-    const newUser = {
+    const newUser: MockUser = {
       id: `${MOCK_USERS.length + 1}`,
       name,
       email,
-      password
+      password,
+      provider: "email"
     };
     
     // Add to mock database
     MOCK_USERS.push(newUser);
     
-    // Remove password before storing in state/localStorage
-    const { password: _, ...userWithoutPassword } = newUser;
+    // Create a user object without the password
+    const userWithoutPassword: User = {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      provider: newUser.provider
+    };
     
     setUser(userWithoutPassword);
     localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
@@ -127,11 +148,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Create a mock Google user (in a real app, this would use Google's authentication API)
-    const mockGoogleUser = {
+    const mockGoogleUser: MockUser = {
       id: "google-" + Math.random().toString(36).substring(2, 9),
       name: "Google User",
       email: "google-user@example.com",
-      provider: "google" as const
+      provider: "google"
     };
     
     // Check if this Google user already exists (by email in this demo)
@@ -139,12 +160,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (existingUser) {
       // User exists, log them in
-      const { password: _, ...userWithoutPassword } = existingUser;
+      const userWithoutPassword: User = {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        provider: existingUser.provider
+      };
+      
       setUser(userWithoutPassword);
       localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
     } else {
       // New user, add them to our mock database
       MOCK_USERS.push(mockGoogleUser);
+      
       setUser(mockGoogleUser);
       localStorage.setItem("matchmeadows_user", JSON.stringify(mockGoogleUser));
     }
@@ -159,11 +187,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Create a mock Facebook user (in a real app, this would use Facebook's authentication API)
-    const mockFacebookUser = {
+    const mockFacebookUser: MockUser = {
       id: "fb-" + Math.random().toString(36).substring(2, 9),
       name: "Facebook User",
       email: "facebook-user@example.com",
-      provider: "facebook" as const
+      provider: "facebook"
     };
     
     // Check if this Facebook user already exists (by email in this demo)
@@ -171,12 +199,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (existingUser) {
       // User exists, log them in
-      const { password: _, ...userWithoutPassword } = existingUser;
+      const userWithoutPassword: User = {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        provider: existingUser.provider
+      };
+      
       setUser(userWithoutPassword);
       localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
     } else {
       // New user, add them to our mock database
       MOCK_USERS.push(mockFacebookUser);
+      
       setUser(mockFacebookUser);
       localStorage.setItem("matchmeadows_user", JSON.stringify(mockFacebookUser));
     }
