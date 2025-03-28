@@ -1,4 +1,3 @@
-
 import React, { createContext, useEffect, useState } from "react";
 
 type User = {
@@ -6,6 +5,7 @@ type User = {
   name: string;
   email: string;
   // Add more user fields as needed
+  provider?: "email" | "google" | "facebook";
 };
 
 type AuthContextType = {
@@ -14,6 +14,8 @@ type AuthContextType = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithFacebook: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -23,6 +25,8 @@ export const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   signIn: async () => {},
   signUp: async () => {},
+  signInWithGoogle: async () => {},
+  signInWithFacebook: async () => {},
   signOut: async () => {},
 });
 
@@ -32,7 +36,8 @@ const MOCK_USERS = [
     id: "1",
     name: "Alex Johnson",
     email: "alex@example.com",
-    password: "password123" // Obviously not secure, just for demo
+    password: "password123", // Obviously not secure, just for demo
+    provider: "email"
   }
 ];
 
@@ -60,7 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // This would normally be an API call to your backend
     setIsLoading(true);
     
     // Simulate API delay
@@ -85,7 +89,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    // This would normally be an API call to your backend
     setIsLoading(true);
     
     // Simulate API delay
@@ -117,6 +120,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   };
 
+  const signInWithGoogle = async () => {
+    setIsLoading(true);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Create a mock Google user (in a real app, this would use Google's authentication API)
+    const mockGoogleUser = {
+      id: "google-" + Math.random().toString(36).substring(2, 9),
+      name: "Google User",
+      email: "google-user@example.com",
+      provider: "google" as const
+    };
+    
+    // Check if this Google user already exists (by email in this demo)
+    const existingUser = MOCK_USERS.find(u => u.email === mockGoogleUser.email);
+    
+    if (existingUser) {
+      // User exists, log them in
+      const { password: _, ...userWithoutPassword } = existingUser;
+      setUser(userWithoutPassword);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
+    } else {
+      // New user, add them to our mock database
+      MOCK_USERS.push(mockGoogleUser);
+      setUser(mockGoogleUser);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(mockGoogleUser));
+    }
+    
+    setIsLoading(false);
+  };
+
+  const signInWithFacebook = async () => {
+    setIsLoading(true);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Create a mock Facebook user (in a real app, this would use Facebook's authentication API)
+    const mockFacebookUser = {
+      id: "fb-" + Math.random().toString(36).substring(2, 9),
+      name: "Facebook User",
+      email: "facebook-user@example.com",
+      provider: "facebook" as const
+    };
+    
+    // Check if this Facebook user already exists (by email in this demo)
+    const existingUser = MOCK_USERS.find(u => u.email === mockFacebookUser.email);
+    
+    if (existingUser) {
+      // User exists, log them in
+      const { password: _, ...userWithoutPassword } = existingUser;
+      setUser(userWithoutPassword);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
+    } else {
+      // New user, add them to our mock database
+      MOCK_USERS.push(mockFacebookUser);
+      setUser(mockFacebookUser);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(mockFacebookUser));
+    }
+    
+    setIsLoading(false);
+  };
+
   const signOut = async () => {
     // Clear user from state and localStorage
     setUser(null);
@@ -131,6 +198,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         signIn,
         signUp,
+        signInWithGoogle,
+        signInWithFacebook,
         signOut
       }}
     >
