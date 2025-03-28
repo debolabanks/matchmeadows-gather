@@ -1,24 +1,12 @@
 
 import React, { createContext, useEffect, useState } from "react";
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  // Add more user fields as needed
-  provider: "email" | "google" | "facebook";
-};
-
-type AuthContextType = {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
-  signOut: () => Promise<void>;
-};
+import { User, AuthContextType } from "./authTypes";
+import { 
+  signInWithEmailAndPassword, 
+  signUpWithEmailAndPassword,
+  signInWithGoogle as googleSignIn,
+  signInWithFacebook as facebookSignIn
+} from "@/services/authService";
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -30,26 +18,6 @@ export const AuthContext = createContext<AuthContextType>({
   signInWithFacebook: async () => {},
   signOut: async () => {},
 });
-
-// Define our MockUser type to differentiate from the User type that is exposed to the rest of the app
-type MockUser = {
-  id: string;
-  name: string;
-  email: string;
-  password?: string;
-  provider: "email" | "google" | "facebook";
-};
-
-// Mock user data for demo purposes
-const MOCK_USERS: MockUser[] = [
-  {
-    id: "1",
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    password: "password123", // Obviously not secure, just for demo
-    provider: "email"
-  }
-];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -76,147 +44,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Find user in our mock database
-    const foundUser = MOCK_USERS.find(
-      u => u.email === email && u.password === password
-    );
-    
-    if (!foundUser) {
+    try {
+      const user = await signInWithEmailAndPassword(email, password);
+      setUser(user);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(user));
+    } finally {
       setIsLoading(false);
-      throw new Error("Invalid credentials");
     }
-    
-    // Create a user object without the password
-    const userWithoutPassword: User = {
-      id: foundUser.id,
-      name: foundUser.name,
-      email: foundUser.email,
-      provider: foundUser.provider
-    };
-    
-    setUser(userWithoutPassword);
-    localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
-    setIsLoading(false);
   };
 
   const signUp = async (email: string, password: string, name: string) => {
     setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Check if email already exists
-    const existingUser = MOCK_USERS.find(u => u.email === email);
-    if (existingUser) {
+    try {
+      const user = await signUpWithEmailAndPassword(email, password, name);
+      setUser(user);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(user));
+    } finally {
       setIsLoading(false);
-      throw new Error("Email already in use");
     }
-    
-    // Create new user
-    const newUser: MockUser = {
-      id: `${MOCK_USERS.length + 1}`,
-      name,
-      email,
-      password,
-      provider: "email"
-    };
-    
-    // Add to mock database
-    MOCK_USERS.push(newUser);
-    
-    // Create a user object without the password
-    const userWithoutPassword: User = {
-      id: newUser.id,
-      name: newUser.name,
-      email: newUser.email,
-      provider: newUser.provider
-    };
-    
-    setUser(userWithoutPassword);
-    localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
-    setIsLoading(false);
   };
 
   const signInWithGoogle = async () => {
     setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Create a mock Google user (in a real app, this would use Google's authentication API)
-    const mockGoogleUser: MockUser = {
-      id: "google-" + Math.random().toString(36).substring(2, 9),
-      name: "Google User",
-      email: "google-user@example.com",
-      provider: "google"
-    };
-    
-    // Check if this Google user already exists (by email in this demo)
-    const existingUser = MOCK_USERS.find(u => u.email === mockGoogleUser.email);
-    
-    if (existingUser) {
-      // User exists, log them in
-      const userWithoutPassword: User = {
-        id: existingUser.id,
-        name: existingUser.name,
-        email: existingUser.email,
-        provider: existingUser.provider
-      };
-      
-      setUser(userWithoutPassword);
-      localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
-    } else {
-      // New user, add them to our mock database
-      MOCK_USERS.push(mockGoogleUser);
-      
-      setUser(mockGoogleUser);
-      localStorage.setItem("matchmeadows_user", JSON.stringify(mockGoogleUser));
+    try {
+      const user = await googleSignIn();
+      setUser(user);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(user));
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const signInWithFacebook = async () => {
     setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Create a mock Facebook user (in a real app, this would use Facebook's authentication API)
-    const mockFacebookUser: MockUser = {
-      id: "fb-" + Math.random().toString(36).substring(2, 9),
-      name: "Facebook User",
-      email: "facebook-user@example.com",
-      provider: "facebook"
-    };
-    
-    // Check if this Facebook user already exists (by email in this demo)
-    const existingUser = MOCK_USERS.find(u => u.email === mockFacebookUser.email);
-    
-    if (existingUser) {
-      // User exists, log them in
-      const userWithoutPassword: User = {
-        id: existingUser.id,
-        name: existingUser.name,
-        email: existingUser.email,
-        provider: existingUser.provider
-      };
-      
-      setUser(userWithoutPassword);
-      localStorage.setItem("matchmeadows_user", JSON.stringify(userWithoutPassword));
-    } else {
-      // New user, add them to our mock database
-      MOCK_USERS.push(mockFacebookUser);
-      
-      setUser(mockFacebookUser);
-      localStorage.setItem("matchmeadows_user", JSON.stringify(mockFacebookUser));
+    try {
+      const user = await facebookSignIn();
+      setUser(user);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(user));
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const signOut = async () => {
