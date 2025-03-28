@@ -1,0 +1,310 @@
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { ChevronRight, Heart, Image, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from "react-router-dom";
+
+// Sample user data
+const userData = {
+  name: "Alex Johnson",
+  age: 29,
+  location: "San Francisco, CA",
+  bio: "Coffee enthusiast, hiking lover, and software engineer. Looking for someone who enjoys outdoor adventures and quiet evenings with a good book.",
+  interests: ["Hiking", "Coffee", "Coding", "Reading", "Photography", "Travel"],
+  profileImage: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=928&q=80",
+  photos: [
+    "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=928&q=80",
+    "https://images.unsplash.com/photo-1501555088652-021faa106b9b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=928&q=80",
+    "https://images.unsplash.com/photo-1596635831807-46aac6ddb257?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80"
+  ],
+  preferences: {
+    ageRange: [25, 35],
+    distance: 25,
+    lookingFor: "Relationship"
+  },
+  stats: {
+    matches: 23,
+    likes: 126,
+    views: 354
+  }
+};
+
+const Profile = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(userData.name);
+  const [bio, setBio] = useState(userData.bio);
+  const [location, setLocation] = useState(userData.location);
+  
+  const handleSaveProfile = () => {
+    // In a real app, we would save the data to a backend
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
+      <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+      
+      <Tabs defaultValue="profile" className="max-w-4xl mx-auto">
+        <TabsList className="grid grid-cols-3 mb-8">
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="photos">Photos</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        
+        {/* Profile Tab */}
+        <TabsContent value="profile">
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="md:col-span-1">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 relative">
+                  <img
+                    src={userData.profileImage}
+                    alt="Profile"
+                    className="rounded-full h-32 w-32 object-cover"
+                  />
+                  {!isEditing && (
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="absolute bottom-0 right-0"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                {isEditing ? (
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="text-xl font-bold"
+                  />
+                ) : (
+                  <CardTitle>{userData.name}, {userData.age}</CardTitle>
+                )}
+                
+                {isEditing ? (
+                  <Input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="text-muted-foreground mt-1"
+                  />
+                ) : (
+                  <CardDescription>{userData.location}</CardDescription>
+                )}
+              </CardHeader>
+              
+              <CardContent className="text-center">
+                <div className="grid grid-cols-3 gap-1 mb-6">
+                  <div className="p-3">
+                    <div className="text-2xl font-bold text-love-600">{userData.stats.matches}</div>
+                    <div className="text-xs text-muted-foreground">Matches</div>
+                  </div>
+                  <div className="p-3">
+                    <div className="text-2xl font-bold text-love-600">{userData.stats.likes}</div>
+                    <div className="text-xs text-muted-foreground">Likes</div>
+                  </div>
+                  <div className="p-3">
+                    <div className="text-2xl font-bold text-love-600">{userData.stats.views}</div>
+                    <div className="text-xs text-muted-foreground">Views</div>
+                  </div>
+                </div>
+                
+                <Link to="/discover">
+                  <Button variant="outline" className="w-full">
+                    <Heart className="h-4 w-4 mr-2 text-love-500" />
+                    Continue Matching
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+            
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>About Me</CardTitle>
+              </CardHeader>
+              
+              <CardContent className="space-y-6">
+                {isEditing ? (
+                  <Textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={5}
+                  />
+                ) : (
+                  <p className="text-muted-foreground leading-relaxed">{userData.bio}</p>
+                )}
+                
+                <div>
+                  <h3 className="font-semibold mb-3">Interests</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {userData.interests.map((interest) => (
+                      <Badge key={interest} variant="secondary">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-3">Looking For</h3>
+                  <p className="text-muted-foreground">
+                    {userData.preferences.lookingFor} • 
+                    Ages {userData.preferences.ageRange[0]}-{userData.preferences.ageRange[1]} • 
+                    Within {userData.preferences.distance} miles
+                  </p>
+                </div>
+              </CardContent>
+              
+              {isEditing && (
+                <CardFooter className="justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveProfile}>
+                    Save Changes
+                  </Button>
+                </CardFooter>
+              )}
+            </Card>
+          </div>
+        </TabsContent>
+        
+        {/* Photos Tab */}
+        <TabsContent value="photos">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Photos</CardTitle>
+              <CardDescription>
+                Add up to 6 photos to show your best self
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {userData.photos.map((photo, index) => (
+                  <div key={index} className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={photo}
+                      alt={`Photo ${index + 1}`}
+                      className="object-cover w-full h-full"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8 opacity-80 hover:opacity-100"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </Button>
+                  </div>
+                ))}
+                
+                {/* Add photo button */}
+                <div className="aspect-[3/4] rounded-lg border-2 border-dashed border-muted flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                  <div className="text-center p-4">
+                    <Image className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Add Photo
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="justify-between">
+              <div className="text-sm text-muted-foreground">
+                {userData.photos.length} of 6 photos
+              </div>
+              <Button>Save Photos</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Settings Tab */}
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Settings</CardTitle>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
+                <div>
+                  <h3 className="font-medium">Notification Preferences</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage how we contact you
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
+                <div>
+                  <h3 className="font-medium">Dating Preferences</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Set your distance, age range, and more
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
+                <div>
+                  <h3 className="font-medium">Privacy Settings</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Control who can see your profile
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
+                <div>
+                  <h3 className="font-medium">Account Information</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Update your email and password
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors text-destructive">
+                <div>
+                  <h3 className="font-medium">Delete Account</h3>
+                  <p className="text-sm opacity-80">
+                    Permanently delete your account and data
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 opacity-80 group-hover:opacity-100 transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Profile;
