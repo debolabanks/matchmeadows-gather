@@ -6,15 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronRight, Heart, Image, Settings } from "lucide-react";
+import { Check, ChevronRight, Heart, Image, MapPin, Settings, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/components/ui/use-toast";
+import { UserProfile } from "@/contexts/authTypes";
+import { ProfileCompletion } from "@/components/ProfileCompletion";
 
-// Sample user data
+// Sample user data (will be replaced with real user data)
 const userData = {
   name: "Alex Johnson",
   age: 29,
+  gender: "non-binary",
   location: "San Francisco, CA",
   bio: "Coffee enthusiast, hiking lover, and software engineer. Looking for someone who enjoys outdoor adventures and quiet evenings with a good book.",
   interests: ["Hiking", "Coffee", "Coding", "Reading", "Photography", "Travel"],
@@ -37,19 +44,72 @@ const userData = {
 };
 
 const Profile = () => {
+  const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(userData.name);
-  const [bio, setBio] = useState(userData.bio);
-  const [location, setLocation] = useState(userData.location);
   
-  const handleSaveProfile = () => {
-    // In a real app, we would save the data to a backend
-    setIsEditing(false);
+  // Form state
+  const [name, setName] = useState(user?.name || userData.name);
+  const [age, setAge] = useState<number | undefined>(user?.profile?.age || userData.age);
+  const [gender, setGender] = useState<string>(user?.profile?.gender || userData.gender);
+  const [location, setLocation] = useState(user?.profile?.location || userData.location);
+  const [bio, setBio] = useState(user?.profile?.bio || userData.bio);
+  
+  // Calculate profile completion percentage
+  const calculateCompletionPercentage = () => {
+    const fields = [
+      !!name, 
+      !!age, 
+      !!gender, 
+      !!location, 
+      !!bio, 
+      !!(user?.profile?.interests?.length || userData.interests.length),
+      !!(user?.profile?.photos?.length || userData.photos.length)
+    ];
+    
+    const filledFields = fields.filter(field => field).length;
+    return Math.round((filledFields / fields.length) * 100);
+  };
+  
+  const completionPercentage = calculateCompletionPercentage();
+  
+  const handleSaveProfile = async () => {
+    try {
+      // Prepare profile data
+      const profileData: Partial<UserProfile> = {
+        age: age,
+        gender: gender as any,
+        location,
+        bio
+      };
+      
+      // Call update profile function
+      if (updateProfile) {
+        await updateProfile(profileData);
+        toast({
+          title: "Profile Updated",
+          description: "Your profile has been updated successfully.",
+        });
+      }
+      
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
       <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+      
+      {/* Profile Completion Bar */}
+      <ProfileCompletion 
+        percentage={completionPercentage}
+        className="max-w-4xl mx-auto mb-8"
+      />
       
       <Tabs defaultValue="profile" className="max-w-4xl mx-auto">
         <TabsList className="grid grid-cols-3 mb-8">
@@ -65,7 +125,7 @@ const Profile = () => {
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 relative">
                   <img
-                    src={userData.profileImage}
+                    src={user?.profile?.photos?.[0] || userData.profileImage}
                     alt="Profile"
                     className="rounded-full h-32 w-32 object-cover"
                   />
@@ -85,20 +145,27 @@ const Profile = () => {
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="text-xl font-bold"
+                    className="text-xl font-bold mb-2"
                   />
                 ) : (
-                  <CardTitle>{userData.name}, {userData.age}</CardTitle>
+                  <CardTitle>{name}, {age}</CardTitle>
                 )}
                 
                 {isEditing ? (
-                  <Input
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="text-muted-foreground mt-1"
-                  />
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="text-muted-foreground"
+                      placeholder="Enter your location"
+                    />
+                  </div>
                 ) : (
-                  <CardDescription>{userData.location}</CardDescription>
+                  <CardDescription className="flex items-center justify-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    {location}
+                  </CardDescription>
                 )}
               </CardHeader>
               
@@ -134,13 +201,57 @@ const Profile = () => {
               
               <CardContent className="space-y-6">
                 {isEditing ? (
-                  <Textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={5}
-                  />
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="age">Age</Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        value={age || ''}
+                        onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : undefined)}
+                        min={18}
+                        max={100}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="gender">Gender</Label>
+                      <Select value={gender} onValueChange={setGender}>
+                        <SelectTrigger id="gender">
+                          <SelectValue placeholder="Select your gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="non-binary">Non-binary</SelectItem>
+                          <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="bio">About me</Label>
+                      <Textarea
+                        id="bio"
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        rows={5}
+                        placeholder="Tell others about yourself..."
+                      />
+                    </div>
+                  </div>
                 ) : (
-                  <p className="text-muted-foreground leading-relaxed">{userData.bio}</p>
+                  <>
+                    <div>
+                      <h3 className="font-semibold mb-2">About</h3>
+                      <p className="text-muted-foreground leading-relaxed">{bio}</p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold mb-2">Gender</h3>
+                      <p className="text-muted-foreground capitalize">{gender?.replace('-', ' ')}</p>
+                    </div>
+                  </>
                 )}
                 
                 <div>

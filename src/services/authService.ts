@@ -1,5 +1,4 @@
-
-import { User } from "@/contexts/authTypes";
+import { User, UserProfile } from "@/contexts/authTypes";
 import { MOCK_USERS, MockUser } from "@/mocks/users";
 
 export const signInWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
@@ -94,4 +93,32 @@ export const confirmPasswordReset = async (email: string, newPassword: string): 
   MOCK_USERS[userIndex].password = newPassword;
   
   console.log(`Password reset completed for ${email}`);
+};
+
+export const updateUserProfile = async (userId: string, profileData: Partial<UserProfile>): Promise<User> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Find user
+  const userIndex = MOCK_USERS.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    throw new Error("User not found");
+  }
+  
+  // Update profile in our mock database
+  MOCK_USERS[userIndex].profile = {
+    ...MOCK_USERS[userIndex].profile || {},
+    ...profileData
+  };
+  
+  // Create a user object without the password
+  const userWithoutPassword: User = {
+    id: MOCK_USERS[userIndex].id,
+    name: MOCK_USERS[userIndex].name,
+    email: MOCK_USERS[userIndex].email,
+    provider: MOCK_USERS[userIndex].provider,
+    profile: MOCK_USERS[userIndex].profile
+  };
+  
+  return userWithoutPassword;
 };

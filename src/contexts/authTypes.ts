@@ -3,8 +3,17 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  // Add more user fields as needed
   provider: "email";
+  profile?: UserProfile;
+};
+
+export type UserProfile = {
+  age?: number;
+  gender?: "male" | "female" | "non-binary" | "prefer-not-to-say";
+  location?: string;
+  bio?: string;
+  interests?: string[];
+  photos?: string[];
 };
 
 export type AuthContextType = {
@@ -16,4 +25,5 @@ export type AuthContextType = {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   confirmPasswordReset: (email: string, newPassword: string) => Promise<void>;
+  updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
 };
