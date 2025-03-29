@@ -1,10 +1,11 @@
 import React, { createContext, useEffect, useState } from "react";
-import { User, AuthContextType } from "./authTypes";
+import { User, AuthContextType, UserProfile } from "./authTypes";
 import { 
   signInWithEmailAndPassword, 
   signUpWithEmailAndPassword,
   resetPassword as resetPasswordService,
-  confirmPasswordReset as confirmPasswordResetService
+  confirmPasswordReset as confirmPasswordResetService,
+  updateUserProfile
 } from "@/services/authService";
 
 export const AuthContext = createContext<AuthContextType>({
@@ -16,6 +17,7 @@ export const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   resetPassword: async () => {},
   confirmPasswordReset: async () => {},
+  updateProfile: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -86,6 +88,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = async (profileData: Partial<UserProfile>) => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const updatedUser = await updateUserProfile(user.id, profileData);
+      setUser(updatedUser);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(updatedUser));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -96,7 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         signOut,
         resetPassword,
-        confirmPasswordReset
+        confirmPasswordReset,
+        updateProfile
       }}
     >
       {children}

@@ -1,4 +1,6 @@
 
+import { UserProfile } from "@/contexts/authTypes";
+
 // Mock user data for demo purposes
 export type MockUser = {
   id: string;
@@ -6,6 +8,7 @@ export type MockUser = {
   email: string;
   password?: string;
   provider: "email";
+  profile?: UserProfile;
 };
 
 export const MOCK_USERS: MockUser[] = [
