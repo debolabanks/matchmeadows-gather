@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CheckCircle, Clock, ShieldAlert } from "lucide-react";
 
 type VerificationStatus = "unverified" | "pending" | "verified";
@@ -45,21 +45,19 @@ export const VerificationBadge = ({ status, className }: VerificationBadgeProps)
   const content = getBadgeContent();
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge 
-            variant={content.variant as any}
-            className={`flex items-center text-xs ${content.color} ${className}`}
-          >
-            {content.icon}
-            {content.text}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{content.tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge 
+          variant={content.variant as any}
+          className={`flex items-center text-xs ${content.color} ${className}`}
+        >
+          {content.icon}
+          {content.text}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{content.tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };

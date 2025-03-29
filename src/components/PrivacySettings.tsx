@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Eye, Clock } from "lucide-react";
+import { Users, Eye, Clock, Lock } from "lucide-react";
 
 type PrivacySettingsType = {
   showActivity: boolean;
@@ -81,7 +81,7 @@ export const PrivacySettings = ({ settings, onChange }: PrivacySettingsProps) =>
           <Label htmlFor="profile-visibility">Profile Visibility</Label>
           <Select 
             value={settings.profileVisibility} 
-            onValueChange={(value) => onChange({ profileVisibility: value as any })}
+            onValueChange={(value: "public" | "matches-only" | "private") => onChange({ profileVisibility: value })}
           >
             <SelectTrigger id="profile-visibility">
               <SelectValue placeholder="Who can see your profile" />
