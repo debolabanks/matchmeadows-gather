@@ -1,9 +1,10 @@
-
 import React, { createContext, useEffect, useState } from "react";
 import { User, AuthContextType } from "./authTypes";
 import { 
   signInWithEmailAndPassword, 
-  signUpWithEmailAndPassword
+  signUpWithEmailAndPassword,
+  resetPassword as resetPasswordService,
+  confirmPasswordReset as confirmPasswordResetService
 } from "@/services/authService";
 
 export const AuthContext = createContext<AuthContextType>({
@@ -13,6 +14,8 @@ export const AuthContext = createContext<AuthContextType>({
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
+  resetPassword: async () => {},
+  confirmPasswordReset: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -61,9 +64,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Clear user from state and localStorage
     setUser(null);
     localStorage.removeItem("matchmeadows_user");
+  };
+
+  const resetPassword = async (email: string) => {
+    setIsLoading(true);
+    try {
+      await resetPasswordService(email);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmPasswordReset = async (email: string, newPassword: string) => {
+    setIsLoading(true);
+    try {
+      await confirmPasswordResetService(email, newPassword);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -74,7 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         signIn,
         signUp,
-        signOut
+        signOut,
+        resetPassword,
+        confirmPasswordReset
       }}
     >
       {children}

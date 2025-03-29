@@ -62,3 +62,36 @@ export const signUpWithEmailAndPassword = async (
   
   return userWithoutPassword;
 };
+
+export const resetPassword = async (email: string): Promise<void> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Check if email exists
+  const existingUser = MOCK_USERS.find(u => u.email === email);
+  if (!existingUser) {
+    throw new Error("Email not found");
+  }
+  
+  // In a real app, this would send an email with a reset link
+  // For our mock implementation, we'll just consider it successful
+  // The reset code would typically be stored and validated when the user clicks the link
+  
+  console.log(`Password reset initiated for ${email}`);
+};
+
+export const confirmPasswordReset = async (email: string, newPassword: string): Promise<void> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Find user
+  const userIndex = MOCK_USERS.findIndex(u => u.email === email);
+  if (userIndex === -1) {
+    throw new Error("Email not found");
+  }
+  
+  // Update password in our mock database
+  MOCK_USERS[userIndex].password = newPassword;
+  
+  console.log(`Password reset completed for ${email}`);
+};
