@@ -5,6 +5,7 @@ export type User = {
   email: string;
   provider: "email";
   profile?: UserProfile;
+  verified?: boolean;
 };
 
 export type UserProfile = {
@@ -14,6 +15,12 @@ export type UserProfile = {
   bio?: string;
   interests?: string[];
   photos?: string[];
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  verificationStatus?: "unverified" | "pending" | "verified";
+  locationPrivacy?: "public" | "friends" | "private";
 };
 
 export type AuthContextType = {
@@ -26,4 +33,5 @@ export type AuthContextType = {
   resetPassword: (email: string) => Promise<void>;
   confirmPasswordReset: (email: string, newPassword: string) => Promise<void>;
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
+  requestVerification: () => Promise<void>;
 };

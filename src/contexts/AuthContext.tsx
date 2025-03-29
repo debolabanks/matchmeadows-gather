@@ -5,7 +5,8 @@ import {
   signUpWithEmailAndPassword,
   resetPassword as resetPasswordService,
   confirmPasswordReset as confirmPasswordResetService,
-  updateUserProfile
+  updateUserProfile,
+  requestVerification as requestVerificationService
 } from "@/services/authService";
 
 export const AuthContext = createContext<AuthContextType>({
@@ -18,13 +19,13 @@ export const AuthContext = createContext<AuthContextType>({
   resetPassword: async () => {},
   confirmPasswordReset: async () => {},
   updateProfile: async () => {},
+  requestVerification: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing session on load
   useEffect(() => {
     const checkAuth = () => {
       const storedUser = localStorage.getItem("matchmeadows_user");
@@ -101,6 +102,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const requestVerification = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const updatedUser = await requestVerificationService(user.id);
+      setUser(updatedUser);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(updatedUser));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -112,7 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signOut,
         resetPassword,
         confirmPasswordReset,
-        updateProfile
+        updateProfile,
+        requestVerification
       }}
     >
       {children}

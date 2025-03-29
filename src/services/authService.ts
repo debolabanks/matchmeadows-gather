@@ -19,7 +19,9 @@ export const signInWithEmailAndPassword = async (email: string, password: string
     id: foundUser.id,
     name: foundUser.name,
     email: foundUser.email,
-    provider: foundUser.provider
+    provider: foundUser.provider,
+    profile: foundUser.profile,
+    verified: foundUser.verified
   };
   
   return userWithoutPassword;
@@ -45,7 +47,12 @@ export const signUpWithEmailAndPassword = async (
     name,
     email,
     password,
-    provider: "email"
+    provider: "email",
+    verified: false,
+    profile: {
+      verificationStatus: "unverified",
+      locationPrivacy: "public"
+    }
   };
   
   // Add to mock database
@@ -56,7 +63,9 @@ export const signUpWithEmailAndPassword = async (
     id: newUser.id,
     name: newUser.name,
     email: newUser.email,
-    provider: newUser.provider
+    provider: newUser.provider,
+    profile: newUser.profile,
+    verified: newUser.verified
   };
   
   return userWithoutPassword;
@@ -117,7 +126,42 @@ export const updateUserProfile = async (userId: string, profileData: Partial<Use
     name: MOCK_USERS[userIndex].name,
     email: MOCK_USERS[userIndex].email,
     provider: MOCK_USERS[userIndex].provider,
-    profile: MOCK_USERS[userIndex].profile
+    profile: MOCK_USERS[userIndex].profile,
+    verified: MOCK_USERS[userIndex].verified
+  };
+  
+  return userWithoutPassword;
+};
+
+export const requestVerification = async (userId: string): Promise<User> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Find user
+  const userIndex = MOCK_USERS.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    throw new Error("User not found");
+  }
+  
+  // Update verification status
+  if (MOCK_USERS[userIndex].profile) {
+    MOCK_USERS[userIndex].profile.verificationStatus = "pending";
+  } else {
+    MOCK_USERS[userIndex].profile = {
+      verificationStatus: "pending"
+    };
+  }
+  
+  // In a real app, this would trigger an email or SMS verification process
+  
+  // Create a user object without the password
+  const userWithoutPassword: User = {
+    id: MOCK_USERS[userIndex].id,
+    name: MOCK_USERS[userIndex].name,
+    email: MOCK_USERS[userIndex].email,
+    provider: MOCK_USERS[userIndex].provider,
+    profile: MOCK_USERS[userIndex].profile,
+    verified: MOCK_USERS[userIndex].verified
   };
   
   return userWithoutPassword;

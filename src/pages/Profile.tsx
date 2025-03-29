@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, ChevronRight, Heart, Image, MapPin, Settings, User } from "lucide-react";
+import { Check, ChevronRight, Heart, Image, MapPin, Settings, User, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 import { UserProfile } from "@/contexts/authTypes";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
+import { VerificationBadge } from "@/components/VerificationBadge";
+import { LocationPrivacy } from "@/components/LocationPrivacy";
 
 // Sample user data (will be replaced with real user data)
 const userData = {
@@ -44,7 +46,7 @@ const userData = {
 };
 
 const Profile = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, requestVerification } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   
   // Form state
@@ -53,6 +55,7 @@ const Profile = () => {
   const [gender, setGender] = useState<string>(user?.profile?.gender || userData.gender);
   const [location, setLocation] = useState(user?.profile?.location || userData.location);
   const [bio, setBio] = useState(user?.profile?.bio || userData.bio);
+  const [locationPrivacy, setLocationPrivacy] = useState(user?.profile?.locationPrivacy || "public");
   
   // Calculate profile completion percentage
   const calculateCompletionPercentage = () => {
@@ -63,7 +66,8 @@ const Profile = () => {
       !!location, 
       !!bio, 
       !!(user?.profile?.interests?.length || userData.interests.length),
-      !!(user?.profile?.photos?.length || userData.photos.length)
+      !!(user?.profile?.photos?.length || userData.photos.length),
+      !!user?.profile?.verificationStatus
     ];
     
     const filledFields = fields.filter(field => field).length;
@@ -79,7 +83,8 @@ const Profile = () => {
         age: age,
         gender: gender as any,
         location,
-        bio
+        bio,
+        locationPrivacy: locationPrivacy as any
       };
       
       // Call update profile function
@@ -96,6 +101,24 @@ const Profile = () => {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRequestVerification = async () => {
+    try {
+      if (requestVerification) {
+        await requestVerification();
+        toast({
+          title: "Verification Requested",
+          description: "Your verification request has been submitted. We'll review it shortly.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to request verification. Please try again.",
         variant: "destructive",
       });
     }
@@ -148,7 +171,27 @@ const Profile = () => {
                     className="text-xl font-bold mb-2"
                   />
                 ) : (
-                  <CardTitle>{name}, {age}</CardTitle>
+                  <div className="flex flex-col items-center gap-2">
+                    <CardTitle className="flex items-center gap-2">
+                      {name}, {age}
+                      {user?.profile?.verificationStatus && (
+                        <VerificationBadge status={user.profile.verificationStatus} />
+                      )}
+                    </CardTitle>
+                    
+                    {user?.profile?.verificationStatus !== 'verified' && 
+                     user?.profile?.verificationStatus !== 'pending' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-xs"
+                        onClick={handleRequestVerification}
+                      >
+                        <Shield className="h-3 w-3 mr-1" />
+                        Verify Profile
+                      </Button>
+                    )}
+                  </div>
                 )}
                 
                 {isEditing ? (
@@ -229,6 +272,11 @@ const Profile = () => {
                       </Select>
                     </div>
                     
+                    <LocationPrivacy 
+                      value={locationPrivacy as any} 
+                      onChange={(value) => setLocationPrivacy(value)}
+                    />
+                    
                     <div>
                       <Label htmlFor="bio">About me</Label>
                       <Textarea
@@ -250,6 +298,20 @@ const Profile = () => {
                     <div>
                       <h3 className="font-semibold mb-2">Gender</h3>
                       <p className="text-muted-foreground capitalize">{gender?.replace('-', ' ')}</p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold mb-2">Location Privacy</h3>
+                      <div className="flex items-center gap-2">
+                        {locationPrivacy === "public" && <MapPin className="h-4 w-4 text-green-500" />}
+                        {locationPrivacy === "friends" && <Users className="h-4 w-4 text-blue-500" />}
+                        {locationPrivacy === "private" && <Lock className="h-4 w-4 text-red-500" />}
+                        <p className="text-muted-foreground capitalize">
+                          {locationPrivacy === "public" && "Public - Everyone can see"}
+                          {locationPrivacy === "friends" && "Friends only"}
+                          {locationPrivacy === "private" && "Private - Only you"}
+                        </p>
+                      </div>
                     </div>
                   </>
                 )}
