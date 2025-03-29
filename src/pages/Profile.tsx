@@ -18,7 +18,7 @@ import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { LocationPrivacy } from "@/components/LocationPrivacy";
 import { LanguagePreferences } from "@/components/LanguagePreferences";
-import { PrivacySettings } from "@/components/PrivacySettings";
+import { PrivacySettings, PrivacySettingsType } from "@/components/PrivacySettings";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const userData = {
@@ -57,16 +57,12 @@ const Profile = () => {
   const [bio, setBio] = useState(user?.profile?.bio || userData.bio);
   const [locationPrivacy, setLocationPrivacy] = useState(user?.profile?.locationPrivacy || "public");
   const [language, setLanguage] = useState<string>(user?.profile?.language || "en");
-  const [privacySettings, setPrivacySettings] = useState<{
-    showActivity: boolean;
-    showDistance: boolean;
-    showOnlineStatus: boolean;
-    profileVisibility: "public" | "matches-only" | "private";
-  }>(user?.profile?.privacySettings || {
-    showActivity: true,
-    showDistance: true,
-    showOnlineStatus: true,
-    profileVisibility: "public"
+  
+  const [privacySettings, setPrivacySettings] = useState<PrivacySettingsType>({
+    showActivity: user?.profile?.privacySettings?.showActivity ?? true,
+    showDistance: user?.profile?.privacySettings?.showDistance ?? true,
+    showOnlineStatus: user?.profile?.privacySettings?.showOnlineStatus ?? true,
+    profileVisibility: user?.profile?.privacySettings?.profileVisibility ?? "public"
   });
   
   const calculateCompletionPercentage = () => {
@@ -135,7 +131,7 @@ const Profile = () => {
     }
   };
 
-  const handlePrivacySettingsChange = (settings: Partial<typeof privacySettings>) => {
+  const handlePrivacySettingsChange = (settings: Partial<PrivacySettingsType>) => {
     setPrivacySettings(prev => ({ ...prev, ...settings }));
   };
 
