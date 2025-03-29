@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,8 +17,9 @@ import { UserProfile } from "@/contexts/authTypes";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { LocationPrivacy } from "@/components/LocationPrivacy";
+import { LanguagePreferences } from "@/components/LanguagePreferences";
+import { PrivacySettings } from "@/components/PrivacySettings";
 
-// Sample user data (will be replaced with real user data)
 const userData = {
   name: "Alex Johnson",
   age: 29,
@@ -49,15 +49,20 @@ const Profile = () => {
   const { user, updateProfile, requestVerification } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   
-  // Form state
   const [name, setName] = useState(user?.name || userData.name);
   const [age, setAge] = useState<number | undefined>(user?.profile?.age || userData.age);
   const [gender, setGender] = useState<string>(user?.profile?.gender || userData.gender);
   const [location, setLocation] = useState(user?.profile?.location || userData.location);
   const [bio, setBio] = useState(user?.profile?.bio || userData.bio);
   const [locationPrivacy, setLocationPrivacy] = useState(user?.profile?.locationPrivacy || "public");
+  const [language, setLanguage] = useState<string>(user?.profile?.language || "en");
+  const [privacySettings, setPrivacySettings] = useState(user?.profile?.privacySettings || {
+    showActivity: true,
+    showDistance: true,
+    showOnlineStatus: true,
+    profileVisibility: "public"
+  });
   
-  // Calculate profile completion percentage
   const calculateCompletionPercentage = () => {
     const fields = [
       !!name, 
@@ -78,16 +83,16 @@ const Profile = () => {
   
   const handleSaveProfile = async () => {
     try {
-      // Prepare profile data
       const profileData: Partial<UserProfile> = {
         age: age,
         gender: gender as any,
         location,
         bio,
-        locationPrivacy: locationPrivacy as any
+        locationPrivacy: locationPrivacy as any,
+        language: language as any,
+        privacySettings: privacySettings as any
       };
       
-      // Call update profile function
       if (updateProfile) {
         await updateProfile(profileData);
         toast({
@@ -124,24 +129,27 @@ const Profile = () => {
     }
   };
 
+  const handlePrivacySettingsChange = (settings: Partial<typeof privacySettings>) => {
+    setPrivacySettings(prev => ({ ...prev, ...settings }));
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
       <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
       
-      {/* Profile Completion Bar */}
       <ProfileCompletion 
         percentage={completionPercentage}
         className="max-w-4xl mx-auto mb-8"
       />
       
       <Tabs defaultValue="profile" className="max-w-4xl mx-auto">
-        <TabsList className="grid grid-cols-3 mb-8">
+        <TabsList className="grid grid-cols-4 mb-8">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="privacy">Privacy</TabsTrigger>
         </TabsList>
         
-        {/* Profile Tab */}
         <TabsContent value="profile">
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="md:col-span-1">
@@ -351,7 +359,6 @@ const Profile = () => {
           </div>
         </TabsContent>
         
-        {/* Photos Tab */}
         <TabsContent value="photos">
           <Card>
             <CardHeader>
@@ -386,7 +393,6 @@ const Profile = () => {
                   </div>
                 ))}
                 
-                {/* Add photo button */}
                 <div className="aspect-[3/4] rounded-lg border-2 border-dashed border-muted flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
                   <div className="text-center p-4">
                     <Image className="h-8 w-8 mx-auto text-muted-foreground" />
@@ -407,7 +413,6 @@ const Profile = () => {
           </Card>
         </TabsContent>
         
-        {/* Settings Tab */}
         <TabsContent value="settings">
           <Card>
             <CardHeader>
@@ -415,6 +420,15 @@ const Profile = () => {
             </CardHeader>
             
             <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <LanguagePreferences 
+                  value={language as any}
+                  onChange={(value) => setLanguage(value)}
+                />
+              </div>
+              
+              <Separator />
+              
               <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
                 <div>
                   <h3 className="font-medium">Notification Preferences</h3>
@@ -432,18 +446,6 @@ const Profile = () => {
                   <h3 className="font-medium">Dating Preferences</h3>
                   <p className="text-sm text-muted-foreground">
                     Set your distance, age range, and more
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-              </div>
-              
-              <Separator />
-              
-              <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                <div>
-                  <h3 className="font-medium">Privacy Settings</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Control who can see your profile
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -474,6 +476,13 @@ const Profile = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="privacy">
+          <PrivacySettings 
+            settings={privacySettings as any}
+            onChange={handlePrivacySettingsChange}
+          />
         </TabsContent>
       </Tabs>
     </div>
