@@ -8,11 +8,13 @@ export interface ProfileCardProps {
   id: string;
   name: string;
   age: number;
+  gender?: "male" | "female" | "non-binary" | "prefer-not-to-say";
   location: string;
   bio: string;
   interests: string[];
   imageUrl: string;
   distance: string;
+  coordinates?: { latitude: number; longitude: number };
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
 }
@@ -21,6 +23,7 @@ const ProfileCard = ({
   id,
   name,
   age,
+  gender,
   location,
   bio,
   interests,
@@ -37,7 +40,7 @@ const ProfileCard = ({
 
   return (
     <div 
-      className="profile-card animate-fade-in"
+      className="profile-card animate-fade-in rounded-lg overflow-hidden shadow-lg border border-border"
       onClick={toggleDetails}
     >
       <div className="relative h-96">
@@ -80,7 +83,7 @@ const ProfileCard = ({
           }}
           variant="outline" 
           size="icon" 
-          className="swipe-button bg-white hover:bg-red-50"
+          className="swipe-button bg-white hover:bg-red-50 rounded-full h-14 w-14"
         >
           <X className="h-6 w-6 text-red-500" />
         </Button>
@@ -92,7 +95,7 @@ const ProfileCard = ({
           }}
           variant="outline" 
           size="icon" 
-          className="swipe-button bg-white hover:bg-love-50"
+          className="swipe-button bg-white hover:bg-love-50 rounded-full h-14 w-14"
         >
           <Heart className="h-6 w-6 text-love-500" />
         </Button>
