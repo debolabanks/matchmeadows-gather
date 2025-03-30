@@ -1,8 +1,10 @@
 
-import { Heart, X } from "lucide-react";
+import { Heart, X, MessageSquare, Map, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 export interface ProfileCardProps {
   id: string;
@@ -15,6 +17,8 @@ export interface ProfileCardProps {
   imageUrl: string;
   distance: string;
   coordinates?: { latitude: number; longitude: number };
+  isVerified?: boolean;
+  preferredLanguage?: string;
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
 }
@@ -29,6 +33,8 @@ const ProfileCard = ({
   interests,
   imageUrl,
   distance,
+  isVerified,
+  preferredLanguage,
   onLike,
   onDislike
 }: ProfileCardProps) => {
@@ -36,6 +42,16 @@ const ProfileCard = ({
   
   const toggleDetails = () => {
     setShowDetails(!showDetails);
+  };
+
+  const handleMessageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({
+      title: "Starting conversation",
+      description: `Starting a new conversation with ${name}`
+    });
+    // In a real app, this would navigate to the messages page
+    // or open a new chat with this user
   };
 
   return (
@@ -50,8 +66,23 @@ const ProfileCard = ({
           className="h-full w-full object-cover"
         />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
-          <h3 className="text-2xl font-bold">{name}, {age}</h3>
-          <p className="text-sm opacity-90">{distance} away • {location}</p>
+          <div className="flex items-center gap-2">
+            <h3 className="text-2xl font-bold">{name}, {age}</h3>
+            {isVerified && (
+              <Shield className="h-5 w-5 text-blue-400" />
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-sm opacity-90 flex items-center">
+              <Map className="h-3 w-3 mr-1" />
+              {distance} away • {location}
+            </p>
+            {preferredLanguage && (
+              <Badge variant="outline" className="text-xs border-blue-400/30 text-blue-400">
+                Speaks {preferredLanguage}
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
       
@@ -83,9 +114,18 @@ const ProfileCard = ({
           }}
           variant="outline" 
           size="icon" 
-          className="swipe-button bg-white hover:bg-red-50 rounded-full h-14 w-14"
+          className="swipe-button bg-white hover:bg-red-50 rounded-full h-12 w-12"
         >
           <X className="h-6 w-6 text-red-500" />
+        </Button>
+        
+        <Button 
+          onClick={handleMessageClick}
+          variant="outline" 
+          size="icon" 
+          className="swipe-button bg-white hover:bg-blue-50 rounded-full h-12 w-12"
+        >
+          <MessageSquare className="h-6 w-6 text-blue-500" />
         </Button>
         
         <Button 
@@ -95,7 +135,7 @@ const ProfileCard = ({
           }}
           variant="outline" 
           size="icon" 
-          className="swipe-button bg-white hover:bg-love-50 rounded-full h-14 w-14"
+          className="swipe-button bg-white hover:bg-love-50 rounded-full h-12 w-12"
         >
           <Heart className="h-6 w-6 text-love-500" />
         </Button>
