@@ -1,5 +1,4 @@
 
-
 export type User = {
   id: string;
   name: string;
@@ -33,6 +32,35 @@ export type UserProfile = {
     allowVideoCall?: boolean;
     allowVoiceCall?: boolean;
   };
+  // Creator profile related fields
+  isCreator?: boolean;
+  creatorProfile?: {
+    displayName?: string;
+    categories?: string[];
+    bio?: string;
+    subscriptionTiers?: {
+      basic?: {
+        price: number;
+        benefits: string[];
+      };
+      premium?: {
+        price: number;
+        benefits: string[];
+      };
+      vip?: {
+        price: number;
+        benefits: string[];
+      };
+    };
+    totalSubscribers?: number;
+    earnings?: {
+      total: number;
+      lastMonth: number;
+      pendingPayout: number;
+    };
+    streamKey?: string;
+    streamServerUrl?: string;
+  };
 };
 
 export type AuthContextType = {
@@ -47,4 +75,3 @@ export type AuthContextType = {
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   requestVerification: () => Promise<void>;
 };
-

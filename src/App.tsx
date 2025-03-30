@@ -20,6 +20,8 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
+import StreamsDiscovery from "./pages/StreamsDiscovery";
+import StreamPage from "./pages/StreamPage";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +60,16 @@ const App = () => (
                   <Route path="/profile" element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/streams" element={
+                    <ProtectedRoute>
+                      <StreamsDiscovery />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/streams/:streamId" element={
+                    <ProtectedRoute>
+                      <StreamPage />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<NotFound />} />
