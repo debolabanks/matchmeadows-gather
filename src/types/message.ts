@@ -46,4 +46,18 @@ export interface ChatContact {
     read: boolean;
     hasAttachment?: boolean;
   };
+  videoCallEnabled?: boolean;
+  voiceCallEnabled?: boolean;
+  verificationStatus?: "unverified" | "verified" | "pending";
 }
+
+export interface CallSession {
+  id: string;
+  type: "video" | "voice";
+  participants: string[];
+  startTime: string;
+  endTime?: string;
+  status: "connecting" | "connected" | "ended" | "rejected" | "missed";
+  duration?: number;
+}
+

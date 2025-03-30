@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: string;
   name: string;
@@ -20,6 +21,8 @@ export type UserProfile = {
     longitude: number;
   };
   verificationStatus?: "unverified" | "pending" | "verified";
+  faceVerified?: boolean;
+  faceVerificationDate?: string;
   locationPrivacy?: "public" | "friends" | "private";
   language?: "en" | "es" | "fr" | "de" | "zh" | "ja" | "ko" | "pt" | "ru";
   privacySettings?: {
@@ -27,6 +30,8 @@ export type UserProfile = {
     showDistance?: boolean;
     showOnlineStatus?: boolean;
     profileVisibility?: "public" | "matches-only" | "private";
+    allowVideoCall?: boolean;
+    allowVoiceCall?: boolean;
   };
 };
 
@@ -42,3 +47,4 @@ export type AuthContextType = {
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   requestVerification: () => Promise<void>;
 };
+
