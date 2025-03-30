@@ -1,9 +1,13 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CallSession } from "@/types/message";
+import { attachTrackToElement } from "@/services/twilioService";
+import { useCallContext } from "@/contexts/CallContext";
+import { Room, RemoteParticipant, RemoteTrack, RemoteTrackPublication } from "twilio-video";
 import { 
-  Video, 
+  Video as VideoIcon, 
   VideoOff, 
   Mic, 
   MicOff, 
@@ -44,101 +48,92 @@ const VideoCall = ({
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteParticipant, setRemoteParticipant] = useState<RemoteParticipant | null>(null);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const callContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<number | null>(null);
   const { toast } = useToast();
+  const { twilioRoom, localTracks } = useCallContext();
 
-  // Start media stream when component mounts
+  // Initialize call when component mounts
   useEffect(() => {
     if (isIncoming && callStatus === "connecting") {
-      // Don't start media for incoming calls until accepted
+      // Don't start for incoming calls until accepted
       return;
     }
     
-    const startMedia = async () => {
-      try {
-        const constraints: MediaStreamConstraints = {
-          audio: true,
-          video: callType === "video"
-        };
-        
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        setLocalStream(stream);
-        
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-        
-        // In a real app, you would establish WebRTC connection here
-        // For this demo, we'll simulate a connection after a delay
-        setTimeout(() => {
-          setCallStatus("connected");
-          simulateRemoteStream();
-          startTimer();
-        }, 2000);
-        
-      } catch (error) {
-        console.error("Error accessing media devices:", error);
-        toast({
-          title: "Media Access Error",
-          description: "Could not access camera or microphone",
-          variant: "destructive"
-        });
-        endCall();
-      }
-    };
+    setCallStatus("connecting");
     
-    startMedia();
+    // Start call timer when connected
+    if (callStatus === "connected") {
+      startTimer();
+    }
     
     return () => {
-      stopStreams();
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [callType, isIncoming, callStatus]);
+  }, [callStatus, isIncoming]);
 
-  // Simulate remote stream (in a real app this would be from WebRTC)
-  const simulateRemoteStream = () => {
-    // For demo purposes, we'll create a mock remote stream
-    const mockVideo = document.createElement('video');
-    mockVideo.autoplay = true;
-    mockVideo.loop = true;
-    mockVideo.muted = true;
+  // Handle Twilio room and tracks
+  useEffect(() => {
+    if (!twilioRoom) return;
     
-    // Use a placeholder or keep it black for voice calls
-    if (callType === "voice") {
-      // For voice calls, just show the profile image
-      setRemoteStream(null);
-    } else {
-      // In a real app, this would be the remote peer's video stream
-      // For demo, we'll use the local stream as a placeholder
-      if (localStream) {
-        setRemoteStream(localStream);
-        
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = localStream;
-        }
+    // Mark call as connected when room is ready
+    setCallStatus("connected");
+    
+    // Set up local video
+    const localVideoTrack = localTracks.find(track => track.kind === 'video');
+    if (localVideoTrack && localVideoRef.current) {
+      const videoElement = localVideoRef.current;
+      attachTrackToElement(localVideoTrack as any, videoElement);
+    }
+    
+    // Handle remote participants
+    const handleTrackSubscribed = (track: RemoteTrack) => {
+      if (track.kind === 'video' && remoteVideoRef.current) {
+        attachTrackToElement(track as any, remoteVideoRef.current);
       }
-    }
-  };
-
-  // Stop all media streams
-  const stopStreams = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-    }
-    setLocalStream(null);
-    setRemoteStream(null);
-  };
+    };
+    
+    const handleParticipantConnected = (participant: RemoteParticipant) => {
+      setRemoteParticipant(participant);
+      
+      participant.tracks.forEach(publication => {
+        if (publication.isSubscribed) {
+          handleTrackSubscribed(publication.track);
+        }
+      });
+      
+      participant.on('trackSubscribed', handleTrackSubscribed);
+    };
+    
+    twilioRoom.participants.forEach(handleParticipantConnected);
+    twilioRoom.on('participantConnected', handleParticipantConnected);
+    
+    // Start timer when connected to room
+    startTimer();
+    
+    return () => {
+      // Cleanup event listeners
+      twilioRoom.off('participantConnected', handleParticipantConnected);
+      
+      if (remoteParticipant) {
+        remoteParticipant.removeAllListeners();
+      }
+    };
+  }, [twilioRoom, localTracks]);
 
   // Start call duration timer
   const startTimer = () => {
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
     timerRef.current = window.setInterval(() => {
       setDuration(prev => prev + 1);
     }, 1000);
@@ -147,7 +142,6 @@ const VideoCall = ({
   // Handle call end
   const endCall = () => {
     setCallStatus("ended");
-    stopStreams();
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -173,20 +167,18 @@ const VideoCall = ({
 
   // Toggle mute
   const toggleMute = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = isMuted;
-      });
+    const audioTrack = localTracks.find(track => track.kind === 'audio');
+    if (audioTrack) {
+      audioTrack.enable(!isMuted);
     }
     setIsMuted(!isMuted);
   };
 
   // Toggle video
   const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(track => {
-        track.enabled = isVideoOff;
-      });
+    const videoTrack = localTracks.find(track => track.kind === 'video');
+    if (videoTrack) {
+      videoTrack.enable(!isVideoOff);
     }
     setIsVideoOff(!isVideoOff);
   };
@@ -196,6 +188,11 @@ const VideoCall = ({
     // In a real app, you would switch audio output devices
     // This is just for UI demonstration
     setIsSpeakerOn(!isSpeakerOn);
+    
+    toast({
+      title: isSpeakerOn ? "Speaker off" : "Speaker on",
+      duration: 1500,
+    });
   };
 
   // Toggle fullscreen
@@ -231,15 +228,17 @@ const VideoCall = ({
     >
       {/* Remote video (main view) */}
       <div className="relative flex-1 flex items-center justify-center bg-gray-900">
-        {callType === "video" && remoteStream ? (
+        {callType === "video" && (
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
             className="w-full h-full object-cover"
           />
-        ) : (
-          <div className="flex flex-col items-center justify-center">
+        )}
+        
+        {(callType === "voice" || callStatus !== "connected" || !remoteParticipant) && (
+          <div className="flex flex-col items-center justify-center absolute inset-0">
             <div className="h-32 w-32 md:h-48 md:w-48 rounded-full overflow-hidden mb-4 border-4 border-primary">
               <img src={contactImage} alt={contactName} className="w-full h-full object-cover" />
             </div>
@@ -264,7 +263,7 @@ const VideoCall = ({
         </div>
         
         {/* Local video (picture-in-picture) */}
-        {callType === "video" && localStream && !isVideoOff && (
+        {callType === "video" && !isVideoOff && (
           <div className="absolute top-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-lg overflow-hidden border-2 border-white">
             <video
               ref={localVideoRef}
@@ -318,7 +317,7 @@ const VideoCall = ({
                 variant={isVideoOff ? "secondary" : "outline"}
                 className="rounded-full"
               >
-                {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
+                {isVideoOff ? <VideoOff className="h-5 w-5" /> : <VideoIcon className="h-5 w-5" />}
               </Button>
             )}
             

@@ -4,10 +4,13 @@ import { useCall } from "@/hooks/useCall";
 import VideoCall from "@/components/VideoCall";
 import { Button } from "@/components/ui/button";
 import { Phone, Video, X } from "lucide-react";
+import { Room, LocalTrack } from "twilio-video";
 
 interface CallContextType {
   startCall: (contactId: string, contactName: string, contactImage: string, type: "video" | "voice") => void;
   simulateIncomingCall: (fromId: string, fromName: string, fromImage: string, type: "video" | "voice") => void;
+  twilioRoom: Room | null;
+  localTracks: LocalTrack[];
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -20,7 +23,9 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     endCall,
     acceptIncomingCall,
     rejectIncomingCall,
-    simulateIncomingCall
+    simulateIncomingCall,
+    twilioRoom,
+    localTracks
   } = useCall();
 
   // Simulate an incoming call after the app loads (demo purpose)
@@ -38,7 +43,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   }, [simulateIncomingCall]);
 
   return (
-    <CallContext.Provider value={{ startCall, simulateIncomingCall }}>
+    <CallContext.Provider value={{ startCall, simulateIncomingCall, twilioRoom, localTracks }}>
       {children}
       
       {/* Active call overlay */}
