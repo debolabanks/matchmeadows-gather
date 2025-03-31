@@ -78,6 +78,8 @@ export const createLocalVideoTrack = async (): Promise<LocalVideoTrack> => {
 const createDemoRoom = (roomName: string, localTracks: LocalTrack[]): Room => {
   // This is a simplified mock of a Twilio Room for demonstration
   // In a real app, this would come from the Twilio SDK
+  const eventHandlers: Record<string, Function[]> = {};
+  
   const demoRoom = {
     name: roomName,
     localParticipant: {
@@ -103,8 +105,25 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[]): Room => {
       console.log('Disconnected from room:', roomName);
     },
     on: (event: string, handler: Function) => {
-      // Mock event binding
+      // Add event handler
+      if (!eventHandlers[event]) {
+        eventHandlers[event] = [];
+      }
+      eventHandlers[event].push(handler);
       console.log(`[Demo Room] Registered handler for event: ${event}`);
+      return demoRoom;
+    },
+    off: (event: string, handler?: Function) => {
+      // Remove event handler
+      if (eventHandlers[event]) {
+        if (handler) {
+          // Remove specific handler
+          eventHandlers[event] = eventHandlers[event].filter(h => h !== handler);
+        } else {
+          // Remove all handlers for this event
+          delete eventHandlers[event];
+        }
+      }
       return demoRoom;
     },
     once: (event: string, handler: Function) => {

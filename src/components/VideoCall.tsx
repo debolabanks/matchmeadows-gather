@@ -118,10 +118,12 @@ const VideoCall = ({
     startTimer();
     
     return () => {
-      // Cleanup event listeners
-      twilioRoom.off('participantConnected', handleParticipantConnected);
+      // Safely remove event listeners
+      if (twilioRoom && typeof twilioRoom.off === 'function') {
+        twilioRoom.off('participantConnected', handleParticipantConnected);
+      }
       
-      if (remoteParticipant) {
+      if (remoteParticipant && typeof remoteParticipant.removeAllListeners === 'function') {
         remoteParticipant.removeAllListeners();
       }
     };
