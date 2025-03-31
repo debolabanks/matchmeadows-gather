@@ -24,6 +24,7 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
     try {
       toast({
         title: `Starting video call with ${contact.name}`,
+        description: "Connecting to Twilio service...",
         duration: 3000,
       });
       
@@ -31,11 +32,14 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
     } catch (error) {
       toast({
         title: "Call failed",
-        description: "Could not start video call",
+        description: "Could not start video call with Twilio",
         variant: "destructive",
       });
     } finally {
-      setIsCallStarting(false);
+      // Reset the loading state after a short delay
+      setTimeout(() => {
+        setIsCallStarting(false);
+      }, 1500);
     }
   };
 
@@ -47,6 +51,7 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
     try {
       toast({
         title: `Starting voice call with ${contact.name}`,
+        description: "Connecting to Twilio service...",
         duration: 3000,
       });
       
@@ -54,11 +59,14 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
     } catch (error) {
       toast({
         title: "Call failed",
-        description: "Could not start voice call",
+        description: "Could not start voice call with Twilio",
         variant: "destructive",
       });
     } finally {
-      setIsCallStarting(false);
+      // Reset the loading state after a short delay
+      setTimeout(() => {
+        setIsCallStarting(false);
+      }, 1500);
     }
   };
 
@@ -70,7 +78,7 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
           size="icon"
           className="rounded-full h-9 w-9"
           onClick={handleVideoCall}
-          title="Video Call"
+          title="Twilio Video Call"
           disabled={isCallStarting}
         >
           <Video className={`h-4 w-4 ${isCallStarting ? 'animate-pulse' : ''}`} />
@@ -83,7 +91,7 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
           size="icon"
           className="rounded-full h-9 w-9"
           onClick={handleVoiceCall}
-          title="Voice Call"
+          title="Twilio Voice Call"
           disabled={isCallStarting}
         >
           <Phone className={`h-4 w-4 ${isCallStarting ? 'animate-pulse' : ''}`} />

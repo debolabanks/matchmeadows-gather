@@ -3,6 +3,7 @@ import Video, {
   LocalTrack, 
   LocalVideoTrack, 
   LocalAudioTrack, 
+  LocalDataTrack,
   Room, 
   RemoteParticipant 
 } from 'twilio-video';
@@ -85,14 +86,20 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[]): Room => {
         track,
         kind: track.kind,
         send: () => {},
-        stop: () => {},
       })),
       publishTrack: (track: LocalTrack) => Promise.resolve(track),
       unpublishTrack: (track: LocalTrack) => Promise.resolve(track),
     },
     participants: new Map<string, RemoteParticipant>(),
     disconnect: () => {
-      localTracks.forEach(track => track.stop());
+      // Safely stop tracks with type checking
+      localTracks.forEach(track => {
+        if ('stop' in track && typeof track.stop === 'function') {
+          track.stop();
+        } else if (track instanceof LocalAudioTrack || track instanceof LocalVideoTrack) {
+          track.stop();
+        }
+      });
       console.log('Disconnected from room:', roomName);
     },
     on: (event: string, handler: Function) => {

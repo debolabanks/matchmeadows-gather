@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback } from "react";
 import { CallSession } from "@/types/message";
 import { connectToRoom, createLocalAudioTrack, createLocalVideoTrack } from "@/services/twilioService";
-import Video, { LocalTrack, Room } from "twilio-video";
+import Video, { LocalTrack, LocalAudioTrack, LocalVideoTrack, Room } from "twilio-video";
 
 type CallType = "video" | "voice";
 
@@ -35,8 +35,14 @@ export const useCall = (): UseCallReturn => {
 
   // Cleanup function for when call ends
   const cleanupResources = useCallback(() => {
-    // Stop all local tracks
-    localTracks.forEach(track => track.stop());
+    // Stop all local tracks with proper type checking
+    localTracks.forEach(track => {
+      if (track instanceof LocalAudioTrack || track instanceof LocalVideoTrack) {
+        track.stop();
+      } else if ('stop' in track && typeof track.stop === 'function') {
+        track.stop();
+      }
+    });
     setLocalTracks([]);
     
     // Disconnect from Twilio room if active
