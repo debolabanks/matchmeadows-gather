@@ -1,3 +1,4 @@
+
 import Video, { 
   LocalTrack, 
   LocalVideoTrack, 
@@ -16,13 +17,22 @@ interface ConnectOptions {
   audio: boolean;
   video: boolean;
   isPresenter?: boolean; // Whether this user is broadcasting (presenter) or viewing
+  quality?: 'low' | 'standard' | 'high'; // Stream quality
+  screenShare?: boolean; // Whether to include screen sharing
 }
 
 /**
  * Connect to a Twilio Video room
  * In a real implementation, we would fetch a token from the server first
  */
-export const connectToRoom = async ({ name, audio, video, isPresenter = false }: ConnectOptions): Promise<Room> => {
+export const connectToRoom = async ({ 
+  name, 
+  audio, 
+  video, 
+  isPresenter = false,
+  quality = 'standard',
+  screenShare = false
+}: ConnectOptions): Promise<Room> => {
   try {
     console.log(`Connecting to room: ${name} as ${isPresenter ? 'presenter' : 'viewer'}`);
     
@@ -35,8 +45,31 @@ export const connectToRoom = async ({ name, audio, video, isPresenter = false }:
     }
     
     if (video) {
-      const videoTrack = await createLocalVideoTrack();
+      // Set video quality based on the quality parameter
+      const videoOptions = {
+        low: { width: 320, height: 240 },
+        standard: { width: 640, height: 480 },
+        high: { width: 1280, height: 720 }
+      };
+      
+      const videoTrack = await createLocalVideoTrack({
+        name: 'camera',
+        ...videoOptions[quality]
+      });
+      
       tracks.push(videoTrack);
+    }
+    
+    // Add screen sharing if requested (in a real app)
+    if (screenShare && isPresenter) {
+      try {
+        // This is just a placeholder for demo - in a real app we would capture the screen
+        console.log("Screen sharing would be enabled in a real implementation");
+        // const screenTrack = await Video.createLocalVideoTrack({ name: 'screen' });
+        // tracks.push(screenTrack);
+      } catch (err) {
+        console.error("Failed to get screen sharing:", err);
+      }
     }
     
     // In real implementation, we would use:
@@ -54,20 +87,22 @@ export const connectToRoom = async ({ name, audio, video, isPresenter = false }:
 /**
  * Create a local audio track
  */
-export const createLocalAudioTrack = async (): Promise<LocalAudioTrack> => {
+export const createLocalAudioTrack = async (options = {}): Promise<LocalAudioTrack> => {
   return Video.createLocalAudioTrack({
     name: 'microphone',
+    ...options
   });
 };
 
 /**
  * Create a local video track
  */
-export const createLocalVideoTrack = async (): Promise<LocalVideoTrack> => {
+export const createLocalVideoTrack = async (options = {}): Promise<LocalVideoTrack> => {
   return Video.createLocalVideoTrack({
     name: 'camera',
     width: 640,
     height: 480,
+    ...options
   });
 };
 
@@ -136,8 +171,7 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPresenter
       console.log(`[Demo Room] Registered handler for event: ${event}`);
       return demoRoom;
     },
-    // Fix the TypeScript error by properly typing the event parameter
-    // The Twilio SDK expects specific event types, not just any string
+    // Fix the TypeScript error by using 'any' type for event parameter
     off: (event: any, handler?: Function) => {
       // Remove event handler
       if (eventHandlers[event]) {
@@ -214,12 +248,19 @@ export const detachAllTracks = (tracks: Video.VideoTrack[]) => {
 /**
  * Start a broadcast as a creator
  */
-export const startBroadcast = async (roomName: string): Promise<Room> => {
+export const startBroadcast = async (roomName: string, options = {
+  audio: true,
+  video: true,
+  quality: 'standard' as const,
+  screenShare: false
+}): Promise<Room> => {
   return connectToRoom({
     name: roomName,
-    audio: true,
-    video: true,
-    isPresenter: true
+    audio: options.audio,
+    video: options.video,
+    isPresenter: true,
+    quality: options.quality,
+    screenShare: options.screenShare
   });
 };
 
@@ -233,4 +274,30 @@ export const joinBroadcast = async (roomName: string): Promise<Room> => {
     video: false, // Viewers don't need to send video
     isPresenter: false
   });
+};
+
+/**
+ * Get device information for configuration
+ */
+export const getDeviceOptions = async () => {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    
+    const videoInputs = devices.filter(device => device.kind === 'videoinput');
+    const audioInputs = devices.filter(device => device.kind === 'audioinput');
+    const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+    
+    return {
+      videoInputs,
+      audioInputs,
+      audioOutputs
+    };
+  } catch (error) {
+    console.error('Error getting media devices:', error);
+    return {
+      videoInputs: [],
+      audioInputs: [],
+      audioOutputs: []
+    };
+  }
 };

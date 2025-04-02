@@ -3,23 +3,37 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { startBroadcast, attachTrackToElement } from "@/services/twilioService";
-import { Room, LocalTrack } from "twilio-video";
 import { 
-  Video as VideoIcon, 
+  Card, 
+  CardContent, 
+  CardDescription,
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "@/components/ui/use-toast";
+import { Room } from "twilio-video";
+import { startBroadcast } from "@/services/twilioService";
+import { 
+  Video,
   Mic, 
-  MicOff, 
-  VideoOff, 
-  Settings, 
-  Users, 
+  MicOff,
+  VideoOff,
+  Users,
   MessageSquare,
-  Share,
-  MoreVertical,
-  Maximize2
+  Rabbit
 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 interface CreatorBroadcastProps {
   creatorId: string;
@@ -27,367 +41,418 @@ interface CreatorBroadcastProps {
 }
 
 const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => {
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
-  const [isPreparingToStart, setIsPreparingToStart] = useState(false);
-  const [streamTitle, setStreamTitle] = useState("");
-  const [streamDescription, setStreamDescription] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
+  const [isSubscriberOnly, setIsSubscriberOnly] = useState(false);
+  const [isLive, setIsLive] = useState(false);
+  const [isMicEnabled, setIsMicEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [viewerCount, setViewerCount] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [twilioRoom, setTwilioRoom] = useState<Room | null>(null);
-  const [localTracks, setLocalTracks] = useState<LocalTrack[]>([]);
+  const [broadcastDuration, setDuration] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const timerRef = useRef<number | null>(null);
-  const { toast } = useToast();
-
-  // Clean up when component unmounts
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const intervalRef = useRef<number | null>(null);
+  const twilioRoomRef = useRef<Room | null>(null);
+  const navigate = useNavigate();
+  
+  // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+      if (twilioRoomRef.current) {
+        twilioRoomRef.current.disconnect();
       }
       
-      if (twilioRoom) {
-        twilioRoom.disconnect();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
-      
-      localTracks.forEach(track => {
-        if ('stop' in track && typeof track.stop === 'function') {
-          track.stop();
-        }
-      });
     };
-  }, [twilioRoom, localTracks]);
-
-  // Handle broadcasting state changes
+  }, []);
+  
+  // Set up local video preview
   useEffect(() => {
-    if (isBroadcasting && twilioRoom) {
-      // Start elapsed time counter
-      timerRef.current = window.setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
-      
-      // Simulate viewers joining
-      const viewerSimulator = setInterval(() => {
-        setViewerCount(prev => {
-          const change = Math.floor(Math.random() * 3);
-          return prev + change;
+    const setupPreview = async () => {
+      try {
+        // Only set up preview when not live
+        if (!isLive && isVideoEnabled) {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: false 
+          });
+          
+          if (videoPreviewRef.current) {
+            videoPreviewRef.current.srcObject = stream;
+          }
+          
+          return () => {
+            stream.getTracks().forEach(track => track.stop());
+          };
+        }
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        toast({
+          title: "Camera access error",
+          description: "Could not access your camera. Please check permissions.",
+          variant: "destructive",
         });
-      }, 10000);
-      
-      return () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-        clearInterval(viewerSimulator);
-      };
-    }
-  }, [isBroadcasting, twilioRoom]);
-
-  // Format elapsed time as HH:MM:SS
-  const formatElapsedTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+      }
+    };
     
-    return [
-      hrs > 0 ? String(hrs).padStart(2, '0') : null,
-      String(mins).padStart(2, '0'),
-      String(secs).padStart(2, '0')
-    ].filter(Boolean).join(':');
-  };
-
-  // Start the broadcast
-  const handleStartBroadcast = async () => {
-    if (!streamTitle.trim()) {
+    const cleanup = setupPreview();
+    
+    return () => {
+      cleanup?.then(cleanupFn => cleanupFn?.());
+    };
+  }, [isLive, isVideoEnabled]);
+  
+  const startBroadcastHandler = async () => {
+    if (!title.trim()) {
       toast({
-        title: "Stream title required",
-        description: "Please enter a title for your stream",
-        variant: "destructive"
+        title: "Title required",
+        description: "Please enter a title for your broadcast",
+        variant: "destructive",
       });
       return;
     }
     
-    setIsPreparingToStart(true);
+    setIsLoading(true);
     
     try {
-      // Create a unique room name based on creator ID and timestamp
-      const roomName = `broadcast-${creatorId}-${Date.now()}`;
+      // Create a room name based on creator id and timestamp
+      const roomName = `${creatorId}-${Date.now()}`;
       
-      // Connect to Twilio room as a presenter
+      // Connect to Twilio room
       const room = await startBroadcast(roomName);
-      setTwilioRoom(room);
+      twilioRoomRef.current = room;
       
-      // Get local tracks from room
-      const tracks = Array.from(room.localParticipant.tracks.values())
-        .map(publication => publication.track)
-        .filter(track => track !== null) as LocalTrack[];
+      // Successfully connected to the room
+      setIsLive(true);
+      setViewerCount(0);
+      setDuration(0);
       
-      setLocalTracks(tracks);
-      
-      // Attach local video track to preview
-      const videoTrack = tracks.find(track => track.kind === 'video');
-      if (videoTrack && videoRef.current) {
-        attachTrackToElement(videoTrack as any, videoRef.current);
-      }
-      
-      setIsBroadcasting(true);
-      setIsPreparingToStart(false);
+      // Start duration timer
+      intervalRef.current = window.setInterval(() => {
+        setDuration(prev => prev + 1);
+      }, 1000);
       
       toast({
         title: "Broadcast started!",
-        description: "You are now live to your audience",
+        description: "You are now live. Share your stream with others.",
       });
-    } catch (error) {
-      console.error("Failed to start broadcast:", error);
-      setIsPreparingToStart(false);
       
+      // Generate a stream ID (in a real app, this would come from the backend)
+      const streamId = `${creatorId}-${Date.now()}`;
+      
+      // Create a new Stream object (in a real app, this would be saved to the database)
+      const newStream = {
+        id: streamId,
+        creatorId,
+        creatorName,
+        title,
+        description,
+        category,
+        tags: tags.split(",").map(tag => tag.trim()),
+        isSubscriberOnly,
+        status: "live",
+        viewerCount: 0,
+        startTime: new Date().toISOString(),
+      };
+      
+      console.log("New stream created:", newStream);
+      
+      // Simulate random viewers joining
+      const viewerInterval = setInterval(() => {
+        setViewerCount(prev => {
+          const randomChange = Math.floor(Math.random() * 3);
+          return prev + randomChange;
+        });
+      }, 10000);
+      
+      // Save the interval for cleanup
+      const oldInterval = intervalRef.current;
+      intervalRef.current = viewerInterval as unknown as number;
+      
+      return () => {
+        clearInterval(oldInterval);
+        clearInterval(viewerInterval);
+      };
+    } catch (error) {
+      console.error("Error starting broadcast:", error);
       toast({
-        title: "Broadcast failed",
-        description: "There was an error starting your broadcast",
-        variant: "destructive"
+        title: "Broadcast error",
+        description: "Could not start the broadcast. Please try again.",
+        variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  // End the broadcast
-  const handleEndBroadcast = () => {
-    if (twilioRoom) {
-      twilioRoom.disconnect();
-      setTwilioRoom(null);
+  
+  const stopBroadcastHandler = () => {
+    if (twilioRoomRef.current) {
+      twilioRoomRef.current.disconnect();
+      twilioRoomRef.current = null;
     }
     
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
     
-    setIsBroadcasting(false);
-    setElapsedTime(0);
+    setIsLive(false);
+    setDuration(0);
     setViewerCount(0);
     
     toast({
       title: "Broadcast ended",
-      description: "Your live stream has ended",
+      description: "Your broadcast has ended successfully.",
     });
   };
-
-  // Toggle microphone
-  const toggleMicrophone = () => {
-    const audioTrack = localTracks.find(track => track.kind === 'audio');
-    if (audioTrack && 'enable' in audioTrack && typeof audioTrack.enable === 'function') {
-      if (isMuted) {
-        audioTrack.enable();
-      } else {
-        audioTrack.disable();
-      }
-      setIsMuted(!isMuted);
+  
+  const toggleMic = () => {
+    setIsMicEnabled(!isMicEnabled);
+    
+    if (twilioRoomRef.current) {
+      const audioTracks = Array.from(twilioRoomRef.current.localParticipant.audioTracks.values());
+      audioTracks.forEach(publication => {
+        if (publication.track) {
+          isMicEnabled ? publication.track.disable() : publication.track.enable();
+        }
+      });
     }
   };
-
-  // Toggle camera
-  const toggleCamera = () => {
-    const videoTrack = localTracks.find(track => track.kind === 'video');
-    if (videoTrack && 'enable' in videoTrack && typeof videoTrack.enable === 'function') {
-      if (isVideoOff) {
-        videoTrack.enable();
-      } else {
-        videoTrack.disable();
-      }
-      setIsVideoOff(!isVideoOff);
+  
+  const toggleVideo = () => {
+    setIsVideoEnabled(!isVideoEnabled);
+    
+    if (twilioRoomRef.current) {
+      const videoTracks = Array.from(twilioRoomRef.current.localParticipant.videoTracks.values());
+      videoTracks.forEach(publication => {
+        if (publication.track) {
+          isVideoEnabled ? publication.track.disable() : publication.track.enable();
+        }
+      });
     }
   };
-
+  
+  // Format duration as mm:ss
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
   return (
-    <div className="flex flex-col gap-6">
-      {!isBroadcasting ? (
-        // Pre-broadcast setup screen
-        <Card>
-          <CardHeader>
-            <CardTitle>Start a New Broadcast</CardTitle>
-            <CardDescription>Share your content live with your audience</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label htmlFor="streamTitle" className="text-sm font-medium">Stream Title</label>
-              <Input 
-                id="streamTitle" 
-                placeholder="Give your stream a title..." 
-                value={streamTitle}
-                onChange={(e) => setStreamTitle(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <label htmlFor="streamDescription" className="text-sm font-medium">Description (optional)</label>
-              <Textarea 
-                id="streamDescription" 
-                placeholder="Tell viewers what your stream is about..." 
-                value={streamDescription}
-                onChange={(e) => setStreamDescription(e.target.value)}
-                className="mt-1 min-h-[100px]"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <VideoIcon className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Before starting, make sure your camera and microphone are working properly.
-              </span>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={handleStartBroadcast} 
-              disabled={isPreparingToStart || !streamTitle.trim()}
-              className="w-full"
-            >
-              {isPreparingToStart ? "Preparing..." : "Start Broadcasting"}
-            </Button>
-          </CardFooter>
-        </Card>
-      ) : (
-        // Active broadcast UI
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Main video and controls */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                playsInline 
-                muted 
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Overlay information */}
-              <div className="absolute top-4 left-4 flex gap-2">
-                <Badge className="bg-red-500 animate-pulse">LIVE</Badge>
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {viewerCount}
-                </Badge>
-                <Badge variant="outline" className="bg-black/30 text-white">
-                  {formatElapsedTime(elapsedTime)}
-                </Badge>
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Left column - Stream settings */}
+        <div className="md:col-span-2 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Broadcast Settings</CardTitle>
+              <CardDescription>
+                Configure your live stream settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Stream Title</Label>
+                <Input
+                  id="title"
+                  placeholder="Enter an engaging title for your stream..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={isLive}
+                />
               </div>
               
-              {/* Bottom controls */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-t from-black/80 to-transparent">
-                <div className="flex gap-2">
-                  <Button 
-                    variant={isMuted ? "secondary" : "outline"} 
-                    size="sm"
-                    className="bg-black/50 border-none hover:bg-black/70"
-                    onClick={toggleMicrophone}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="What will you be sharing in this stream?"
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={isLive}
+                />
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select 
+                    value={category} 
+                    onValueChange={setCategory}
+                    disabled={isLive}
                   >
-                    {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                  </Button>
-                  <Button 
-                    variant={isVideoOff ? "secondary" : "outline"} 
-                    size="sm"
-                    className="bg-black/50 border-none hover:bg-black/70"
-                    onClick={toggleCamera}
-                  >
-                    {isVideoOff ? <VideoOff className="w-4 h-4" /> : <VideoIcon className="w-4 h-4" />}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="bg-black/50 border-none hover:bg-black/70"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gaming">Gaming</SelectItem>
+                      <SelectItem value="music">Music</SelectItem>
+                      <SelectItem value="cooking">Cooking</SelectItem>
+                      <SelectItem value="art">Art</SelectItem>
+                      <SelectItem value="fitness">Fitness</SelectItem>
+                      <SelectItem value="tech">Technology</SelectItem>
+                      <SelectItem value="travel">Travel</SelectItem>
+                      <SelectItem value="fashion">Fashion</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags (comma separated)</Label>
+                  <Input
+                    id="tags"
+                    placeholder="gaming, strategy, tutorial"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    disabled={isLive}
+                  />
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="subscriber-only">Subscriber Only</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Limit this stream to your subscribers
+                  </p>
+                </div>
+                <Switch
+                  id="subscriber-only"
+                  checked={isSubscriberOnly}
+                  onCheckedChange={setIsSubscriberOnly}
+                  disabled={isLive}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Right column - Video preview */}
+        <div>
+          <Card className="h-full flex flex-col">
+            <CardHeader>
+              <CardTitle>Camera Preview</CardTitle>
+              <CardDescription>
+                See how you look before going live
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow flex flex-col">
+              <div className="relative bg-black rounded-md aspect-video mb-4 flex items-center justify-center overflow-hidden">
+                {isVideoEnabled ? (
+                  <video
+                    ref={videoPreviewRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-white flex flex-col items-center justify-center">
+                    <VideoOff className="h-8 w-8 mb-2" />
+                    <p>Camera off</p>
+                  </div>
+                )}
+                
+                {isLive && (
+                  <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold animate-pulse">
+                    LIVE
+                  </div>
+                )}
+                
+                {isLive && (
+                  <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md text-xs flex items-center">
+                    <Users className="h-3 w-3 mr-1" />
+                    {viewerCount}
+                  </div>
+                )}
+                
+                {isLive && (
+                  <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded-md text-xs">
+                    {formatDuration(broadcastDuration)}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2 justify-center mb-4">
+                <Button
+                  variant={isMicEnabled ? "outline" : "secondary"}
+                  size="icon"
+                  onClick={toggleMic}
+                  disabled={isLoading}
+                >
+                  {isMicEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+                </Button>
+                
+                <Button
+                  variant={isVideoEnabled ? "outline" : "secondary"}
+                  size="icon"
+                  onClick={toggleVideo}
+                  disabled={isLoading}
+                >
+                  {isVideoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+                </Button>
+              </div>
+              
+              {isLive ? (
+                <div className="space-y-4">
                   <Button 
                     variant="destructive" 
-                    size="sm"
-                    onClick={handleEndBroadcast}
+                    className="w-full"
+                    onClick={stopBroadcastHandler}
                   >
                     End Broadcast
                   </Button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-xl font-bold">{streamTitle}</h2>
-                <p className="text-sm text-muted-foreground">By {creatorName}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Share className="w-4 h-4 mr-2" /> Share
-                </Button>
-                <Button variant="outline" size="sm">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-            
-            {streamDescription && (
-              <div className="bg-muted p-4 rounded-lg">
-                <p>{streamDescription}</p>
-              </div>
-            )}
-          </div>
-          
-          {/* Chat and stats sidebar */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" /> Chat
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[300px] overflow-y-auto border-y">
-                <div className="space-y-2 p-2">
-                  <div className="text-center text-sm text-muted-foreground pb-2">
-                    Chat messages will appear here
-                  </div>
-                  {/* Demo messages */}
-                  <div className="flex items-start gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs">JD</div>
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-semibold text-sm">John Doe</span>
-                        <span className="text-xs text-muted-foreground">just now</span>
-                      </div>
-                      <p className="text-sm">Great content! Keep it up!</p>
+                  
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Duration:</span>
+                      <span>{formatDuration(broadcastDuration)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Viewers:</span>
+                      <span>{viewerCount}</span>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter className="pt-2">
-                <div className="flex gap-2 w-full">
-                  <Input placeholder="Type a message..." />
-                  <Button>Send</Button>
-                </div>
-              </CardFooter>
-            </Card>
+              ) : (
+                <Button 
+                  className="w-full"
+                  onClick={startBroadcastHandler}
+                  disabled={!title.trim() || isLoading}
+                >
+                  {isLoading ? "Connecting..." : "Go Live"}
+                </Button>
+              )}
+            </CardContent>
             
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="w-4 h-4" /> Viewers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-2xl font-bold">{viewerCount}</div>
-                    <div className="text-sm text-muted-foreground">Current viewers</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{Math.max(viewerCount, 10)}</div>
-                    <div className="text-sm text-muted-foreground">Peak viewers</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            {isLive && (
+              <CardFooter className="flex-col gap-2">
+                <Button variant="outline" className="w-full" asChild>
+                  <Link to={`/streams/${creatorId}-${Date.now()}`} target="_blank">
+                    <Rabbit className="mr-2 h-4 w-4" />
+                    Open Stream Page
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full" size="sm">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  View Chat
+                </Button>
+              </CardFooter>
+            )}
+          </Card>
         </div>
-      )}
+      </div>
     </div>
   );
 };

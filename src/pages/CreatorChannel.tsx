@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,10 @@ const CreatorChannel = () => {
           const creatorStreams = MOCK_STREAMS.filter(s => s.creatorId === creatorId);
           setStreams(creatorStreams);
           
-          setIsSubscribed(Math.random() > 0.5);
+          // Create a fake consistent subscription status for demo purposes
+          // In a real app, this would come from the backend
+          const hashedId = creatorId?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0;
+          setIsSubscribed(hashedId % 2 === 0);
         }
         
         setLoading(false);
@@ -141,7 +145,10 @@ const CreatorChannel = () => {
     });
   };
   
-  const isCreatorUser = user && creator && user.id === creator.id;
+  // Check if the current user is the creator of this channel
+  const isCreatorUser = user && creator && (user.id === creator.id || 
+    // This is for demo purposes - allow specific users to access broadcast
+    (creatorId === "creator2" && user.id === "2"));
   
   if (loading) {
     return (
@@ -179,7 +186,7 @@ const CreatorChannel = () => {
             
             <div className="flex flex-wrap gap-2">
               {isCreatorUser ? (
-                <Button onClick={() => setActiveTab("broadcast")}>
+                <Button onClick={() => setActiveTab("broadcast")} className="animate-pulse">
                   <Video className="h-4 w-4 mr-2" /> Go Live
                 </Button>
               ) : (
@@ -235,7 +242,10 @@ const CreatorChannel = () => {
           <TabsTrigger value="streams">Streams</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
           {isCreatorUser && (
-            <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
+            <TabsTrigger value="broadcast" className="relative">
+              <span>Broadcast</span>
+              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+            </TabsTrigger>
           )}
         </TabsList>
         
@@ -253,6 +263,14 @@ const CreatorChannel = () => {
               streams={streams.filter(stream => stream.status === "scheduled")} 
               title="Upcoming Streams" 
               description="Scheduled broadcasts"
+            />
+          )}
+          
+          {streams.filter(stream => stream.status === "ended").length > 0 && (
+            <StreamList 
+              streams={streams.filter(stream => stream.status === "ended")} 
+              title="Past Broadcasts" 
+              description="Watch previous streams"
             />
           )}
           

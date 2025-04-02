@@ -1,4 +1,3 @@
-
 export interface Stream {
   id: string;
   creatorId: string;
@@ -41,4 +40,35 @@ export interface StreamSubscription {
 export interface StreamReaction {
   type: "like" | "love" | "wow" | "support";
   count: number;
+}
+
+export interface StreamChatMessage {
+  id: string;
+  userId: string;
+  userName: string;
+  userImage: string;
+  message: string;
+  timestamp: Date;
+  isCreator: boolean;
+  isModerator?: boolean;
+  isHighlighted?: boolean;
+}
+
+export interface StreamSettings {
+  allowChat: boolean;
+  subscriberOnlyChat: boolean;
+  slowMode: boolean;
+  slowModeInterval: number; // seconds
+  followerOnlyMode: boolean;
+  followerOnlyModeDuration: number; // hours
+}
+
+export interface BroadcastStats {
+  viewerCount: number;
+  peakViewers: number;
+  duration: number;
+  startedAt: Date;
+  chatCount: number;
+  subscriberCount: number;
+  newSubscribers: number;
 }
