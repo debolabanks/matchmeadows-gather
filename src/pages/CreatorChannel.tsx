@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -95,6 +94,7 @@ const CreatorChannel = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -113,8 +113,6 @@ const CreatorChannel = () => {
           const creatorStreams = MOCK_STREAMS.filter(s => s.creatorId === creatorId);
           setStreams(creatorStreams);
           
-          // Create a fake consistent subscription status for demo purposes
-          // In a real app, this would come from the backend
           const hashedId = creatorId?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0;
           setIsSubscribed(hashedId % 2 === 0);
         }
@@ -145,9 +143,7 @@ const CreatorChannel = () => {
     });
   };
   
-  // Check if the current user is the creator of this channel
   const isCreatorUser = user && creator && (user.id === creator.id || 
-    // This is for demo purposes - allow specific users to access broadcast
     (creatorId === "creator2" && user.id === "2"));
   
   if (loading) {
@@ -173,6 +169,11 @@ const CreatorChannel = () => {
     );
   }
   
+  const handleGoLive = () => {
+    setActiveTab("broadcast");
+    navigate(`/creators/${creatorId}?tab=broadcast`, { replace: true });
+  };
+  
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
@@ -186,7 +187,7 @@ const CreatorChannel = () => {
             
             <div className="flex flex-wrap gap-2">
               {isCreatorUser ? (
-                <Button onClick={() => setActiveTab("broadcast")} className="animate-pulse">
+                <Button onClick={handleGoLive} className="animate-pulse">
                   <Video className="h-4 w-4 mr-2" /> Go Live
                 </Button>
               ) : (

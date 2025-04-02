@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import StreamList from "@/components/stream/StreamList";
 import { Stream } from "@/types/stream";
 import { Search, Video, Plus } from "lucide-react";
@@ -112,6 +111,7 @@ const StreamsDiscovery = () => {
   const [category, setCategory] = useState("all");
   const [activeTabValue, setActiveTabValue] = useState("all");
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const filteredStreams = MOCK_STREAMS.filter(stream => {
     const matchesSearch = 
@@ -127,16 +127,22 @@ const StreamsDiscovery = () => {
   const liveStreams = filteredStreams.filter(stream => stream.status === "live");
   const scheduledStreams = filteredStreams.filter(stream => stream.status === "scheduled");
   
+  const handleStartBroadcasting = () => {
+    if (user) {
+      navigate(`/creators/${user.id}?tab=broadcast`);
+    } else {
+      navigate("/sign-in");
+    }
+  };
+  
   return (
     <div className="container mx-auto py-6 max-w-6xl">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Discover Streams</h1>
         
-        <Link to={user ? `/creators/${user.id}?tab=broadcast` : "/sign-in"}>
-          <Button>
-            <Video className="h-4 w-4 mr-2" /> Start Broadcasting
-          </Button>
-        </Link>
+        <Button onClick={handleStartBroadcasting}>
+          <Video className="h-4 w-4 mr-2" /> Start Broadcasting
+        </Button>
       </div>
       
       <div className="flex items-center gap-4 mb-8">
@@ -165,7 +171,6 @@ const StreamsDiscovery = () => {
         </Select>
       </div>
       
-      {/* Featured Creators Section */}
       <div className="mb-10">
         <h2 className="text-2xl font-bold mb-4">Popular Creators</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
