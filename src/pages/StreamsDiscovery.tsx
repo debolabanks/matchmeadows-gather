@@ -3,9 +3,12 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import StreamList from "@/components/stream/StreamList";
 import { Stream } from "@/types/stream";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 // Mock data for demonstration
 const MOCK_STREAMS: Stream[] = [
@@ -82,9 +85,33 @@ const MOCK_STREAMS: Stream[] = [
   }
 ];
 
+// List of popular creators
+const POPULAR_CREATORS = [
+  {
+    id: "creator1",
+    name: "JessicaStyle",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80",
+    category: "Fashion"
+  },
+  {
+    id: "creator2",
+    name: "TravelWithMike",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80",
+    category: "Travel"
+  },
+  {
+    id: "creator3",
+    name: "FitnessByAlex",
+    image: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80",
+    category: "Fitness"
+  }
+];
+
 const StreamsDiscovery = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
+  const [activeTabValue, setActiveTabValue] = useState("all");
+  const { user } = useAuth();
   
   const filteredStreams = MOCK_STREAMS.filter(stream => {
     const matchesSearch = 
@@ -102,7 +129,15 @@ const StreamsDiscovery = () => {
   
   return (
     <div className="container mx-auto py-6 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6">Discover Streams</h1>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <h1 className="text-3xl font-bold">Discover Streams</h1>
+        
+        <Link to={`/creators/${user?.id}`}>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" /> Start Broadcasting
+          </Button>
+        </Link>
+      </div>
       
       <div className="flex items-center gap-4 mb-8">
         <div className="relative flex-1">
@@ -130,7 +165,27 @@ const StreamsDiscovery = () => {
         </Select>
       </div>
       
-      <Tabs defaultValue="all" className="space-y-6">
+      {/* Featured Creators Section */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-4">Popular Creators</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {POPULAR_CREATORS.map(creator => (
+            <Link 
+              to={`/creators/${creator.id}`} 
+              key={creator.id}
+              className="flex flex-col items-center p-4 rounded-lg hover:bg-accent transition-colors"
+            >
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden mb-2 border-2 border-primary">
+                <img src={creator.image} alt={creator.name} className="w-full h-full object-cover" />
+              </div>
+              <h3 className="font-medium text-center">{creator.name}</h3>
+              <p className="text-xs text-muted-foreground">{creator.category}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+      
+      <Tabs value={activeTabValue} onValueChange={setActiveTabValue} className="space-y-6">
         <TabsList className="mb-4">
           <TabsTrigger value="all">All Streams</TabsTrigger>
           <TabsTrigger value="live">Live Now</TabsTrigger>

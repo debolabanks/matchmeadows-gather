@@ -16,15 +16,16 @@ interface ConnectOptions {
   name: string; // Room name
   audio: boolean;
   video: boolean;
+  isPresenter?: boolean; // Whether this user is broadcasting (presenter) or viewing
 }
 
 /**
  * Connect to a Twilio Video room
  * In a real implementation, we would fetch a token from the server first
  */
-export const connectToRoom = async ({ name, audio, video }: ConnectOptions): Promise<Room> => {
+export const connectToRoom = async ({ name, audio, video, isPresenter = false }: ConnectOptions): Promise<Room> => {
   try {
-    console.log(`Connecting to room: ${name}`);
+    console.log(`Connecting to room: ${name} as ${isPresenter ? 'presenter' : 'viewer'}`);
     
     // Create appropriate tracks based on preferences
     const tracks: LocalTrack[] = [];
@@ -43,7 +44,7 @@ export const connectToRoom = async ({ name, audio, video }: ConnectOptions): Pro
     // return await Video.connect(token, { name, tracks });
     
     // For demo, create a simulated room without actually connecting to Twilio
-    return createDemoRoom(name, tracks);
+    return createDemoRoom(name, tracks, isPresenter);
     
   } catch (error) {
     console.error('Error connecting to Twilio room:', error);
@@ -75,7 +76,7 @@ export const createLocalVideoTrack = async (): Promise<LocalVideoTrack> => {
  * For demonstration purposes only - creates a mock Room object
  * In a real implementation, this would be handled by Twilio's SDK
  */
-const createDemoRoom = (roomName: string, localTracks: LocalTrack[]): Room => {
+const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPresenter: boolean = false): Room => {
   // This is a simplified mock of a Twilio Room for demonstration
   // In a real app, this would come from the Twilio SDK
   const eventHandlers: Record<string, Function[]> = {};
@@ -83,7 +84,7 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[]): Room => {
   const demoRoom = {
     name: roomName,
     localParticipant: {
-      identity: 'currentUser',
+      identity: isPresenter ? 'creator' : 'viewer',
       tracks: localTracks.map(track => ({
         track,
         kind: track.kind,
@@ -133,9 +134,25 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[]): Room => {
     // Mock other Room properties and methods as needed
   } as unknown as Room;
   
-  // Simulate the connected state
+  // Simulate the connected state and add a fake remote participant if this is a viewer
   setTimeout(() => {
     console.log(`[Demo Room] Connected to room: ${roomName}`);
+    
+    // If this is a viewer, simulate a presenter being in the room
+    if (!isPresenter) {
+      const fakePresenter = {
+        identity: 'creator',
+        tracks: new Map(),
+      } as unknown as RemoteParticipant;
+      
+      // Add the fake presenter to the participants map
+      demoRoom.participants.set('creator', fakePresenter);
+      
+      // Trigger the participantConnected event
+      if (eventHandlers['participantConnected']) {
+        eventHandlers['participantConnected'].forEach(handler => handler(fakePresenter));
+      }
+    }
   }, 1000);
   
   return demoRoom;
@@ -161,5 +178,29 @@ export const attachTrackToElement = (track: Video.VideoTrack, element: HTMLVideo
 export const detachAllTracks = (tracks: Video.VideoTrack[]) => {
   tracks.forEach(track => {
     track.detach().forEach(element => element.remove());
+  });
+};
+
+/**
+ * Start a broadcast as a creator
+ */
+export const startBroadcast = async (roomName: string): Promise<Room> => {
+  return connectToRoom({
+    name: roomName,
+    audio: true,
+    video: true,
+    isPresenter: true
+  });
+};
+
+/**
+ * Join a broadcast as a viewer
+ */
+export const joinBroadcast = async (roomName: string): Promise<Room> => {
+  return connectToRoom({
+    name: roomName,
+    audio: false, // Viewers don't need to send audio
+    video: false, // Viewers don't need to send video
+    isPresenter: false
   });
 };

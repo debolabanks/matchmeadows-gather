@@ -65,8 +65,8 @@ const StreamList = ({ streams, title = "Live Now", description, className = "" }
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStreams.map((stream) => (
-            <Link to={`/streams/${stream.id}`} key={stream.id}>
-              <Card className="overflow-hidden h-full hover:shadow-md transition-shadow cursor-pointer">
+            <Card key={stream.id} className="overflow-hidden h-full hover:shadow-md transition-shadow">
+              <Link to={`/streams/${stream.id}`}>
                 <div className="relative">
                   <img
                     src={stream.thumbnailUrl}
@@ -92,34 +92,36 @@ const StreamList = ({ streams, title = "Live Now", description, className = "" }
                     {stream.viewerCount}
                   </div>
                 </div>
-                <CardHeader className="py-3">
+              </Link>
+              <CardHeader className="py-3">
+                <Link to={`/streams/${stream.id}`}>
                   <CardTitle className="text-lg line-clamp-1">{stream.title}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={stream.creatorImage} />
-                      <AvatarFallback>{stream.creatorName[0]}</AvatarFallback>
-                    </Avatar>
-                    <CardDescription className="line-clamp-1">
-                      {stream.creatorName}
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardFooter className="pt-0 pb-3">
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {stream.status === "live" 
-                      ? "Started " + new Date(stream.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                      : new Date(stream.startTime).toLocaleString([], {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })
-                    }
-                  </div>
-                </CardFooter>
-              </Card>
-            </Link>
+                </Link>
+                <Link to={`/creators/${stream.creatorId}`} className="flex items-center gap-2 hover:underline">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={stream.creatorImage} />
+                    <AvatarFallback>{stream.creatorName[0]}</AvatarFallback>
+                  </Avatar>
+                  <CardDescription className="line-clamp-1">
+                    {stream.creatorName}
+                  </CardDescription>
+                </Link>
+              </CardHeader>
+              <CardFooter className="pt-0 pb-3">
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {stream.status === "live" 
+                    ? "Started " + new Date(stream.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    : new Date(stream.startTime).toLocaleString([], {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                  }
+                </div>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       )}

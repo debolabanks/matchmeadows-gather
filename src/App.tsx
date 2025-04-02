@@ -22,6 +22,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import StreamsDiscovery from "./pages/StreamsDiscovery";
 import StreamPage from "./pages/StreamPage";
+import CreatorChannel from "./pages/CreatorChannel";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,11 @@ const App = () => (
                   <Route path="/streams/:streamId" element={
                     <ProtectedRoute>
                       <StreamPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/creators/:creatorId" element={
+                    <ProtectedRoute>
+                      <CreatorChannel />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<NotFound />} />
