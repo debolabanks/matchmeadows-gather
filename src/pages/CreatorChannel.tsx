@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +10,6 @@ import { Video, Calendar, User, Bell, BellOff } from "lucide-react";
 import CreatorBroadcast from "@/components/stream/CreatorBroadcast";
 import { useAuth } from "@/hooks/useAuth";
 
-// Mock data for demonstration
 const MOCK_CREATORS = [
   {
     id: "creator1",
@@ -41,7 +39,6 @@ const MOCK_CREATORS = [
   }
 ];
 
-// Reusing the same mock stream data
 const MOCK_STREAMS: Stream[] = [
   {
     id: "1",
@@ -81,7 +78,7 @@ const MOCK_STREAMS: Stream[] = [
     thumbnailUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
     status: "scheduled",
     viewerCount: 0,
-    startTime: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow
+    startTime: new Date(Date.now() + 172800000).toISOString(),
     category: "Fashion",
     tags: ["fall", "fashion", "preview", "collection"]
   }
@@ -89,6 +86,7 @@ const MOCK_STREAMS: Stream[] = [
 
 const CreatorChannel = () => {
   const { creatorId } = useParams<{ creatorId: string }>();
+  const [searchParams] = useSearchParams();
   const [creator, setCreator] = useState<typeof MOCK_CREATORS[0] | null>(null);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -98,7 +96,11 @@ const CreatorChannel = () => {
   const { user } = useAuth();
   
   useEffect(() => {
-    // In a real app, this would be an API call
+    const tab = searchParams.get('tab');
+    if (tab === 'broadcast') {
+      setActiveTab('broadcast');
+    }
+    
     const fetchCreator = () => {
       setLoading(true);
       
@@ -107,11 +109,9 @@ const CreatorChannel = () => {
         
         if (foundCreator) {
           setCreator(foundCreator);
-          // Get streams for this creator
           const creatorStreams = MOCK_STREAMS.filter(s => s.creatorId === creatorId);
           setStreams(creatorStreams);
           
-          // Randomly decide if user is subscribed (for demo)
           setIsSubscribed(Math.random() > 0.5);
         }
         
@@ -120,7 +120,7 @@ const CreatorChannel = () => {
     };
     
     fetchCreator();
-  }, [creatorId]);
+  }, [creatorId, searchParams]);
   
   const handleSubscribe = () => {
     if (!user) {
@@ -168,7 +168,6 @@ const CreatorChannel = () => {
   
   return (
     <div className="container mx-auto py-6">
-      {/* Creator Profile Header */}
       <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
         <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden">
           <img src={creator.image} alt={creator.name} className="w-full h-full object-cover" />
@@ -231,7 +230,6 @@ const CreatorChannel = () => {
       
       <Separator className="mb-6" />
       
-      {/* Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="streams">Streams</TabsTrigger>

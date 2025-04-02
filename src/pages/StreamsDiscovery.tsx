@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import StreamList from "@/components/stream/StreamList";
 import { Stream } from "@/types/stream";
-import { Search, Plus } from "lucide-react";
+import { Search, Video, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 // Mock data for demonstration
@@ -132,9 +132,9 @@ const StreamsDiscovery = () => {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Discover Streams</h1>
         
-        <Link to={`/creators/${user?.id}`}>
+        <Link to={user ? `/creators/${user.id}?tab=broadcast` : "/sign-in"}>
           <Button>
-            <Plus className="h-4 w-4 mr-2" /> Start Broadcasting
+            <Video className="h-4 w-4 mr-2" /> Start Broadcasting
           </Button>
         </Link>
       </div>

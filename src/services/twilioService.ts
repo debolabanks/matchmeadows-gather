@@ -1,4 +1,3 @@
-
 import Video, { 
   LocalTrack, 
   LocalVideoTrack, 
@@ -85,13 +84,31 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPresenter
     name: roomName,
     localParticipant: {
       identity: isPresenter ? 'creator' : 'viewer',
-      tracks: localTracks.map(track => ({
+      tracks: new Map(localTracks.map(track => [
+        track.id,
+        {
+          track,
+          trackSid: track.id,
+          trackName: track.name,
+          isTrackEnabled: true,
+          kind: track.kind,
+          send: () => {},
+        }
+      ])),
+      publishTrack: (track: LocalTrack) => Promise.resolve({
         track,
+        trackSid: track.id,
+        trackName: track.name,
+        isTrackEnabled: true,
         kind: track.kind,
-        send: () => {},
-      })),
-      publishTrack: (track: LocalTrack) => Promise.resolve(track),
-      unpublishTrack: (track: LocalTrack) => Promise.resolve(track),
+      }),
+      unpublishTrack: (track: LocalTrack) => Promise.resolve({
+        track,
+        trackSid: track.id,
+        trackName: track.name,
+        isTrackEnabled: true,
+        kind: track.kind,
+      }),
     },
     participants: new Map<string, RemoteParticipant>(),
     disconnect: () => {
@@ -104,6 +121,11 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPresenter
         }
       });
       console.log('Disconnected from room:', roomName);
+      
+      // Call any disconnect event handlers
+      if (eventHandlers['disconnected']) {
+        eventHandlers['disconnected'].forEach(handler => handler());
+      }
     },
     on: (event: string, handler: Function) => {
       // Add event handler
@@ -128,7 +150,13 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPresenter
       return demoRoom;
     },
     once: (event: string, handler: Function) => {
-      // Mock event binding
+      // Add a one-time event handler
+      const onceHandler = (...args: any[]) => {
+        handler(...args);
+        demoRoom.off(event, onceHandler);
+      };
+      
+      demoRoom.on(event, onceHandler);
       return demoRoom;
     },
     // Mock other Room properties and methods as needed
