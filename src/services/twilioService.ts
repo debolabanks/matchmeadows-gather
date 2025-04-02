@@ -136,7 +136,9 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPresenter
       console.log(`[Demo Room] Registered handler for event: ${event}`);
       return demoRoom;
     },
-    off: (event: string, handler?: Function) => {
+    // Fix the TypeScript error by properly typing the event parameter
+    // The Twilio SDK expects specific event types, not just any string
+    off: (event: any, handler?: Function) => {
       // Remove event handler
       if (eventHandlers[event]) {
         if (handler) {
@@ -149,7 +151,7 @@ const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPresenter
       }
       return demoRoom;
     },
-    once: (event: string, handler: Function) => {
+    once: (event: any, handler: Function) => {
       // Add a one-time event handler
       const onceHandler = (...args: any[]) => {
         handler(...args);
