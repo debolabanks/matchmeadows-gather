@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useCall } from "@/contexts/CallContext";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, User } from "lucide-react";
 import { stopIncomingCallSound } from "@/services/soundService";
 import { useToast } from "@/hooks/use-toast";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CallUIProps {
   contactName?: string;
@@ -19,7 +18,7 @@ interface CallUIProps {
 const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) => {
   const { currentCall, incomingCall, acceptCall, rejectCall, endCall } = useCall();
   const { toast } = useToast();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   const [localMuted, setLocalMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
@@ -31,26 +30,22 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
   const isConnectingCall = Boolean(currentCall && currentCall.status === "connecting");
   const callType = currentCall?.type || incomingCall?.type || "voice";
   
-  // Format call duration
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
   
-  // Handle accepting calls
   const handleAcceptCall = () => {
     stopIncomingCallSound();
     acceptCall();
   };
   
-  // Handle rejecting calls
   const handleRejectCall = () => {
     stopIncomingCallSound();
     rejectCall();
   };
   
-  // Handle ending calls
   const handleEndCall = () => {
     if (callTimerId) {
       clearInterval(callTimerId);
@@ -59,7 +54,6 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
     endCall();
   };
   
-  // Toggle microphone
   const toggleMute = () => {
     setLocalMuted(!localMuted);
     toast({
@@ -68,7 +62,6 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
     });
   };
   
-  // Toggle camera
   const toggleCamera = () => {
     setCameraOff(!cameraOff);
     toast({
@@ -77,7 +70,6 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
     });
   };
   
-  // Start call timer when connected
   useEffect(() => {
     if (isOngoingCall && !callTimerId) {
       const timerId = window.setInterval(() => {
@@ -99,14 +91,12 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
     }
   }, [isOngoingCall, callTimerId]);
   
-  // Stop call sound when component unmounts
   useEffect(() => {
     return () => {
       stopIncomingCallSound();
     };
   }, []);
   
-  // Stop sound when accepting or rejecting
   useEffect(() => {
     if (isIncomingCall) {
       return () => {
@@ -148,11 +138,9 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
     </div>
   );
   
-  // For mobile devices, use the Drawer component
   if (isMobile) {
     return (
       <>
-        {/* Incoming call drawer */}
         <Drawer open={isIncomingCall} onOpenChange={open => !open && handleRejectCall()}>
           <DrawerContent className="max-h-[50%]">
             <DrawerHeader>
@@ -190,7 +178,6 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
           </DrawerContent>
         </Drawer>
         
-        {/* Ongoing call drawer */}
         <Drawer open={isOngoingCall || isConnectingCall} onOpenChange={open => !open && handleEndCall()}>
           <DrawerContent className="max-h-[90%]">
             <DrawerHeader>
@@ -238,10 +225,8 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
     );
   }
   
-  // For desktop, use Dialog
   return (
     <>
-      {/* Incoming call dialog */}
       <Dialog open={isIncomingCall} onOpenChange={open => !open && handleRejectCall()}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center p-4">
@@ -276,7 +261,6 @@ const CallUI: React.FC<CallUIProps> = ({ contactName = "User", contactImage }) =
         </DialogContent>
       </Dialog>
       
-      {/* Ongoing call dialog */}
       <Dialog open={isOngoingCall || isConnectingCall} onOpenChange={open => !open && handleEndCall()}>
         <DialogContent className="sm:max-w-md">
           <CardHeader className="text-center">
