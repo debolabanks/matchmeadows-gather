@@ -1,13 +1,12 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { twilioConfig } from '@/config/twilioConfig';
+import { getTwilioTokenFromBackend } from './twilioBackendService';
 
 /**
  * In a real production application, this token would be generated on the server
- * to keep your Twilio credentials secure. This is a client-side implementation
- * for demonstration purposes only.
- * 
- * SECURITY WARNING: Do not use this approach in production!
- * Instead, create a backend API endpoint that generates tokens.
+ * to keep your Twilio credentials secure. This file provides both client-side
+ * and server-integrated implementations.
  */
 
 // Environmental variables for Twilio credentials (using config for development)
@@ -15,30 +14,30 @@ const TWILIO_ACCOUNT_SID = twilioConfig.accountSid;
 const TWILIO_API_KEY = twilioConfig.apiKey;
 const TWILIO_API_SECRET = twilioConfig.apiSecret;
 
+// Flag to determine if we should use the backend service
+const USE_BACKEND_SERVICE = twilioConfig.useBackendService || false;
+
 /**
  * Generate a Twilio access token
- * In a real application, this function would make an API call to your backend
+ * This will use the backend service if configured, otherwise it falls back to
+ * the demo token for development purposes
  */
 export const generateTwilioToken = async (identity: string, roomName: string): Promise<string> => {
-  // For demonstration, we're checking if we have the credentials
+  // If backend service is enabled, use it
+  if (USE_BACKEND_SERVICE) {
+    return getTwilioTokenFromBackend(identity, roomName);
+  }
+  
+  // For development or demo mode without backend
+  // Check if we have the credentials
   if (!TWILIO_ACCOUNT_SID || !TWILIO_API_KEY || !TWILIO_API_SECRET) {
     console.warn("Twilio credentials not found. Using mock token for demonstration.");
     return `demo-token-${uuidv4()}`;
   }
 
   try {
-    // In a real application, we would make an API call to our backend here
-    // For example:
-    // const response = await fetch('/api/twilio-token', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ identity, roomName })
-    // });
-    // const data = await response.json();
-    // return data.token;
-    
-    // Since we don't have a backend set up yet, we'll return a demo token
-    // This would be replaced with actual API call in production
+    // This would normally make an API call to a backend
+    // Since we don't have a backend set up yet, we return a demo token
     console.log(`[Demo] Generated token for ${identity} in room ${roomName}`);
     return `demo-token-${uuidv4()}`;
   } catch (error) {
