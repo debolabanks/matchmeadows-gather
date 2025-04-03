@@ -2,6 +2,10 @@
 import { useBroadcast } from "./broadcast/useBroadcast";
 import StreamSettings from "./broadcast/StreamSettings";
 import CameraPreview from "./broadcast/CameraPreview";
+import { useAuth } from "@/hooks/useAuth";
+import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface CreatorBroadcastProps {
   creatorId: string;
@@ -9,6 +13,9 @@ interface CreatorBroadcastProps {
 }
 
 const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => {
+  const { user } = useAuth();
+  const isPremium = user?.profile?.subscriptionStatus === "active";
+  
   const {
     title,
     setTitle,
@@ -31,6 +38,22 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
     toggleMic,
     toggleVideo
   } = useBroadcast(creatorId, creatorName);
+  
+  if (!isPremium) {
+    return (
+      <div className="text-center py-12">
+        <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-xl font-semibold mb-2">Premium Feature</h3>
+        <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+          The Go Live streaming feature is only available for premium subscribers.
+          Upgrade now to start broadcasting to your audience!
+        </p>
+        <Button asChild>
+          <Link to="/subscription">Upgrade to Premium</Link>
+        </Button>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
