@@ -13,11 +13,14 @@ import LetterInput from "./word-guess/LetterInput";
 import LetterKeyboard from "./word-guess/LetterKeyboard";
 import GameOverMessage from "./word-guess/GameOverMessage";
 import MultiplayerMode from "./word-guess/MultiplayerMode";
+import CategorySelector from "./word-guess/CategorySelector";
 import { 
   MAX_WRONG_GUESSES, 
   getRandomWord, 
   checkWin, 
-  checkLoss 
+  checkLoss,
+  DEFAULT_CATEGORY,
+  CATEGORY_NAMES
 } from "./word-guess/gameUtils";
 
 interface GameState {
@@ -37,6 +40,7 @@ const WordGuess = () => {
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [currentGuess, setCurrentGuess] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(DEFAULT_CATEGORY);
   
   // Multiplayer state
   const [isMultiplayer, setIsMultiplayer] = useState(false);
@@ -66,9 +70,9 @@ const WordGuess = () => {
     };
   }, [location.state]);
 
-  // Start a new game with a random word
+  // Start a new game with a random word from the selected category
   const startNewGame = () => {
-    const newWord = getRandomWord();
+    const newWord = getRandomWord(selectedCategory);
     setWord(newWord);
     setGuessedLetters([]);
     setWrongGuesses(0);
@@ -79,6 +83,25 @@ const WordGuess = () => {
     
     if (opponentTimeout) {
       clearTimeout(opponentTimeout);
+    }
+  };
+
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    // Start a new game with the new category if not currently in a game
+    // or if they confirm they want to restart
+    if (gameOver || guessedLetters.length === 0 || confirm("Changing category will start a new game. Continue?")) {
+      setTimeout(() => {
+        const newWord = getRandomWord(category);
+        setWord(newWord);
+        setGuessedLetters([]);
+        setWrongGuesses(0);
+        setGameOver(false);
+        setGameWon(false);
+        setPlayerTurn(1);
+        setIsOpponentTurn(false);
+      }, 0);
     }
   };
 
@@ -271,6 +294,12 @@ const WordGuess = () => {
             New Game
           </Button>
         </div>
+        
+        <CategorySelector 
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+          disabled={!gameOver && guessedLetters.length > 0}
+        />
         
         {isMultiplayer && (
           <div className="bg-accent/20 rounded-md p-4 mb-4">
