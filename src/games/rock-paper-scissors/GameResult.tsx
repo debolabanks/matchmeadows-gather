@@ -1,10 +1,9 @@
 
 import React from "react";
-
-type GameOption = "rock" | "paper" | "scissors" | null;
+import { GameOption, GameResult } from "./useRockPaperScissors";
 
 interface GameResultProps {
-  result: "win" | "lose" | "draw" | null;
+  result: GameResult;
   playerChoice: GameOption;
   opponentChoice: GameOption;
   isPlaying: boolean;

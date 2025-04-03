@@ -1,8 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-
-type GameOption = "rock" | "paper" | "scissors" | null;
+import { GameOption } from "./useRockPaperScissors";
 
 interface GameOptionsProps {
   onSelectOption: (option: GameOption) => void;
