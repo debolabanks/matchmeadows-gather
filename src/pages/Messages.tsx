@@ -1,19 +1,17 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { Paperclip, Phone, Video } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { ChatContact, ChatMessage } from "@/types/message";
-import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { playNewMessageSound } from "@/services/soundService";
 import { useLocation } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
 import { useCall } from "@/contexts/CallContext";
 import CallUI from "@/components/CallUI";
+import ContactList from "@/components/messages/ContactList";
+import ConversationHeader from "@/components/messages/ConversationHeader";
+import MessageDisplay from "@/components/messages/MessageDisplay";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -25,7 +23,6 @@ const Messages = () => {
   const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null);
   const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const mockContacts: ChatContact[] = [
@@ -138,10 +135,6 @@ const Messages = () => {
     }
   }, [selectedContact]);
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const handleSendMessage = (messageText: string) => {
     if (messageText.trim() && selectedContact) {
       const message: ChatMessage = {
@@ -222,147 +215,30 @@ const Messages = () => {
     }
   }, [selectedContact]);
 
-  const formatMessageTime = (timestamp: string) => {
-    return format(new Date(timestamp), 'h:mm a');
-  };
-
-  const formatLastActive = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = Math.abs(now.getTime() - date.getTime()) / 36e5;
-
-    if (diffInHours < 24) {
-      return `Last active ${format(date, 'h:mm a')}`;
-    } else {
-      return `Last active ${format(date, 'MMM d, yyyy')}`;
-    }
-  };
-
   return (
     <div className="container py-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Messages</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1 border rounded-lg overflow-hidden bg-card">
-          <div className="p-4 border-b">
-            <Input 
-              placeholder="Search contacts..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="divide-y overflow-auto max-h-[600px]">
-            {filteredContacts.length > 0 ? (
-              filteredContacts.map(contact => (
-                <div 
-                  key={contact.id}
-                  className={`p-3 flex items-center gap-3 cursor-pointer hover:bg-accent/50 ${selectedContact?.id === contact.id ? 'bg-accent' : ''}`}
-                  onClick={() => setSelectedContact(contact)}
-                >
-                  <div className="relative">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={contact.imageUrl} alt={contact.name} />
-                      <AvatarFallback>{contact.name.substring(0, 2)}</AvatarFallback>
-                    </Avatar>
-                    {contact.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium truncate">{contact.name}</h3>
-                      {contact.lastMessage && (
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(contact.lastMessage.timestamp), 'h:mm a')}
-                        </span>
-                      )}
-                    </div>
-                    {contact.lastMessage && (
-                      <p className={`text-sm truncate ${!contact.lastMessage.read && contact.lastMessage.isFromContact ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
-                        {contact.lastMessage.isFromContact ? '' : 'You: '}
-                        {contact.lastMessage.text}
-                      </p>
-                    )}
-                  </div>
-                  {contact.lastMessage && !contact.lastMessage.read && contact.lastMessage.isFromContact && (
-                    <span className="w-2 h-2 bg-primary rounded-full"></span>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="p-4 text-center text-muted-foreground">
-                No contacts found
-              </div>
-            )}
-          </div>
-        </div>
+        <ContactList 
+          contacts={contacts}
+          selectedContact={selectedContact}
+          onSelectContact={setSelectedContact}
+        />
         
         <div className="md:col-span-2 border rounded-lg overflow-hidden bg-card flex flex-col h-[600px]">
           {selectedContact ? (
             <>
-              <div className="p-3 border-b flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={selectedContact.imageUrl} alt={selectedContact.name} />
-                    <AvatarFallback>{selectedContact.name.substring(0, 2)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-medium">{selectedContact.name}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedContact.isOnline ? 'Online' : formatLastActive(selectedContact.lastActive)}
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Call buttons */}
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={handleStartVoiceCall}
-                    title="Start voice call"
-                  >
-                    <Phone className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={handleStartVideoCall}
-                    title="Start video call"
-                  >
-                    <Video className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <ConversationHeader 
+                contact={selectedContact}
+                onStartVoiceCall={handleStartVoiceCall}
+                onStartVideoCall={handleStartVideoCall}
+              />
               
-              <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
-                {messages.map(message => (
-                  <div 
-                    key={message.id} 
-                    className={`flex ${message.senderId === "currentUser" ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`max-w-[70%] rounded-lg p-3 ${
-                        message.senderId === "currentUser" 
-                          ? 'bg-primary text-primary-foreground rounded-br-none' 
-                          : 'bg-muted rounded-bl-none'
-                      }`}
-                    >
-                      <p>{message.text}</p>
-                      <div 
-                        className={`text-xs mt-1 ${
-                          message.senderId === "currentUser" 
-                            ? 'text-primary-foreground/70' 
-                            : 'text-muted-foreground'
-                        }`}
-                      >
-                        {formatMessageTime(message.timestamp)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <MessageDisplay 
+                messages={messages} 
+                selectedContactName={selectedContact.name} 
+              />
               
               <MessageInput onSendMessage={handleSendMessage} />
             </>
