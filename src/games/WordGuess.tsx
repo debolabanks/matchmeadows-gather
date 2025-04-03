@@ -6,12 +6,13 @@ import { ArrowLeft, FileText, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 
-// Import our new components
+// Import our components
 import WordDisplay from "./word-guess/WordDisplay";
 import GameProgress from "./word-guess/GameProgress";
 import LetterInput from "./word-guess/LetterInput";
 import LetterKeyboard from "./word-guess/LetterKeyboard";
 import GameOverMessage from "./word-guess/GameOverMessage";
+import MultiplayerMode from "./word-guess/MultiplayerMode";
 import { 
   MAX_WRONG_GUESSES, 
   getRandomWord, 
@@ -36,6 +37,14 @@ const WordGuess = () => {
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [currentGuess, setCurrentGuess] = useState("");
+  
+  // Multiplayer state
+  const [isMultiplayer, setIsMultiplayer] = useState(false);
+  const [playerTurn, setPlayerTurn] = useState<1 | 2>(1);
+  const [player1Score, setPlayer1Score] = useState(0);
+  const [player2Score, setPlayer2Score] = useState(0);
+  
+  // Single player AI opponent state
   const [isOpponentTurn, setIsOpponentTurn] = useState(false);
   const [opponentTimeout, setOpponentTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -65,6 +74,7 @@ const WordGuess = () => {
     setWrongGuesses(0);
     setGameOver(false);
     setGameWon(false);
+    setPlayerTurn(1);
     setIsOpponentTurn(false);
     
     if (opponentTimeout) {
@@ -72,10 +82,19 @@ const WordGuess = () => {
     }
   };
 
+  // Toggle between single player and multiplayer modes
+  const toggleMultiplayerMode = () => {
+    setIsMultiplayer(!isMultiplayer);
+    startNewGame();
+  };
+
   // Process a guess
   const handleGuess = (letter: string) => {
-    // Ignore if game is over or it's the opponent's turn
-    if (gameOver || isOpponentTurn) return;
+    // Ignore if game is over
+    if (gameOver) return;
+    
+    // In single player mode, ignore if it's the opponent's turn
+    if (!isMultiplayer && isOpponentTurn) return;
     
     // Convert to uppercase for consistency
     letter = letter.toUpperCase();
@@ -94,29 +113,48 @@ const WordGuess = () => {
         setGameOver(true);
         toast({
           title: "Game Over!",
-          description: `You lost! The word was: ${word}`,
+          description: `${isMultiplayer 
+            ? (playerTurn === 1 ? "Player 1" : "Player 2") 
+            : "You"} lost! The word was: ${word}`,
           duration: 5000,
         });
       } else {
-        // Switch to opponent's turn after a wrong guess
-        setIsOpponentTurn(true);
-        simulateOpponentGuess(newGuessedLetters);
+        if (isMultiplayer) {
+          // Switch turns in multiplayer mode
+          setPlayerTurn(playerTurn === 1 ? 2 : 1);
+        } else {
+          // Switch to opponent's turn in single player mode
+          setIsOpponentTurn(true);
+          simulateOpponentGuess(newGuessedLetters);
+        }
       }
     } else {
       // Check if player won after a correct guess
       if (checkWin(word, newGuessedLetters)) {
         setGameOver(true);
         setGameWon(true);
+        
+        // Update score for the winning player
+        if (isMultiplayer) {
+          if (playerTurn === 1) {
+            setPlayer1Score(player1Score + 1);
+          } else {
+            setPlayer2Score(player2Score + 1);
+          }
+        }
+        
         toast({
           title: "Congratulations!",
-          description: "You won the game!",
+          description: `${isMultiplayer 
+            ? (playerTurn === 1 ? "Player 1" : "Player 2") 
+            : "You"} won the game!`,
           duration: 5000,
         });
       }
     }
   };
 
-  // Simulate opponent making a guess
+  // Simulate opponent making a guess (single player mode only)
   const simulateOpponentGuess = (currentGuessedLetters: string[]) => {
     const timeout = setTimeout(() => {
       // Find letters not yet guessed
@@ -183,6 +221,15 @@ const WordGuess = () => {
     });
   };
 
+  // Get the current player name based on turn
+  const getCurrentPlayerName = () => {
+    if (isMultiplayer) {
+      return playerTurn === 1 ? "Player 1" : "Player 2";
+    } else {
+      return isOpponentTurn ? (contactInfo.contactName || "Opponent") : "You";
+    }
+  };
+
   return (
     <div className="container py-6 max-w-lg mx-auto">
       <div className="flex items-center gap-2 mb-6">
@@ -197,7 +244,7 @@ const WordGuess = () => {
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <FileText className="h-6 w-6" />
           Word Guess
-          {contactInfo.contactName && (
+          {contactInfo.contactName && !isMultiplayer && (
             <span className="text-xl font-normal text-muted-foreground ml-2">
               with {contactInfo.contactName}
             </span>
@@ -207,15 +254,13 @@ const WordGuess = () => {
 
       <Card className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <div className="text-lg font-medium">
-            {gameOver 
-              ? gameWon 
-                ? "You won!" 
-                : `${contactInfo.contactName || "Opponent"} won!`
-              : isOpponentTurn 
-                ? `${contactInfo.contactName || "Opponent"}'s turn...` 
-                : "Your turn"}
-          </div>
+          <MultiplayerMode
+            isMultiplayer={isMultiplayer}
+            onToggleMode={toggleMultiplayerMode}
+            playerTurn={playerTurn}
+            player1Name="Player 1"
+            player2Name={isMultiplayer ? "Player 2" : contactInfo.contactName || "Opponent"}
+          />
           <Button 
             onClick={startNewGame} 
             variant="outline" 
@@ -227,6 +272,33 @@ const WordGuess = () => {
           </Button>
         </div>
         
+        {isMultiplayer && (
+          <div className="bg-accent/20 rounded-md p-4 mb-4">
+            <h3 className="text-center mb-2 font-medium">Score</h3>
+            <div className="flex justify-around items-center">
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">Player 1</div>
+                <div className="text-3xl font-bold">{player1Score}</div>
+              </div>
+              <div className="text-xl font-bold">-</div>
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">
+                  {isMultiplayer ? "Player 2" : contactInfo.contactName || "Opponent"}
+                </div>
+                <div className="text-3xl font-bold">{player2Score}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="mb-4 text-lg font-medium">
+          {gameOver 
+            ? gameWon 
+              ? `${isMultiplayer ? (playerTurn === 1 ? "Player 1" : "Player 2") : "You"} won!` 
+              : `${isMultiplayer ? (playerTurn === 1 ? "Player 1" : "Player 2") : contactInfo.contactName || "Opponent"} won!`
+            : `${getCurrentPlayerName()}'s turn`}
+        </div>
+        
         <WordDisplay word={word} guessedLetters={guessedLetters} />
         
         <GameProgress wrongGuesses={wrongGuesses} maxWrongGuesses={MAX_WRONG_GUESSES} />
@@ -235,13 +307,13 @@ const WordGuess = () => {
           currentGuess={currentGuess}
           onChange={handleInputChange}
           onSubmit={handleSubmitGuess}
-          disabled={gameOver || isOpponentTurn}
+          disabled={gameOver || (!isMultiplayer && isOpponentTurn)}
         />
         
         <LetterKeyboard
           guessedLetters={guessedLetters}
           onLetterClick={handleGuess}
-          disabled={gameOver || isOpponentTurn}
+          disabled={gameOver || (!isMultiplayer && isOpponentTurn)}
         />
         
         {gameOver && (
