@@ -2,6 +2,7 @@
 import { useBroadcast } from "./broadcast/useBroadcast";
 import StreamSettings from "./broadcast/StreamSettings";
 import CameraPreview from "./broadcast/CameraPreview";
+import CreatorEarnings from "./creator/CreatorEarnings";
 import { useAuth } from "@/hooks/useAuth";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,11 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
             setIsSubscriberOnly={setIsSubscriberOnly}
             isLive={isLive}
           />
+          
+          {/* Creator earnings section (only when not live) */}
+          {!isLive && (
+            <CreatorEarnings creatorId={creatorId} />
+          )}
         </div>
         
         {/* Right column - Video preview */}

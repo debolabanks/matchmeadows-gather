@@ -31,7 +31,17 @@ const StreamPlayer = ({ stream, currentUser, onSubscribe }: StreamPlayerProps) =
     handleReaction
   } = useStreamPlayer(stream);
 
-  const isSubscriber = currentUser?.id === stream.creatorId || !stream.isSubscriberOnly;
+  // Check if user is a subscriber
+  // In a real app, this would likely involve a more complex check against a subscriptions database
+  const isSubscriber = currentUser?.id === stream.creatorId || 
+                      currentUser?.profile?.subscriptionStatus === "active" || 
+                      !stream.isSubscriberOnly;
+
+  const handleSubscribe = () => {
+    if (onSubscribe) {
+      onSubscribe();
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row gap-4">
@@ -49,7 +59,7 @@ const StreamPlayer = ({ stream, currentUser, onSubscribe }: StreamPlayerProps) =
         onToggleFullscreen={toggleFullscreen}
         onReaction={handleReaction}
         onToggleChat={() => setShowChat(!showChat)}
-        onSubscribe={onSubscribe}
+        onSubscribe={handleSubscribe}
       />
 
       {/* Chat and info sidebar */}
