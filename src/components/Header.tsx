@@ -1,5 +1,5 @@
 
-import { Heart, LogOut, MessageSquare, User } from "lucide-react";
+import { Heart, LogOut, MessageSquare, User, Users, Video } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +43,12 @@ const Header = () => {
             </Link>
             <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
               Messages
+            </Link>
+            <Link to="/streams" className="text-foreground hover:text-love-500 transition-colors">
+              Streams
+            </Link>
+            <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
+              Creators
             </Link>
           </nav>
         )}
