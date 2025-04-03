@@ -1,9 +1,10 @@
 
-import { MessageSquare, Star, Ban, Flag } from "lucide-react";
+import { MessageSquare, Star, Ban, Flag, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { MatchScore as MatchScoreType } from "@/utils/gamification";
 import MatchScore from "@/components/MatchScore";
+import AIMatchInsight from "@/components/AIMatchInsight";
 import ReportDialog from "@/components/ReportDialog";
 import { 
   AlertDialog,
@@ -28,6 +29,12 @@ export interface Match {
   hasUnreadMessage: boolean;
   score?: MatchScoreType;
   compatibilityPercentage?: number;
+  aiCompatibility?: {
+    score: number;
+    insights: string[];
+    commonInterests: string[];
+    compatibilityReasons: string[];
+  };
 }
 
 interface MatchesListProps {
@@ -36,6 +43,7 @@ interface MatchesListProps {
 
 const MatchesList = ({ matches: initialMatches }: MatchesListProps) => {
   const [matches, setMatches] = useState(initialMatches);
+  const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
 
   const handleBlockUser = (id: string, name: string) => {
     // Remove the match from the list
@@ -49,10 +57,12 @@ const MatchesList = ({ matches: initialMatches }: MatchesListProps) => {
     // In a real implementation, this would call an API to block the user
   };
 
+  const toggleInsight = (id: string) => {
+    setExpandedInsight(expandedInsight === id ? null : id);
+  };
+
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Your Matches</h2>
-      
       {matches.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-muted-foreground">No matches yet. Keep swiping!</p>
@@ -71,10 +81,10 @@ const MatchesList = ({ matches: initialMatches }: MatchesListProps) => {
                   <div className="absolute top-2 right-2 bg-love-500 rounded-full h-3 w-3"></div>
                 )}
                 
-                {match.compatibilityPercentage && (
+                {match.aiCompatibility && (
                   <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs flex items-center">
-                    <Star className="h-3 w-3 mr-1 text-yellow-400 fill-yellow-400" />
-                    {match.compatibilityPercentage}% compatible
+                    <Sparkles className="h-3 w-3 mr-1 text-amber-400" />
+                    {match.aiCompatibility.score}% match
                   </div>
                 )}
                 
@@ -100,13 +110,46 @@ const MatchesList = ({ matches: initialMatches }: MatchesListProps) => {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-semibold text-lg">{match.name}</h3>
                   <span className="text-xs text-muted-foreground">
-                    Matched {match.matchDate}
+                    {match.matchDate}
                   </span>
                 </div>
                 
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-sm text-muted-foreground mb-2">
                   Active {match.lastActive}
                 </p>
+                
+                {match.aiCompatibility && (
+                  <div 
+                    className="mb-3 cursor-pointer" 
+                    onClick={() => toggleInsight(match.id)}
+                  >
+                    {expandedInsight === match.id ? (
+                      <AIMatchInsight 
+                        score={match.aiCompatibility.score}
+                        insights={match.aiCompatibility.insights}
+                        commonInterests={match.aiCompatibility.commonInterests}
+                        compatibilityReasons={match.aiCompatibility.compatibilityReasons}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <AIMatchInsight 
+                          score={match.aiCompatibility.score}
+                          insights={match.aiCompatibility.insights}
+                          commonInterests={match.aiCompatibility.commonInterests}
+                          compatibilityReasons={match.aiCompatibility.compatibilityReasons}
+                          compact
+                        />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-xs text-muted-foreground"
+                        >
+                          Details
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 {match.score && (
                   <div className="mb-3">
