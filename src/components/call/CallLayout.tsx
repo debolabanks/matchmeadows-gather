@@ -40,7 +40,7 @@ const CallLayout = ({
           />
         )}
         
-        <div className="absolute top-8 left-0 right-0 text-center">
+        <div className="absolute top-8 left-0 right-0 text-center z-10">
           {state.callStatus === "connecting" && !state.remoteParticipant && (
             <p className="text-white bg-black/30 py-1 px-3 rounded-full inline-block">
               Calling {contactName}...
@@ -49,7 +49,7 @@ const CallLayout = ({
         </div>
         
         {callType === "video" && !state.isVideoOff && (
-          <div className="absolute top-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-lg overflow-hidden border-2 border-white">
+          <div className="absolute top-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-lg overflow-hidden border-2 border-white z-10">
             <video
               ref={localVideoRef}
               autoPlay
@@ -61,10 +61,6 @@ const CallLayout = ({
         )}
         
         {children}
-      </div>
-      
-      <div className="bg-black p-4 flex justify-center">
-        {/* Controls go here - provided via children */}
       </div>
     </div>
   );

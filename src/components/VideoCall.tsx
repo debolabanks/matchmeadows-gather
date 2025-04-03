@@ -65,16 +65,18 @@ const VideoCall = ({
       isFullscreen={state.isFullscreen}
     >
       {(callType === "voice" || state.callStatus !== "connected" || !state.remoteParticipant) && (
-        <CallAvatar
-          contactName={contactName}
-          contactImage={contactImage}
-          callStatus={state.callStatus}
-          duration={state.duration}
-          formatDuration={formatDuration}
-        />
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <CallAvatar
+            contactName={contactName}
+            contactImage={contactImage}
+            callStatus={state.callStatus}
+            duration={state.duration}
+            formatDuration={formatDuration}
+          />
+        </div>
       )}
       
-      <div className="bg-black p-4 flex justify-center">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/70 flex justify-center z-20">
         {isIncoming && state.callStatus === "connecting" ? (
           <IncomingCallControls 
             acceptCall={actions.acceptCall}
