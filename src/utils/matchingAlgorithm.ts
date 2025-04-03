@@ -1,4 +1,5 @@
 // Matching algorithm utility functions
+import { enhanceMatchesWithPersonalization } from "./activityTracker";
 
 export type MatchCriteria = {
   minAge?: number;
@@ -180,11 +181,15 @@ export const getAIMatchRecommendations = (
   userProfile: any,
   profiles: any[]
 ): any[] => {
-  return profiles.map(profile => {
+  // First, calculate standard AI compatibility
+  const recommendationsWithBasicCompatibility = profiles.map(profile => {
     const compatibility = calculateAICompatibility(userProfile, profile);
     return {
       ...profile,
       aiCompatibility: compatibility
     };
   }).sort((a, b) => b.aiCompatibility.score - a.aiCompatibility.score);
+  
+  // Then enhance with cross-app personalization
+  return enhanceMatchesWithPersonalization(recommendationsWithBasicCompatibility);
 };

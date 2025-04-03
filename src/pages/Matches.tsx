@@ -1,14 +1,13 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MatchesList, { Match } from "@/components/MatchesList";
 import { getDefaultMatchScore, calculateBadges } from "@/utils/gamification";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Users, Clock } from "lucide-react";
+import { Sparkles, Users, Clock, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAIMatchRecommendations } from "@/utils/matchingAlgorithm";
+import { enhanceMatchesWithPersonalization } from "@/utils/activityTracker";
 import { useAuth } from "@/hooks/useAuth";
 
-// Sample user profile for AI matching
 const userProfile = {
   id: "current-user",
   name: "You",
@@ -22,7 +21,6 @@ const userProfile = {
   }
 };
 
-// Sample match data with gamification elements
 const sampleMatches: Match[] = [
   {
     id: "1",
@@ -92,7 +90,6 @@ const sampleMatches: Match[] = [
   }
 ];
 
-// Additional profiles for AI recommendations
 const additionalProfiles = [
   {
     id: "7",
@@ -145,29 +142,34 @@ const additionalProfiles = [
 const Matches = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   
-  // Prepare AI recommendations by combining matches with potential matches
-  const recommendations = getAIMatchRecommendations(
-    user?.profile || userProfile,
-    [...sampleMatches, ...additionalProfiles]
-  );
+  useEffect(() => {
+    const baseRecommendations = getAIMatchRecommendations(
+      user?.profile || userProfile,
+      [...sampleMatches, ...additionalProfiles]
+    );
+    
+    setRecommendations(baseRecommendations);
+    
+    const enhancedMatches = sampleMatches.map(match => {
+      if (match.aiCompatibility) return match;
+      const recommendation = baseRecommendations.find(r => r.id === match.id);
+      return {
+        ...match,
+        aiCompatibility: recommendation?.aiCompatibility || {
+          score: match.compatibilityPercentage || 50,
+          insights: [],
+          commonInterests: [],
+          compatibilityReasons: []
+        }
+      };
+    });
+    
+    setMatches(enhancedMatches);
+  }, [user]);
   
-  // Apply aiCompatibility to all matches if not already present
-  const enhancedMatches = sampleMatches.map(match => {
-    if (match.aiCompatibility) return match;
-    const recommendation = recommendations.find(r => r.id === match.id);
-    return {
-      ...match,
-      aiCompatibility: recommendation?.aiCompatibility || {
-        score: match.compatibilityPercentage || 50,
-        insights: [],
-        commonInterests: [],
-        compatibilityReasons: []
-      }
-    };
-  });
-  
-  // Get top AI recommendations (that aren't already matches)
   const aiRecommendations = recommendations
     .filter(profile => !sampleMatches.some(match => match.id === profile.id))
     .map(profile => ({
@@ -187,14 +189,31 @@ const Matches = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Your Matches</h2>
         
-        <Button variant="outline" size="sm" className="gap-1">
-          <Sparkles className="h-4 w-4 text-amber-500" />
-          AI Powered
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1">
+            <Sparkles className="h-4 w-4 text-amber-500" />
+            <span>AI Powered</span>
+          </Button>
+          
+          <Button variant="outline" size="sm" className="gap-1">
+            <Globe className="h-4 w-4 text-emerald-500" />
+            <span>Cross-App Personalization</span>
+          </Button>
+        </div>
+      </div>
+      
+      <div className="mb-4 bg-emerald-50 text-emerald-800 rounded-lg p-3 text-sm border border-emerald-200">
+        <p className="flex items-center gap-1.5">
+          <Globe className="h-4 w-4 text-emerald-500" />
+          <span>
+            <strong>Cross-App Activity Tracking:</strong> We're analyzing your activity across
+            partner apps to provide better personalized matches.
+          </span>
+        </p>
       </div>
       
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-3">
+        <TabsList className="grid grid-cols-4">
           <TabsTrigger value="all" className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             <span>All Matches</span>
@@ -203,6 +222,10 @@ const Matches = () => {
             <Sparkles className="h-4 w-4" />
             <span>AI Recommendations</span>
           </TabsTrigger>
+          <TabsTrigger value="personalized" className="flex items-center gap-1">
+            <Globe className="h-4 w-4" />
+            <span>Personalized</span>
+          </TabsTrigger>
           <TabsTrigger value="recent" className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
             <span>Recent Activity</span>
@@ -210,7 +233,7 @@ const Matches = () => {
         </TabsList>
         
         <TabsContent value="all">
-          <MatchesList matches={enhancedMatches} />
+          <MatchesList matches={matches} />
         </TabsContent>
         
         <TabsContent value="ai">
@@ -220,13 +243,27 @@ const Matches = () => {
               <span>Our AI has analyzed your profile and found these potential matches for you.</span>
             </p>
           </div>
-          <MatchesList matches={[...aiRecommendations, ...enhancedMatches.sort((a, b) => 
+          <MatchesList matches={[...aiRecommendations, ...matches.sort((a, b) => 
             (b.aiCompatibility?.score || 0) - (a.aiCompatibility?.score || 0)
           ).slice(0, 3)]} />
         </TabsContent>
         
+        <TabsContent value="personalized">
+          <div className="mb-4 bg-emerald-50 text-emerald-800 rounded-lg p-3 text-sm border border-emerald-200">
+            <p className="flex items-center gap-1.5">
+              <Globe className="h-4 w-4 text-emerald-500" />
+              <span>Recommendations based on your activity across our partner apps and websites.</span>
+            </p>
+          </div>
+          <MatchesList matches={[...matches, ...aiRecommendations].sort((a, b) => {
+            const aScore = a.aiCompatibility?.personalizedScore || a.aiCompatibility?.score || 0;
+            const bScore = b.aiCompatibility?.personalizedScore || b.aiCompatibility?.score || 0;
+            return bScore - aScore;
+          })} />
+        </TabsContent>
+        
         <TabsContent value="recent">
-          <MatchesList matches={enhancedMatches.sort((a, b) => {
+          <MatchesList matches={matches.sort((a, b) => {
             if (a.hasUnreadMessage && !b.hasUnreadMessage) return -1;
             if (!a.hasUnreadMessage && b.hasUnreadMessage) return 1;
             return 0;
