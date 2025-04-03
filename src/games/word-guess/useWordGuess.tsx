@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   MAX_WRONG_GUESSES,
@@ -48,6 +47,13 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
       }
     };
   }, []);
+
+  // Cleanup function to clear any timeouts
+  const cleanup = useCallback(() => {
+    if (opponentTimeout) {
+      clearTimeout(opponentTimeout);
+    }
+  }, [opponentTimeout]);
 
   // Start a new game with a random word from the selected category
   const startNewGame = () => {
@@ -237,6 +243,7 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
     handleGuess,
     handleInputChange,
     handleSubmitGuess,
-    getCurrentPlayerName
+    getCurrentPlayerName,
+    cleanup
   };
 };

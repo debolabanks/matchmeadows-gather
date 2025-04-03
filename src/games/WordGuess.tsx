@@ -43,8 +43,10 @@ const WordGuess = () => {
   
   // Navigate back to games page
   const handleBackToGames = () => {
-    if (gameState.opponentTimeout) {
-      clearTimeout(gameState.opponentTimeout);
+    // Since opponentTimeout is not available directly from gameState, we can call a cleanup function instead
+    // or check if the property exists before trying to clear it
+    if (gameState.cleanup) {
+      gameState.cleanup();
     }
     
     navigate("/games", { 
