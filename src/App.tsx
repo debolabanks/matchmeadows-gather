@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import MobileNav from "./components/MobileNav";
-import Discover from "./pages/Discover";
+import Discover from "./pages/discover";
 import Matches from "./pages/Matches";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
