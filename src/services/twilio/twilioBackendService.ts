@@ -1,10 +1,12 @@
 
 import { v4 as uuidv4 } from 'uuid';
+import { twilioConfig } from '@/config/twilioConfig';
 
-// In a real application, this would be your deployed backend API URL
-const BACKEND_API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-production-api.com/api/twilio' 
-  : 'http://localhost:3001/api/twilio';
+// Get the backend API URL from the config
+const BACKEND_API_URL = twilioConfig.backendUrl || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://your-production-api.com/api/twilio' 
+    : 'http://localhost:3001/api/twilio');
 
 /**
  * Get a Twilio token from the backend server

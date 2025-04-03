@@ -25,6 +25,7 @@ const USE_BACKEND_SERVICE = twilioConfig.useBackendService || false;
 export const generateTwilioToken = async (identity: string, roomName: string): Promise<string> => {
   // If backend service is enabled, use it
   if (USE_BACKEND_SERVICE) {
+    console.log("Using backend service for Twilio token generation");
     return getTwilioTokenFromBackend(identity, roomName);
   }
   
