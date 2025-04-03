@@ -1,5 +1,5 @@
 
-import { Heart, Home, MessageSquare, Search, User, Video } from "lucide-react";
+import { Heart, Home, MessageSquare, Search, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const MobileNav = () => {
@@ -26,14 +26,6 @@ const MobileNav = () => {
         >
           <Search className="h-6 w-6" />
           <span className="text-xs mt-1">Discover</span>
-        </Link>
-        
-        <Link 
-          to="/streams" 
-          className={`flex flex-col items-center ${isActive('/streams') ? 'text-love-500' : 'text-muted-foreground'}`}
-        >
-          <Video className="h-6 w-6" />
-          <span className="text-xs mt-1">Streams</span>
         </Link>
         
         <Link 
