@@ -23,6 +23,8 @@ import Subscription from "./pages/Subscription";
 import Creators from "./pages/Creators";
 import CreatorChannel from "./pages/CreatorChannel";
 import StreamPage from "./pages/StreamPage";
+import Header from "./components/Header";
+import MobileNav from "./components/MobileNav";
 import { useEffect } from "react";
 import { preloadSounds } from "./services/soundService";
 
@@ -37,34 +39,38 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <CallProvider>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/signin" element={<SignIn />} /> {/* Alias for compatibility */}
-              <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/signup" element={<SignUp />} /> {/* Alias for compatibility */}
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/terms" element={<TermsOfUse />} />
-              
-              {/* Previously protected routes - now accessible to all */}
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/discover" element={<Discover />} />
-              <Route path="/discover/streams" element={<StreamsDiscovery />} />
-              <Route path="/matches" element={<Matches />} />
-              <Route path="/verification" element={<Verification />} />
-              <Route path="/games" element={<Games />} />
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/creators" element={<Creators />} />
-              <Route path="/creators/:creatorId" element={<CreatorChannel />} />
-              <Route path="/streams/:streamId" element={<StreamPage />} />
-              
-              {/* Catch-all/404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Header />
+            <div className="pt-16 pb-20 md:pb-0 min-h-screen">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/sign-in" element={<SignIn />} />
+                <Route path="/signin" element={<SignIn />} /> {/* Alias for compatibility */}
+                <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/signup" element={<SignUp />} /> {/* Alias for compatibility */}
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/terms" element={<TermsOfUse />} />
+                
+                {/* Previously protected routes - now accessible to all */}
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/discover" element={<Discover />} />
+                <Route path="/discover/streams" element={<StreamsDiscovery />} />
+                <Route path="/matches" element={<Matches />} />
+                <Route path="/verification" element={<Verification />} />
+                <Route path="/games" element={<Games />} />
+                <Route path="/subscription" element={<Subscription />} />
+                <Route path="/creators" element={<Creators />} />
+                <Route path="/creators/:creatorId" element={<CreatorChannel />} />
+                <Route path="/streams/:streamId" element={<StreamPage />} />
+                
+                {/* Catch-all/404 route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+            <MobileNav />
             <Toaster />
           </CallProvider>
         </AuthProvider>

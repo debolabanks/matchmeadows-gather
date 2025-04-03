@@ -1,9 +1,11 @@
 
 import { Heart, Home, MessageSquare, Search, User, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const MobileNav = () => {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
