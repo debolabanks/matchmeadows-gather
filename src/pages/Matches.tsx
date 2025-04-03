@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { enhanceMatchesWithPersonalization } from "@/utils/activityTracker";
+import { enhanceMatchesWithPersonalization } from "@/utils/activity";
 import { Match } from "@/types/match";
 import MatchesHeader from "@/components/matches/MatchesHeader";
 import CrossAppAlert from "@/components/matches/CrossAppAlert";

@@ -1,5 +1,5 @@
 // Matching algorithm utility functions
-import { enhanceMatchesWithPersonalization } from "./activityTracker";
+import { enhanceMatchesWithPersonalization } from "./activity";
 
 export type MatchCriteria = {
   minAge?: number;
