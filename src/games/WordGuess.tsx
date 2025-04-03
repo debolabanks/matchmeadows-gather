@@ -2,26 +2,27 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, FileText } from "lucide-react";
+import { ArrowLeft, FileText, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
+// Import our new components
+import WordDisplay from "./word-guess/WordDisplay";
+import GameProgress from "./word-guess/GameProgress";
+import LetterInput from "./word-guess/LetterInput";
+import LetterKeyboard from "./word-guess/LetterKeyboard";
+import GameOverMessage from "./word-guess/GameOverMessage";
+import { 
+  MAX_WRONG_GUESSES, 
+  getRandomWord, 
+  checkWin, 
+  checkLoss 
+} from "./word-guess/gameUtils";
 
 interface GameState {
   contactId?: string;
   contactName?: string;
 }
-
-// Word list to randomly select from
-const WORD_LIST = [
-  "DATING", "MATCH", "LOVE", "PARTNER", "COUPLE", 
-  "ROMANCE", "HEART", "AFFECTION", "CHEMISTRY", "SOULMATE",
-  "DINNER", "CINEMA", "COFFEE", "BEACH", "TRAVEL",
-  "FRIEND", "MESSAGE", "PROFILE", "PHOTO", "SMILE"
-];
-
-// Maximum number of wrong guesses allowed
-const MAX_WRONG_GUESSES = 6;
 
 const WordGuess = () => {
   const location = useLocation();
@@ -58,8 +59,7 @@ const WordGuess = () => {
 
   // Start a new game with a random word
   const startNewGame = () => {
-    const randomIndex = Math.floor(Math.random() * WORD_LIST.length);
-    const newWord = WORD_LIST[randomIndex];
+    const newWord = getRandomWord();
     setWord(newWord);
     setGuessedLetters([]);
     setWrongGuesses(0);
@@ -70,16 +70,6 @@ const WordGuess = () => {
     if (opponentTimeout) {
       clearTimeout(opponentTimeout);
     }
-  };
-
-  // Check if all letters in the word have been guessed
-  const checkWin = (word: string, guessedLetters: string[]) => {
-    return word.split("").every(letter => guessedLetters.includes(letter));
-  };
-
-  // Check if the game is lost
-  const checkLoss = (wrongGuesses: number) => {
-    return wrongGuesses >= MAX_WRONG_GUESSES;
   };
 
   // Process a guess
@@ -136,7 +126,6 @@ const WordGuess = () => {
       
       if (remainingLetters.length > 0) {
         // Random letter selection strategy
-        // For more challenge, this could be improved with a smarter algorithm
         const randomIndex = Math.floor(Math.random() * remainingLetters.length);
         const opponentGuess = remainingLetters[randomIndex];
         
@@ -194,32 +183,6 @@ const WordGuess = () => {
     });
   };
 
-  // Display the word with guessed letters shown and others hidden
-  const displayWord = word.split("").map((letter, index) => (
-    guessedLetters.includes(letter) ? (
-      <span key={index} className="text-2xl font-bold mx-1">{letter}</span>
-    ) : (
-      <span key={index} className="text-2xl font-bold mx-1 border-b-2 border-primary w-6 inline-block text-center">_</span>
-    )
-  ));
-
-  // Create keyboard for letter selection
-  const keyboard = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(letter => (
-    <Button
-      key={letter}
-      variant="outline"
-      className="w-8 h-8 p-0 m-1 text-center"
-      disabled={
-        guessedLetters.includes(letter) || 
-        gameOver || 
-        isOpponentTurn
-      }
-      onClick={() => handleGuess(letter)}
-    >
-      {letter}
-    </Button>
-  ));
-
   return (
     <div className="container py-6 max-w-lg mx-auto">
       <div className="flex items-center gap-2 mb-6">
@@ -264,58 +227,29 @@ const WordGuess = () => {
           </Button>
         </div>
         
-        <div className="mb-6 p-4 bg-accent/30 rounded-md text-center">
-          {displayWord}
-        </div>
+        <WordDisplay word={word} guessedLetters={guessedLetters} />
         
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground mb-2">
-            Wrong guesses: {wrongGuesses} / {MAX_WRONG_GUESSES}
-          </p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-primary h-2.5 rounded-full" 
-              style={{ width: `${(wrongGuesses / MAX_WRONG_GUESSES) * 100}%` }}
-            ></div>
-          </div>
-        </div>
+        <GameProgress wrongGuesses={wrongGuesses} maxWrongGuesses={MAX_WRONG_GUESSES} />
         
-        <form onSubmit={handleSubmitGuess} className="mb-6 flex gap-2">
-          <Input
-            type="text"
-            value={currentGuess}
-            onChange={handleInputChange}
-            maxLength={1}
-            placeholder="Type a letter"
-            className="w-full"
-            disabled={gameOver || isOpponentTurn}
-          />
-          <Button 
-            type="submit" 
-            disabled={
-              currentGuess.length !== 1 || 
-              gameOver || 
-              isOpponentTurn ||
-              !/^[A-Za-z]$/.test(currentGuess)
-            }
-          >
-            Guess
-          </Button>
-        </form>
+        <LetterInput
+          currentGuess={currentGuess}
+          onChange={handleInputChange}
+          onSubmit={handleSubmitGuess}
+          disabled={gameOver || isOpponentTurn}
+        />
         
-        <div className="flex flex-wrap justify-center mb-4">
-          {keyboard}
-        </div>
+        <LetterKeyboard
+          guessedLetters={guessedLetters}
+          onLetterClick={handleGuess}
+          disabled={gameOver || isOpponentTurn}
+        />
         
         {gameOver && (
-          <div className="text-center mt-4">
-            <p className="text-lg font-medium">
-              {gameWon ? "Congratulations! You guessed the word!" : `Game over! The word was: ${word}`}
-            </p>
-            <Button onClick={startNewGame} className="mt-2">
-              Play Again
-            </Button>
-          </div>
+          <GameOverMessage
+            gameWon={gameWon}
+            word={word}
+            onPlayAgain={startNewGame}
+          />
         )}
       </Card>
     </div>
