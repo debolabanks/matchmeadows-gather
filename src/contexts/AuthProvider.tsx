@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { User, AuthContextType, UserProfile } from "./authTypes";
+import { User, AuthContextType, UserProfile, Report } from "./authTypes";
 import { AuthContext } from "./AuthContext";
 import { useSwipes } from "@/hooks/useSwipes";
 import { 
@@ -24,10 +23,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           let parsedUser = JSON.parse(storedUser) as User;
           
-          // Check and reset swipes if needed
           parsedUser = checkAndResetSwipes(parsedUser);
           
-          // Save updated user to localStorage
           localStorage.setItem("matchmeadows_user", JSON.stringify(parsedUser));
           setUser(parsedUser);
         } catch (error) {
@@ -46,7 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const authUser = await signInWithEmailAndPassword(email, password);
       
-      // Initialize swipes if not already present
       const userWithSwipes = initializeSwipes(authUser);
       
       setUser(userWithSwipes);
@@ -61,7 +57,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const authUser = await signUpWithEmailAndPassword(email, password, name);
       
-      // Initialize swipes for new user
       const userWithSwipes = initializeSwipes(authUser);
       
       setUser(userWithSwipes);
@@ -101,7 +96,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const updatedUser = await updateUserProfile(user.id, profileData);
       
-      // Preserve swipes info if present
       if (user.swipes) {
         updatedUser.swipes = user.swipes;
       }
@@ -120,7 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const updatedUser = await requestVerificationService(user.id);
       
-      // Preserve swipes info if present
       if (user.swipes) {
         updatedUser.swipes = user.swipes;
       }
@@ -132,7 +125,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Function to use a swipe and check if user has swipes available
   const useSwipe = async (): Promise<boolean> => {
     const { success, updatedUser } = useSwipeHook(user);
     
@@ -143,10 +135,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     return success;
   };
-  
-  // Function to get remaining swipes
+
   const getSwipesRemaining = (): number => {
     return getRemainingSwipes(user);
+  };
+
+  const submitReport = async (report: Omit<Report, "id" | "status" | "createdAt">): Promise<void> => {
+    if (!user) throw new Error("User must be logged in to submit a report");
+    
+    const newReport: Report = {
+      ...report,
+      id: `report-${Date.now()}`,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    
+    const existingReportsJSON = localStorage.getItem("matchmeadows_reports");
+    const existingReports: Report[] = existingReportsJSON ? JSON.parse(existingReportsJSON) : [];
+    
+    const updatedReports = [...existingReports, newReport];
+    
+    localStorage.setItem("matchmeadows_reports", JSON.stringify(updatedReports));
+    
+    return new Promise((resolve) => setTimeout(resolve, 500));
   };
 
   return (
@@ -163,7 +174,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateProfile,
         requestVerification,
         useSwipe,
-        getSwipesRemaining
+        getSwipesRemaining,
+        submitReport
       }}
     >
       {children}

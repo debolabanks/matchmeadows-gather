@@ -1,4 +1,3 @@
-
 export type User = {
   id: string;
   name: string;
@@ -76,7 +75,16 @@ export type UserProfile = {
   };
 };
 
-export type AuthContextType = {
+export interface Report {
+  id?: string;
+  type: "profile" | "message" | "stream";
+  targetId: string;
+  reason: string;
+  status?: "pending" | "reviewed" | "resolved";
+  createdAt?: string;
+}
+
+export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -89,4 +97,5 @@ export type AuthContextType = {
   requestVerification: () => Promise<void>;
   useSwipe: () => Promise<boolean>;
   getSwipesRemaining: () => number;
-};
+  submitReport: (report: Omit<Report, "id" | "status" | "createdAt">) => Promise<void>;
+}

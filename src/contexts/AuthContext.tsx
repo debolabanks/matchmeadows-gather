@@ -17,6 +17,7 @@ export const AuthContext = createContext<AuthContextType>({
   requestVerification: async () => {},
   useSwipe: async () => false,
   getSwipesRemaining: () => 0,
+  submitReport: async () => {},
 });
 
 // Re-export the AuthProvider
