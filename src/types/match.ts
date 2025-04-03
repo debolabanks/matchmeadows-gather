@@ -15,5 +15,8 @@ export interface Match {
     insights: string[];
     commonInterests: string[];
     compatibilityReasons: string[];
+    personalizedScore?: number;
+    crossAppInsights?: string[];
+    recommendedActivities?: string[];
   };
 }

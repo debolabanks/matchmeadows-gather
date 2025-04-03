@@ -1,7 +1,7 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Sparkles, Globe, Clock } from "lucide-react";
-import MatchesList, { Match } from "@/components/MatchesList";
+import MatchesList from "@/components/MatchesList";
+import { Match } from "@/types/match";
 
 interface MatchTabsProps {
   activeTab: string;
@@ -56,7 +56,6 @@ const MatchTabs = ({ activeTab, setActiveTab, matches, aiRecommendations }: Matc
           </p>
         </div>
         <MatchesList matches={[...matches, ...aiRecommendations].sort((a, b) => {
-          // Handle potential missing personalizedScore property safely
           const aScore = a.aiCompatibility?.score || 0;
           const bScore = b.aiCompatibility?.score || 0;
           return bScore - aScore;

@@ -1,5 +1,5 @@
 
-import { Match } from "@/components/MatchesList";
+import { Match } from "@/types/match";
 import { getDefaultMatchScore, calculateBadges } from "@/utils/gamification";
 
 export const sampleMatches: Match[] = [

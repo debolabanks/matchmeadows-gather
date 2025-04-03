@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { getAIMatchRecommendations } from "@/utils/matchingAlgorithm";
-import { Match } from "@/components/MatchesList";
+import { Match } from "@/types/match";
 import { getDefaultMatchScore } from "@/utils/gamification";
 
 interface MatchRecommendationsProps {
