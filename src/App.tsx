@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CallProvider } from "@/contexts/CallContext";
 import Index from "./pages/Index";
@@ -45,13 +45,26 @@ const App = () => (
               <Header />
               <main className="flex-1">
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/about" element={<About />} />
+                  {/* Public routes */}
                   <Route path="/sign-in" element={<SignIn />} />
                   <Route path="/sign-up" element={<SignUp />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/subscription" element={<Subscription />} />
+                  <Route path="/about" element={<About />} />
+                  
+                  {/* Redirect landing page to sign in if not authenticated */}
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <Index />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Protected routes */}
+                  <Route path="/subscription" element={
+                    <ProtectedRoute>
+                      <Subscription />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/verification" element={
                     <ProtectedRoute>
                       <Verification />
@@ -112,6 +125,8 @@ const App = () => (
                       <CreatorChannel />
                     </ProtectedRoute>
                   } />
+                  
+                  {/* Not found route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
