@@ -70,7 +70,7 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <div className="px-3 py-2 text-sm font-medium border-b">
-                    {user?.name}
+                    {user?.name || 'User'}
                   </div>
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">Profile</Link>

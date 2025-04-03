@@ -27,8 +27,6 @@ import StreamPage from "./pages/StreamPage";
 import { useEffect } from "react";
 import { preloadSounds } from "./services/soundService";
 
-// Include any additional imports needed for your app
-
 function App() {
   // Preload sounds when the app first loads
   useEffect(() => {
@@ -43,8 +41,10 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
+              <Route path="/sign-in" element={<SignIn />} />
+              <Route path="/signin" element={<SignIn />} /> {/* Alias for compatibility */}
+              <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/signup" element={<SignUp />} /> {/* Alias for compatibility */}
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/about" element={<About />} />
