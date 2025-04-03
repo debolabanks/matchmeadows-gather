@@ -71,7 +71,7 @@ export const useVideoCallTracks = (
           state.remoteParticipant.removeAllListeners();
         } else if (typeof state.remoteParticipant.off === 'function') {
           // Fallback to .off if it exists
-          state.remoteParticipant.off('trackSubscribed');
+          state.remoteParticipant.off('trackSubscribed', handleTrackSubscribed);
         }
       }
     };
