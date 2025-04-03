@@ -31,27 +31,48 @@ export const useVideoCallTracks = (
     };
     
     const handleParticipantConnected = (participant: any) => {
+      console.log("Participant connected:", participant);
       updateState({ remoteParticipant: participant });
       
-      participant.tracks.forEach((publication: any) => {
-        if (publication.isSubscribed) {
-          handleTrackSubscribed(publication.track);
-        }
-      });
+      // Check if participant.tracks exists and is iterable (Map or Array)
+      if (participant.tracks && typeof participant.tracks.forEach === 'function') {
+        participant.tracks.forEach((publication: any) => {
+          if (publication.isSubscribed) {
+            handleTrackSubscribed(publication.track);
+          }
+        });
+      }
       
-      participant.on('trackSubscribed', handleTrackSubscribed);
+      // Only attach event listener if participant has .on method
+      if (participant && typeof participant.on === 'function') {
+        participant.on('trackSubscribed', handleTrackSubscribed);
+      }
     };
     
-    twilioRoom.participants.forEach(handleParticipantConnected);
-    twilioRoom.on('participantConnected', handleParticipantConnected);
+    // Handle existing participants
+    if (twilioRoom.participants && typeof twilioRoom.participants.forEach === 'function') {
+      twilioRoom.participants.forEach(handleParticipantConnected);
+    }
+    
+    // Listen for new participants
+    if (typeof twilioRoom.on === 'function') {
+      twilioRoom.on('participantConnected', handleParticipantConnected);
+    }
     
     return () => {
+      // Clean up event listeners safely
       if (twilioRoom && typeof twilioRoom.off === 'function') {
         twilioRoom.off('participantConnected', handleParticipantConnected);
       }
       
-      if (state.remoteParticipant && typeof state.remoteParticipant.removeAllListeners === 'function') {
-        state.remoteParticipant.removeAllListeners();
+      if (state.remoteParticipant) {
+        // Only call removeAllListeners if it exists
+        if (typeof state.remoteParticipant.removeAllListeners === 'function') {
+          state.remoteParticipant.removeAllListeners();
+        } else if (typeof state.remoteParticipant.off === 'function') {
+          // Fallback to .off if it exists
+          state.remoteParticipant.off('trackSubscribed');
+        }
       }
     };
   }, [twilioRoom, localTracks, localVideoRef, remoteVideoRef, updateState, state.remoteParticipant]);
