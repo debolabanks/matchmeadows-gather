@@ -9,7 +9,6 @@ import { Paperclip } from "lucide-react";
 import { ChatContact, ChatMessage } from "@/types/message";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import MessageCallButtons from "@/components/MessageCallButtons";
 import { playNewMessageSound } from "@/services/soundService";
 import { useLocation } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
@@ -40,8 +39,6 @@ const Messages = () => {
           isFromContact: true,
           read: false,
         },
-        videoCallEnabled: true,
-        voiceCallEnabled: true,
         verificationStatus: "verified",
       },
       {
@@ -56,8 +53,6 @@ const Messages = () => {
           isFromContact: true,
           read: true,
         },
-        videoCallEnabled: true,
-        voiceCallEnabled: true,
       },
       {
         id: "3",
@@ -72,8 +67,6 @@ const Messages = () => {
           isFromContact: false,
           read: true,
         },
-        videoCallEnabled: false,
-        voiceCallEnabled: true,
       },
     ];
 
@@ -306,7 +299,6 @@ const Messages = () => {
                     </p>
                   </div>
                 </div>
-                <MessageCallButtons contact={selectedContact} />
               </div>
               
               <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
