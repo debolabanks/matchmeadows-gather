@@ -8,24 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     
     if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please enter both email and password",
-        variant: "destructive"
-      });
+      setErrorMessage("Please enter both email and password");
       return;
     }
     
@@ -40,9 +39,16 @@ const SignIn = () => {
       navigate("/discover");
     } catch (error) {
       console.error("Sign in error:", error);
+      
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Invalid email or password");
+      }
+      
       toast({
         title: "Sign in failed",
-        description: "Invalid email or password",
+        description: "Unable to sign in with provided credentials",
         variant: "destructive"
       });
     } finally {
@@ -66,6 +72,12 @@ const SignIn = () => {
         </CardHeader>
         <form onSubmit={handleSignIn}>
           <CardContent className="space-y-4">
+            {errorMessage && (
+              <Alert variant="destructive" className="text-sm">
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

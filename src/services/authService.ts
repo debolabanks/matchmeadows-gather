@@ -10,6 +10,12 @@ export const signInWithEmailAndPassword = async (email: string, password: string
   
   if (error) {
     console.error("Error signing in:", error);
+    
+    // Handle specific error codes
+    if (error.message === "Email not confirmed") {
+      throw new Error("Please check your email to confirm your account before signing in.");
+    }
+    
     throw new Error(error.message);
   }
   
