@@ -7,10 +7,12 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
   
-  // Show nothing while checking authentication
+  console.log("ProtectedRoute - Auth State:", { isAuthenticated, isLoading, user });
+  
+  // Show loading state while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -21,10 +23,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    console.log("ProtectedRoute - Not authenticated, redirecting to sign-in");
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
   
   // Render children if authenticated
+  console.log("ProtectedRoute - Authenticated, rendering children");
   return <>{children}</>;
 };
 

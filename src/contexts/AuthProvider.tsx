@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { User, AuthContextType, UserProfile, Report } from "./authTypes";
 import { AuthContext } from "./AuthContext";
@@ -19,9 +18,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { initializeSwipes, checkAndResetSwipes, useSwipe: useSwipeHook, getSwipesRemaining: getRemainingSwipes } = useSwipes();
 
   useEffect(() => {
+    console.log("AuthProvider - Initializing authentication state");
+    
     // Set up the Supabase auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("AuthProvider - Auth state changed:", event, !!session);
+        
         if (session && session.user) {
           try {
             // Get profile data from our profiles table
@@ -30,6 +33,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .select('*')
               .eq('id', session.user.id)
               .single();
+            
+            console.log("AuthProvider - Profile data fetched:", !!profileData);
             
             // Convert to our app's User format
             const appUser: User = {
@@ -63,33 +68,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for an existing session on load
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // No active session, check local storage as fallback
-        const storedUser = localStorage.getItem("matchmeadows_user");
+      try {
+        console.log("AuthProvider - Checking existing auth session");
         
-        if (storedUser) {
-          try {
-            let parsedUser = JSON.parse(storedUser) as User;
-            parsedUser = checkAndResetSwipes(parsedUser);
-            
-            // Verify this user actually exists in Supabase
-            const { data } = await supabase.auth.getUser();
-            
-            if (data.user && data.user.id === parsedUser.id) {
-              localStorage.setItem("matchmeadows_user", JSON.stringify(parsedUser));
-              setUser(parsedUser);
-            } else {
-              // User data in localStorage doesn't match Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("AuthProvider - No active session, checking localStorage");
+          
+          // No active session, check local storage as fallback
+          const storedUser = localStorage.getItem("matchmeadows_user");
+          
+          if (storedUser) {
+            try {
+              let parsedUser = JSON.parse(storedUser) as User;
+              parsedUser = checkAndResetSwipes(parsedUser);
+              
+              console.log("AuthProvider - Found user in localStorage, verifying with Supabase");
+              
+              // Verify this user actually exists in Supabase
+              const { data } = await supabase.auth.getUser();
+              
+              if (data.user && data.user.id === parsedUser.id) {
+                console.log("AuthProvider - User verified, setting auth state");
+                localStorage.setItem("matchmeadows_user", JSON.stringify(parsedUser));
+                setUser(parsedUser);
+              } else {
+                // User data in localStorage doesn't match Supabase
+                console.log("AuthProvider - User in localStorage doesn't match Supabase, clearing");
+                localStorage.removeItem("matchmeadows_user");
+              }
+            } catch (error) {
+              console.error("Failed to parse stored user:", error);
               localStorage.removeItem("matchmeadows_user");
             }
-          } catch (error) {
-            console.error("Failed to parse stored user:", error);
-            localStorage.removeItem("matchmeadows_user");
           }
+          
+          setIsLoading(false);
         }
-        
+      } catch (error) {
+        console.error("Error checking auth:", error);
         setIsLoading(false);
       }
     };
