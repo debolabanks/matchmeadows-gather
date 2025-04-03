@@ -27,6 +27,7 @@ import Subscription from "./pages/Subscription";
 import Games from "./pages/Games";
 import TicTacToe from "./games/TicTacToe";
 import WordGuess from "./games/WordGuess";
+import RockPaperScissors from "./games/RockPaperScissors";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,11 @@ const App = () => (
                   <Route path="/games/word-guess" element={
                     <ProtectedRoute>
                       <WordGuess />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/games/rock-paper-scissors" element={
+                    <ProtectedRoute>
+                      <RockPaperScissors />
                     </ProtectedRoute>
                   } />
                   <Route path="/profile" element={
