@@ -41,9 +41,7 @@ function App() {
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/signin" element={<SignIn />} /> {/* Alias for compatibility */}
               <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/signup" element={<SignUp />} /> {/* Alias for compatibility */}
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/about" element={<About />} />
