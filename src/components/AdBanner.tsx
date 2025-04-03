@@ -4,17 +4,47 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
+import GoogleAd from "./GoogleAd";
 
 interface AdBannerProps {
   position?: "top" | "bottom" | "sidebar";
   variant?: "small" | "large";
+  adSlot?: string; // Google AdSense slot ID
 }
 
-const AdBanner = ({ position = "top", variant = "small" }: AdBannerProps) => {
+const AdBanner = ({ 
+  position = "top", 
+  variant = "small", 
+  adSlot = "xxxxxxxxxx" // Replace with your actual ad slot ID
+}: AdBannerProps) => {
   const [dismissed, setDismissed] = useState(false);
   
   if (dismissed) return null;
   
+  // Use real Google Ads in production, mock ads in development
+  const isProduction = import.meta.env.PROD || import.meta.env.VITE_ADSENSE_ENABLED === "true";
+  
+  if (isProduction && adSlot) {
+    return (
+      <div className="relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-2 right-2 z-10 h-6 w-6 bg-background/50" 
+          onClick={() => setDismissed(true)}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+        <GoogleAd 
+          slot={adSlot} 
+          className={`mb-4 ${variant === 'large' ? 'min-h-[250px]' : 'min-h-[100px]'}`}
+          format={variant === 'large' ? 'rectangle' : 'horizontal'}
+        />
+      </div>
+    );
+  }
+  
+  // Mock ad banners for development environment
   if (variant === "small") {
     return (
       <Card className={`relative p-3 mb-4 bg-muted/50 border-dashed ${position === "sidebar" ? "w-full" : "w-full"}`}>

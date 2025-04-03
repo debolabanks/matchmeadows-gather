@@ -141,7 +141,7 @@ const Discover = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
-      {!isPremium && <AdBanner variant="large" />}
+      {!isPremium && <AdBanner variant="large" adSlot="1234567890" />}
       
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Discover</h1>
@@ -179,7 +179,7 @@ const Discover = () => {
         </div>
       )}
       
-      {!isPremium && <AdBanner position="sidebar" variant="small" />}
+      {!isPremium && <AdBanner position="sidebar" variant="small" adSlot="0987654321" />}
       
       {filteredProfiles.length === 0 && currentProfiles.length === 0 ? (
         <NoProfilesFound onShowFilters={() => setShowFilters(true)} />
@@ -192,6 +192,8 @@ const Discover = () => {
           isPremium={isPremium}
         />
       )}
+      
+      {!isPremium && <AdBanner variant="small" position="bottom" adSlot="5678901234" />}
     </div>
   );
 };
