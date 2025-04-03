@@ -12,17 +12,30 @@ export const useVideoCallTracks = (
 ) => {
   const { twilioRoom, localTracks } = useCallContext();
 
+  // Handle local tracks setup
+  useEffect(() => {
+    // Attach local video track to local video element
+    const localVideoTrack = localTracks.find(track => track.kind === 'video');
+    if (localVideoTrack && localVideoRef.current) {
+      const videoElement = localVideoRef.current;
+      try {
+        attachTrackToElement(localVideoTrack as any, videoElement);
+        console.log("Local video track attached successfully");
+      } catch (error) {
+        console.error("Error attaching local video track:", error);
+      }
+    } else if (!localVideoTrack) {
+      console.log("No local video track found to attach");
+    } else if (!localVideoRef.current) {
+      console.log("Local video ref is not available");
+    }
+  }, [localTracks, localVideoRef]);
+
   // Handle Twilio track setup
   useEffect(() => {
     if (!twilioRoom) return;
     
     updateState({ callStatus: "connected" });
-    
-    const localVideoTrack = localTracks.find(track => track.kind === 'video');
-    if (localVideoTrack && localVideoRef.current) {
-      const videoElement = localVideoRef.current;
-      attachTrackToElement(localVideoTrack as any, videoElement);
-    }
     
     const handleTrackSubscribed = (track: any) => {
       if (track.kind === 'video' && remoteVideoRef.current) {

@@ -48,8 +48,9 @@ const CallLayout = ({
           )}
         </div>
         
-        {callType === "video" && !state.isVideoOff && (
-          <div className="absolute top-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-lg overflow-hidden border-2 border-white z-10">
+        {/* Always show local video preview for video calls, regardless of state */}
+        {callType === "video" && (
+          <div className="absolute top-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-lg overflow-hidden border-2 border-white z-10 bg-gray-800">
             <video
               ref={localVideoRef}
               autoPlay
