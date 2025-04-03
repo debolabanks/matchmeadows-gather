@@ -1,24 +1,14 @@
 
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Stream, StreamComment, StreamReaction } from "@/types/stream";
 import { User } from "@/contexts/authTypes";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StreamChat from "@/components/stream/StreamChat";
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  Maximize2, 
-  Share, 
-  MessageSquare,
-  Users,
-  Heart,
-  ThumbsUp
-} from "lucide-react";
+import VideoPlayer from "@/components/stream/video/VideoPlayer";
+import SubscriberOnlyMessage from "@/components/stream/video/SubscriberOnlyMessage";
+import StreamInfo from "@/components/stream/info/StreamInfo";
+import StreamInfoTab from "@/components/stream/info/StreamInfoTab";
+import StreamReactionButtons from "@/components/stream/reactions/StreamReactionButtons";
 
 interface StreamPlayerProps {
   stream: Stream;
@@ -40,7 +30,6 @@ const StreamPlayer = ({ stream, currentUser, onSubscribe }: StreamPlayerProps) =
     { type: "support", count: 18 },
   ]);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Mock comments for demo purposes
@@ -79,21 +68,11 @@ const StreamPlayer = ({ stream, currentUser, onSubscribe }: StreamPlayerProps) =
   ]);
 
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
+    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
+    setIsMuted(!isMuted);
   };
 
   const toggleFullscreen = () => {
@@ -170,136 +149,29 @@ const StreamPlayer = ({ stream, currentUser, onSubscribe }: StreamPlayerProps) =
         {/* Video Player */}
         <div className="aspect-video w-full bg-black relative">
           {isSubscriber ? (
-            <>
-              <video
-                ref={videoRef}
-                src={stream.status === "live" ? "https://assets.mixkit.co/videos/preview/mixkit-fashion-model-with-a-yellow-jacket-posing-in-a-parking-39880-large.mp4" : undefined}
-                poster={stream.thumbnailUrl}
-                autoPlay={stream.status === "live"}
-                muted={isMuted}
-                playsInline
-                className="w-full h-full object-contain"
-              />
-              
-              {/* Live indicator and viewer count */}
-              <div className="absolute top-4 left-4 flex gap-2">
-                {stream.status === "live" && (
-                  <div className="bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold flex items-center animate-pulse">
-                    LIVE
-                  </div>
-                )}
-                <div className="bg-black/70 text-white px-2 py-1 rounded-md text-xs flex items-center">
-                  <Users className="h-3 w-3 mr-1" />
-                  {viewerCount} viewers
-                </div>
-              </div>
-              
-              {/* Video controls */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70"
-                      onClick={togglePlay}
-                    >
-                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70"
-                      onClick={toggleMute}
-                    >
-                      {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-full bg-black/50 text-white hover:bg-black/70"
-                      onClick={toggleFullscreen}
-                    >
-                      <Maximize2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
+            <VideoPlayer
+              thumbnailUrl={stream.thumbnailUrl}
+              status={stream.status}
+              isPlaying={isPlaying}
+              isMuted={isMuted}
+              viewerCount={viewerCount}
+              onTogglePlay={togglePlay}
+              onToggleMute={toggleMute}
+              onToggleFullscreen={toggleFullscreen}
+            />
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-black">
-              <div className="w-24 h-24 mb-4 overflow-hidden rounded-full border-4 border-primary">
-                <img 
-                  src={stream.creatorImage} 
-                  alt={stream.creatorName}
-                  className="w-full h-full object-cover" 
-                />
-              </div>
-              <h3 className="text-white text-xl font-bold mb-2">{stream.title}</h3>
-              <p className="text-gray-300 mb-6">This content is available to subscribers only</p>
-              <Button onClick={onSubscribe} className="animate-pulse">
-                Subscribe to Watch
-              </Button>
-            </div>
+            <SubscriberOnlyMessage stream={stream} onSubscribe={onSubscribe || (() => {})} />
           )}
         </div>
   
         {/* Stream info */}
         <div className="p-4 bg-card">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={stream.creatorImage} />
-                <AvatarFallback>{stream.creatorName[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-lg font-bold line-clamp-1">{stream.title}</h2>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <span>{stream.creatorName}</span>
-                  {stream.category && (
-                    <>
-                      <span>•</span>
-                      <span>{stream.category}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-1">
-                <Share className="h-4 w-4" />
-                Share
-              </Button>
-              <Button 
-                variant={showChat ? "default" : "outline"} 
-                size="sm" 
-                className="gap-1 md:hidden"
-                onClick={() => setShowChat(!showChat)}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Chat
-              </Button>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            {reactions.map(reaction => (
-              <Button
-                key={reaction.type}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => handleReaction(reaction.type)}
-              >
-                {reaction.type === "like" && <ThumbsUp className="h-4 w-4 mr-1" />}
-                {reaction.type === "love" && <Heart className="h-4 w-4 mr-1" />}
-                {reaction.type === "wow" && "🤩"}
-                {reaction.type === "support" && "💰"}
-                <span>{reaction.count}</span>
-              </Button>
-            ))}
-          </div>
+          <StreamInfo 
+            stream={stream} 
+            showChat={showChat} 
+            onToggleChat={() => setShowChat(!showChat)} 
+          />
+          <StreamReactionButtons reactions={reactions} onReaction={handleReaction} />
         </div>
       </div>
 
@@ -320,34 +192,7 @@ const StreamPlayer = ({ stream, currentUser, onSubscribe }: StreamPlayerProps) =
               />
             </TabsContent>
             <TabsContent value="info" className="flex-1 overflow-auto p-4">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-1">About this stream</h3>
-                  <p className="text-sm text-muted-foreground">{stream.description}</p>
-                </div>
-                <Separator />
-                <div>
-                  <h3 className="font-semibold mb-2">Started</h3>
-                  <p className="text-sm">
-                    {new Date(stream.startTime).toLocaleString()}
-                  </p>
-                </div>
-                {stream.tags && stream.tags.length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h3 className="font-semibold mb-2">Tags</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {stream.tags.map(tag => (
-                          <div key={tag} className="text-xs px-2 py-1 bg-accent rounded-md">
-                            {tag}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+              <StreamInfoTab stream={stream} />
             </TabsContent>
           </Tabs>
         </div>
