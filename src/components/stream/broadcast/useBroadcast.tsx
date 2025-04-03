@@ -1,6 +1,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { Room } from "twilio-video";
+import { startBroadcast } from "@/services/twilio";
 import { useAuth } from "@/hooks/useAuth";
 
 export const useBroadcast = (creatorId: string, creatorName: string) => {
@@ -18,10 +20,15 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
   
   const { user } = useAuth();
   const intervalRef = useRef<number | null>(null);
+  const twilioRoomRef = useRef<Room | null>(null);
   
   // Clean up on unmount
   useEffect(() => {
     return () => {
+      if (twilioRoomRef.current) {
+        twilioRoomRef.current.disconnect();
+      }
+      
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -50,6 +57,13 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
     setIsLoading(true);
     
     try {
+      // Create a room name based on creator id and timestamp
+      const roomName = `${creatorId}-${Date.now()}`;
+      
+      // Connect to Twilio room
+      const room = await startBroadcast(roomName);
+      twilioRoomRef.current = room;
+      
       // Successfully connected to the room
       setIsLive(true);
       setViewerCount(0);
@@ -114,6 +128,11 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
   };
   
   const stopBroadcastHandler = () => {
+    if (twilioRoomRef.current) {
+      twilioRoomRef.current.disconnect();
+      twilioRoomRef.current = null;
+    }
+    
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -131,10 +150,28 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
   
   const toggleMic = () => {
     setIsMicEnabled(!isMicEnabled);
+    
+    if (twilioRoomRef.current) {
+      const audioTracks = Array.from(twilioRoomRef.current.localParticipant.audioTracks.values());
+      audioTracks.forEach(publication => {
+        if (publication.track) {
+          isMicEnabled ? publication.track.disable() : publication.track.enable();
+        }
+      });
+    }
   };
   
   const toggleVideo = () => {
     setIsVideoEnabled(!isVideoEnabled);
+    
+    if (twilioRoomRef.current) {
+      const videoTracks = Array.from(twilioRoomRef.current.localParticipant.videoTracks.values());
+      videoTracks.forEach(publication => {
+        if (publication.track) {
+          isVideoEnabled ? publication.track.disable() : publication.track.enable();
+        }
+      });
+    }
   };
   
   return {

@@ -5,8 +5,50 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   read: boolean;
-  attachments?: MessageAttachment[];
   reactions?: MessageReaction[];
+  attachments?: MessageAttachment[];
+  isEncrypted?: boolean;
+  isVoiceMessage?: boolean;
+  language?: string;
+  translation?: {
+    text: string;
+    language: string;
+  };
+}
+
+export interface MessageReaction {
+  userId: string;
+  emoji: string;
+  timestamp: string;
+}
+
+export interface MessageAttachment {
+  id: string;
+  type: "image" | "file" | "audio" | "video";
+  url: string;
+  name: string;
+  size?: number;
+  previewUrl?: string;
+  mimeType?: string;
+}
+
+export interface ChatContact {
+  id: string;
+  name: string;
+  imageUrl: string;
+  lastActive: string;
+  isOnline?: boolean;
+  preferredLanguage?: string;
+  lastMessage?: {
+    text: string;
+    timestamp: string;
+    isFromContact: boolean;
+    read: boolean;
+    hasAttachment?: boolean;
+  };
+  videoCallEnabled?: boolean;
+  voiceCallEnabled?: boolean;
+  verificationStatus?: "unverified" | "verified" | "pending";
 }
 
 export interface CallSession {
@@ -15,39 +57,7 @@ export interface CallSession {
   participants: string[];
   startTime: string;
   endTime?: string;
+  status: "connecting" | "connected" | "ended" | "rejected" | "missed";
   duration?: number;
-  status: "connecting" | "connected" | "ended" | "rejected";
 }
 
-export interface ChatContact {
-  id: string;
-  name: string;
-  imageUrl: string;
-  lastActive: string;
-  isOnline: boolean;
-  preferredLanguage?: string;
-  lastMessage?: {
-    text: string;
-    timestamp: string;
-    isFromContact: boolean;
-    read: boolean;
-  };
-  verificationStatus?: 'verified' | 'pending' | 'unverified';
-}
-
-export interface MessageAttachment {
-  id: string;
-  type: "image" | "audio" | "video" | "file";
-  url: string;
-  name: string;
-  size?: number;
-  mimeType?: string;
-  previewUrl?: string;
-}
-
-export interface MessageReaction {
-  id: string;
-  emoji: string;
-  userId: string;
-  timestamp: string;
-}

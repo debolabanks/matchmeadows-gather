@@ -1,203 +1,145 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { CallSession } from "@/types/message";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "@/components/ui/use-toast";
-import { playIncomingCallSound } from "@/services/soundService";
+import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { useCall } from "@/hooks/useCall";
+import VideoCall from "@/components/VideoCall";
+import { Button } from "@/components/ui/button";
+import { Phone, Video, X } from "lucide-react";
+import { Room, LocalTrack } from "twilio-video";
+import { playIncomingCallSound, stopAllSounds } from "@/services/soundService";
 
 interface CallContextType {
-  currentCall: CallSession | null;
-  incomingCall: CallSession | null;
-  startCall: (contactId: string, type: "voice" | "video") => void;
-  acceptCall: () => void;
-  rejectCall: () => void;
-  endCall: () => void;
-  isCallInProgress: boolean;
+  startCall: (contactId: string, contactName: string, contactImage: string, type: "video" | "voice") => void;
+  simulateIncomingCall: (fromId: string, fromName: string, fromImage: string, type: "video" | "voice") => void;
+  twilioRoom: Room | null;
+  localTracks: LocalTrack[];
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-export const useCall = () => {
-  const context = useContext(CallContext);
-  if (!context) {
-    throw new Error("useCall must be used within a CallProvider");
-  }
-  return context;
-};
-
-export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const [currentCall, setCurrentCall] = useState<CallSession | null>(null);
-  const [incomingCall, setIncomingCall] = useState<CallSession | null>(null);
-
-  // Local state to track if a call is in progress
-  const isCallInProgress = Boolean(currentCall && currentCall.status !== "ended" && currentCall.status !== "rejected");
-
-  // Mock function to start a call
-  const startCall = (contactId: string, type: "voice" | "video") => {
-    if (isCallInProgress) {
-      toast({
-        title: "Call in progress",
-        description: "Please end your current call before starting a new one.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Create a new call session
-    const newCall: CallSession = {
-      id: `call-${Date.now()}`,
-      type,
-      participants: [user?.id || "currentUser", contactId],
-      startTime: new Date().toISOString(),
-      status: "connecting",
-    };
-
-    setCurrentCall(newCall);
-    
-    // Simulate connecting
-    setTimeout(() => {
-      if (newCall.id === currentCall?.id) {
-        setCurrentCall((prev) => 
-          prev ? { ...prev, status: "connected" } : null
-        );
-        
-        toast({
-          title: `${type.charAt(0).toUpperCase() + type.slice(1)} call started`,
-          description: "You are now connected",
-        });
-      }
-    }, 2000);
-  };
-
-  // Mock function to accept an incoming call
-  const acceptCall = () => {
-    if (!incomingCall) return;
-    
-    setCurrentCall({
-      ...incomingCall,
-      status: "connected",
-    });
-    
-    setIncomingCall(null);
-    
-    toast({
-      title: "Call accepted",
-      description: "You are now connected",
-    });
-  };
-
-  // Mock function to reject an incoming call
-  const rejectCall = () => {
-    if (!incomingCall) return;
-    
-    setIncomingCall((prev) => 
-      prev ? { ...prev, status: "rejected" } : null
-    );
-    
-    setTimeout(() => {
-      setIncomingCall(null);
-    }, 1000);
-    
-    toast({
-      title: "Call rejected",
-      description: "The call has been rejected",
-    });
-  };
-
-  // Mock function to end an ongoing call
-  const endCall = () => {
-    if (!currentCall) return;
-    
-    const endTime = new Date().toISOString();
-    const startTime = new Date(currentCall.startTime);
-    const duration = (new Date(endTime).getTime() - startTime.getTime()) / 1000;
-    
-    setCurrentCall({
-      ...currentCall,
-      status: "ended",
-      endTime,
-      duration,
-    });
-    
-    toast({
-      title: "Call ended",
-      description: `Call duration: ${Math.floor(duration / 60)}:${String(Math.floor(duration % 60)).padStart(2, '0')}`,
-    });
-    
-    // Clear the ended call after a brief delay
-    setTimeout(() => {
-      setCurrentCall(null);
-    }, 5000);
-  };
-
-  // Simulate incoming calls for demo purposes
-  useEffect(() => {
-    if (!user) return;
-    
-    let incomingCallTimeout: number | null = null;
-    
-    const scheduleIncomingCall = () => {
-      // Random delay between 30-90 seconds for demo purposes
-      const delay = Math.random() * 60000 + 30000;
-      
-      incomingCallTimeout = window.setTimeout(() => {
-        // Only create incoming call if no other call is active
-        if (!currentCall && !incomingCall) {
-          const contactIds = ["1", "2", "3"];
-          const randomContactId = contactIds[Math.floor(Math.random() * contactIds.length)];
-          const callType: "voice" | "video" = Math.random() > 0.5 ? "voice" : "video";
-          
-          const newIncomingCall: CallSession = {
-            id: `call-${Date.now()}`,
-            type: callType,
-            participants: [randomContactId, user.id || "currentUser"],
-            startTime: new Date().toISOString(),
-            status: "connecting",
-          };
-          
-          setIncomingCall(newIncomingCall);
-          playIncomingCallSound();
-          
-          // Auto-reject if not answered within 30 seconds
-          setTimeout(() => {
-            setIncomingCall((prev) => 
-              prev && prev.id === newIncomingCall.id && prev.status === "connecting"
-                ? null
-                : prev
-            );
-          }, 30000);
-        }
-        
-        // Schedule the next incoming call
-        scheduleIncomingCall();
-      }, delay);
-    };
-    
-    // Start the cycle of incoming calls
-    scheduleIncomingCall();
-    
-    // Cleanup
-    return () => {
-      if (incomingCallTimeout) {
-        clearTimeout(incomingCallTimeout);
-      }
-    };
-  }, [user, currentCall, incomingCall]);
-
-  const value: CallContextType = {
-    currentCall,
+export const CallProvider = ({ children }: { children: ReactNode }) => {
+  const {
+    activeCall,
     incomingCall,
     startCall,
-    acceptCall,
-    rejectCall,
     endCall,
-    isCallInProgress,
-  };
+    acceptIncomingCall,
+    rejectIncomingCall,
+    simulateIncomingCall,
+    twilioRoom,
+    localTracks
+  } = useCall();
+
+  // Play sound when there's an incoming call
+  useEffect(() => {
+    if (incomingCall && !activeCall) {
+      playIncomingCallSound();
+    } else {
+      stopAllSounds();
+    }
+    
+    return () => {
+      stopAllSounds();
+    };
+  }, [incomingCall, activeCall]);
+
+  // Simulate an incoming call after the app loads (demo purpose)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      simulateIncomingCall(
+        "1", 
+        "Sophie Chen", 
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80", 
+        Math.random() > 0.5 ? "video" : "voice"
+      );
+    }, 15000); // 15 seconds after loading
+    
+    return () => clearTimeout(timer);
+  }, [simulateIncomingCall]);
 
   return (
-    <CallContext.Provider value={value}>
+    <CallContext.Provider value={{ startCall, simulateIncomingCall, twilioRoom, localTracks }}>
       {children}
+      
+      {/* Active call overlay */}
+      {activeCall && (
+        <VideoCall
+          contactId={activeCall.participants.find(p => p !== "currentUser") || ""}
+          contactName={(activeCall.type === "video" ? "Video" : "Voice") + " call with " + (
+            activeCall.participants.includes("1") ? "Sophie Chen" :
+            activeCall.participants.includes("2") ? "James Wilson" :
+            activeCall.participants.includes("3") ? "Olivia Martinez" : "Contact"
+          )}
+          contactImage={
+            activeCall.participants.includes("1") ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80" :
+            activeCall.participants.includes("2") ? "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80" :
+            activeCall.participants.includes("3") ? "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80" :
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80"
+          }
+          callType={activeCall.type}
+          onEnd={endCall}
+        />
+      )}
+      
+      {/* Incoming call UI */}
+      {incomingCall && !activeCall && (
+        <div className="fixed inset-x-0 top-0 z-50 bg-background/80 backdrop-blur-sm p-4 border-b shadow-lg flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img 
+                src={incomingCall.from.imageUrl} 
+                alt={incomingCall.from.name}
+                className="h-12 w-12 rounded-full object-cover border-2 border-primary animate-pulse" 
+              />
+              {incomingCall.type === "video" ? (
+                <Video className="absolute -bottom-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full p-1" />
+              ) : (
+                <Phone className="absolute -bottom-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full p-1" />
+              )}
+            </div>
+            
+            <div>
+              <p className="font-medium">{incomingCall.from.name}</p>
+              <p className="text-sm text-muted-foreground">
+                Incoming {incomingCall.type} call...
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full h-10 w-10"
+              onClick={rejectIncomingCall}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="default"
+              size="icon"
+              className="rounded-full h-10 w-10 bg-green-500 hover:bg-green-600"
+              onClick={acceptIncomingCall}
+            >
+              {incomingCall.type === "video" ? (
+                <Video className="h-4 w-4" />
+              ) : (
+                <Phone className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </CallContext.Provider>
   );
+};
+
+export const useCallContext = () => {
+  const context = useContext(CallContext);
+  
+  if (context === undefined) {
+    throw new Error("useCallContext must be used within a CallProvider");
+  }
+  
+  return context;
 };
