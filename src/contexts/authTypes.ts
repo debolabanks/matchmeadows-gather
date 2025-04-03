@@ -40,6 +40,11 @@ export type UserProfile = {
     allowVideoCall?: boolean;
     allowVoiceCall?: boolean;
   };
+  // New verification fields
+  phoneNumber?: string;
+  phoneVerified?: boolean;
+  termsAccepted?: string;
+  notificationsEnabled?: boolean;
   // Creator profile related fields
   isCreator?: boolean;
   creatorProfile?: {

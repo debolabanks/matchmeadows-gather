@@ -28,6 +28,8 @@ import Games from "./pages/Games";
 import TicTacToe from "./games/TicTacToe";
 import WordGuess from "./games/WordGuess";
 import RockPaperScissors from "./games/RockPaperScissors";
+import Verification from "./pages/Verification";
+import TermsOfUse from "./pages/TermsOfUse";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +52,16 @@ const App = () => (
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/subscription" element={<Subscription />} />
+                  <Route path="/verification" element={
+                    <ProtectedRoute>
+                      <Verification />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/terms-of-use" element={
+                    <ProtectedRoute>
+                      <TermsOfUse />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/discover" element={
                     <ProtectedRoute>
                       <Discover />
