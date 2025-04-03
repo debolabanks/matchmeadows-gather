@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { User, AuthContextType, UserProfile, Report } from "./authTypes";
 import { AuthContext } from "./AuthContext";
@@ -10,6 +11,7 @@ import {
   updateUserProfile,
   requestVerification as requestVerificationService
 } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -17,25 +19,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { initializeSwipes, checkAndResetSwipes, useSwipe: useSwipeHook, getSwipesRemaining: getRemainingSwipes } = useSwipes();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const storedUser = localStorage.getItem("matchmeadows_user");
-      if (storedUser) {
-        try {
-          let parsedUser = JSON.parse(storedUser) as User;
-          
-          parsedUser = checkAndResetSwipes(parsedUser);
-          
-          localStorage.setItem("matchmeadows_user", JSON.stringify(parsedUser));
-          setUser(parsedUser);
-        } catch (error) {
-          console.error("Failed to parse stored user:", error);
+    // Set up the Supabase auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session && session.user) {
+          try {
+            // Get profile data from our profiles table
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            // Convert to our app's User format
+            const appUser: User = {
+              id: session.user.id,
+              name: profileData?.full_name || session.user.user_metadata?.full_name || "",
+              email: session.user.email || "",
+              provider: "email",
+              profile: profileData ? {
+                bio: profileData.bio,
+                location: profileData.location,
+                // Map other profile fields as needed
+              } : undefined
+            };
+            
+            // Initialize swipes for the user
+            const userWithSwipes = initializeSwipes(appUser);
+            
+            setUser(userWithSwipes);
+            localStorage.setItem("matchmeadows_user", JSON.stringify(userWithSwipes));
+          } catch (error) {
+            console.error("Failed to load user profile:", error);
+          }
+        } else {
+          setUser(null);
           localStorage.removeItem("matchmeadows_user");
         }
+        
+        setIsLoading(false);
       }
-      setIsLoading(false);
+    );
+
+    // Check for an existing session on load
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // No active session, check local storage as fallback
+        const storedUser = localStorage.getItem("matchmeadows_user");
+        
+        if (storedUser) {
+          try {
+            let parsedUser = JSON.parse(storedUser) as User;
+            parsedUser = checkAndResetSwipes(parsedUser);
+            
+            // Verify this user actually exists in Supabase
+            const { data } = await supabase.auth.getUser();
+            
+            if (data.user && data.user.id === parsedUser.id) {
+              localStorage.setItem("matchmeadows_user", JSON.stringify(parsedUser));
+              setUser(parsedUser);
+            } else {
+              // User data in localStorage doesn't match Supabase
+              localStorage.removeItem("matchmeadows_user");
+            }
+          } catch (error) {
+            console.error("Failed to parse stored user:", error);
+            localStorage.removeItem("matchmeadows_user");
+          }
+        }
+        
+        setIsLoading(false);
+      }
     };
 
     checkAuth();
+
+    // Clean up subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -67,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem("matchmeadows_user");
   };
