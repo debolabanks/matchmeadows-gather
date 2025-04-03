@@ -5,19 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Phone, Video } from "lucide-react";
 import { ChatContact, ChatMessage } from "@/types/message";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { playNewMessageSound } from "@/services/soundService";
 import { useLocation } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
+import { useCall } from "@/contexts/CallContext";
+import CallUI from "@/components/CallUI";
 
 const Messages = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const initialContactId = location.state?.contactId;
+  const { startCall } = useCall();
   
   const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null);
   const [contacts, setContacts] = useState<ChatContact[]>([]);
@@ -167,6 +170,18 @@ const Messages = () => {
     }
   };
 
+  const handleStartVoiceCall = () => {
+    if (selectedContact) {
+      startCall(selectedContact.id, "voice");
+    }
+  };
+
+  const handleStartVideoCall = () => {
+    if (selectedContact) {
+      startCall(selectedContact.id, "video");
+    }
+  };
+
   const simulateIncomingMessage = () => {
     if (selectedContact) {
       const incomingMessage: ChatMessage = {
@@ -299,6 +314,26 @@ const Messages = () => {
                     </p>
                   </div>
                 </div>
+                
+                {/* Call buttons */}
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={handleStartVoiceCall}
+                    title="Start voice call"
+                  >
+                    <Phone className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={handleStartVideoCall}
+                    title="Start video call"
+                  >
+                    <Video className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               
               <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
@@ -341,6 +376,12 @@ const Messages = () => {
           )}
         </div>
       </div>
+      
+      {/* Call UI */}
+      <CallUI 
+        contactName={selectedContact?.name} 
+        contactImage={selectedContact?.imageUrl} 
+      />
     </div>
   );
 };

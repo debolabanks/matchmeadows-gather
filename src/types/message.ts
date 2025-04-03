@@ -1,9 +1,12 @@
+
 export interface ChatMessage {
   id: string;
   senderId: string;
   text: string;
   timestamp: string;
   read: boolean;
+  attachments?: MessageAttachment[];
+  reactions?: MessageReaction[];
 }
 
 export interface CallSession {
@@ -30,4 +33,21 @@ export interface ChatContact {
     read: boolean;
   };
   verificationStatus?: 'verified' | 'pending' | 'unverified';
+}
+
+export interface MessageAttachment {
+  id: string;
+  type: "image" | "audio" | "video" | "file";
+  url: string;
+  name: string;
+  size?: number;
+  mimeType?: string;
+  previewUrl?: string;
+}
+
+export interface MessageReaction {
+  id: string;
+  emoji: string;
+  userId: string;
+  timestamp: string;
 }
