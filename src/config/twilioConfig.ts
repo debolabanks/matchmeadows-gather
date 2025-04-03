@@ -1,16 +1,9 @@
 
-// This file contains Twilio configuration settings
-// In production, these values should be handled server-side
+// WARNING: This file contains API keys for development purposes only.
+// In production, these values should be handled server-side.
 
 export const twilioConfig = {
-  // Twilio account credentials (replace with your actual credentials)
-  accountSid: "YOUR_TWILIO_ACCOUNT_SID", // Replace with your actual Twilio Account SID
-  apiKey: "YOUR_TWILIO_API_KEY", // Replace with your actual Twilio API Key
-  apiSecret: "YOUR_TWILIO_API_SECRET", // Replace with your actual Twilio API Secret
-  
-  // Backend service configuration
-  useBackendService: true, // Set to true to use the backend service for token generation
-  backendUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://your-production-api.com/api/twilio' 
-    : 'http://localhost:3001/api/twilio'
+  accountSid: "ACe7243df16ce464fd5e31d397aac529e2", // Replace with your actual Twilio Account SID
+  apiKey: "SKf7fd0ffaf312a2517767c748a8a604d1", // Replace with your actual Twilio API Key
+  apiSecret: "V5sHdEwQj6uHnmI7kHpbS4N4hO7fcBk4", // Replace with your actual Twilio API Secret
 };
