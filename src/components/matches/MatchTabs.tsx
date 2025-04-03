@@ -56,8 +56,9 @@ const MatchTabs = ({ activeTab, setActiveTab, matches, aiRecommendations }: Matc
           </p>
         </div>
         <MatchesList matches={[...matches, ...aiRecommendations].sort((a, b) => {
-          const aScore = a.aiCompatibility?.personalizedScore || a.aiCompatibility?.score || 0;
-          const bScore = b.aiCompatibility?.personalizedScore || b.aiCompatibility?.score || 0;
+          // Handle potential missing personalizedScore property safely
+          const aScore = a.aiCompatibility?.score || 0;
+          const bScore = b.aiCompatibility?.score || 0;
           return bScore - aScore;
         })} />
       </TabsContent>
