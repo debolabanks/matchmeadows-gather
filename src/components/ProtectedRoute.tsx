@@ -1,5 +1,5 @@
 
-import { Navigate, useLocation } from "react-router-dom";
+import React from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
@@ -7,10 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const location = useLocation();
-  
-  console.log("ProtectedRoute - Auth State:", { isAuthenticated, isLoading, user });
+  const { isLoading } = useAuth();
   
   // Show loading state while checking authentication
   if (isLoading) {
@@ -21,14 +18,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
   
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    console.log("ProtectedRoute - Not authenticated, redirecting to sign-in");
-    return <Navigate to="/sign-in" state={{ from: location }} replace />;
-  }
-  
-  // Render children if authenticated
-  console.log("ProtectedRoute - Authenticated, rendering children");
+  // Render children for all users (no authentication check)
   return <>{children}</>;
 };
 
