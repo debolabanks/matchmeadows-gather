@@ -52,7 +52,7 @@ const MatchesList = ({ matches }: MatchesListProps) => {
                   Active {match.lastActive}
                 </p>
                 
-                <Link to={`/messages/${match.id}`}>
+                <Link to={`/messages`} state={{ contactId: match.id }}>
                   <Button className="w-full" variant="outline">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Message

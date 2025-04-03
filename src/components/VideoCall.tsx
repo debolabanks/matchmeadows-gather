@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { ActiveCallControls, IncomingCallControls } from "@/components/call/CallControls";
 import CallAvatar from "@/components/call/CallAvatar";
 import CallLayout from "@/components/call/CallLayout";
+import { playIncomingCallSound, stopAllSounds } from "@/services/soundService";
 
 interface VideoCallProps {
   contactId: string;
@@ -41,6 +42,17 @@ const VideoCall = ({
     onAccept,
     onReject
   });
+
+  // Play sound effect for incoming calls
+  useEffect(() => {
+    if (isIncoming && state.callStatus === "connecting") {
+      playIncomingCallSound();
+    }
+    
+    return () => {
+      stopAllSounds();
+    };
+  }, [isIncoming, state.callStatus]);
 
   return (
     <CallLayout

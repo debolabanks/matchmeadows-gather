@@ -3,7 +3,7 @@
  * Sound service for playing notification sounds
  */
 
-// Sound files
+// Sound files - using URL paths to ensure they work properly
 const INCOMING_CALL_SOUND = new Audio('/src/assets/incoming-call.mp3');
 const NEW_MESSAGE_SOUND = new Audio('/src/assets/new-message.mp3');
 

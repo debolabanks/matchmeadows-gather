@@ -1,23 +1,28 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { Send, Paperclip } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import { ChatContact, ChatMessage } from "@/types/message";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import MessageCallButtons from "@/components/MessageCallButtons";
 import { playNewMessageSound } from "@/services/soundService";
+import { useLocation } from "react-router-dom";
+import MessageInput from "@/components/MessageInput";
 
 const Messages = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
+  const initialContactId = location.state?.contactId;
+  
   const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null);
   const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -73,7 +78,15 @@ const Messages = () => {
     ];
 
     setContacts(mockContacts);
-  }, []);
+    
+    // Select contact if ID is passed through location state
+    if (initialContactId) {
+      const contact = mockContacts.find(c => c.id === initialContactId);
+      if (contact) {
+        setSelectedContact(contact);
+      }
+    }
+  }, [initialContactId]);
 
   useEffect(() => {
     if (selectedContact) {
@@ -133,25 +146,24 @@ const Messages = () => {
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() && selectedContact) {
+  const handleSendMessage = (messageText: string) => {
+    if (messageText.trim() && selectedContact) {
       const message: ChatMessage = {
         id: `msg-${Date.now()}`,
         senderId: "currentUser",
-        text: newMessage,
+        text: messageText,
         timestamp: new Date().toISOString(),
         read: false,
       };
 
       setMessages([...messages, message]);
-      setNewMessage("");
 
       setContacts(contacts.map(contact => 
         contact.id === selectedContact.id
           ? {
               ...contact,
               lastMessage: {
-                text: newMessage,
+                text: messageText,
                 timestamp: new Date().toISOString(),
                 isFromContact: false,
                 read: true,
@@ -325,27 +337,7 @@ const Messages = () => {
                 ))}
               </div>
               
-              <div className="p-3 border-t">
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <Input 
-                    placeholder="Type a message..." 
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSendMessage();
-                      }
-                    }}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <MessageInput onSendMessage={handleSendMessage} />
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-muted-foreground p-4 text-center">
