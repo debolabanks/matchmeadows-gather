@@ -4,6 +4,9 @@ import { useEffect, useRef } from "react";
 const NEW_MESSAGE_SOUND = "/assets/new-message.mp3";
 const INCOMING_CALL_SOUND = "/assets/incoming-call.mp3";
 
+// Track active sound elements
+const activeSounds: HTMLAudioElement[] = [];
+
 // Preload sounds when the app first loads
 export const preloadSounds = () => {
   try {
@@ -27,6 +30,7 @@ export const playNewMessageSound = () => {
       console.warn("Error playing new message sound:", error);
       // Don't throw errors, just continue with the app
     });
+    activeSounds.push(audio);
   } catch (error) {
     console.warn("Error creating audio element for new message sound:", error);
     // Don't throw errors, just continue with the app
@@ -43,11 +47,32 @@ export const playIncomingCallSound = (loop = true) => {
       console.warn("Error playing incoming call sound:", error);
       // Don't throw errors, just continue with the app
     });
+    activeSounds.push(audio);
     return audio;
   } catch (error) {
     console.warn("Error creating audio element for incoming call sound:", error);
     // Don't throw errors, just continue with the app
     return null;
+  }
+};
+
+/**
+ * Stop all currently playing sounds
+ */
+export const stopAllSounds = (): void => {
+  try {
+    // Stop all active sounds
+    for (const audio of activeSounds) {
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }
+    // Clear the active sounds array
+    activeSounds.length = 0;
+  } catch (error) {
+    console.warn("Error stopping sounds:", error);
+    // Don't throw errors, just continue with the app
   }
 };
 
