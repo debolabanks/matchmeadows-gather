@@ -1,5 +1,5 @@
-
 import { v4 as uuidv4 } from 'uuid';
+import { twilioConfig } from '@/config/twilioConfig';
 
 /**
  * In a real production application, this token would be generated on the server
@@ -10,10 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
  * Instead, create a backend API endpoint that generates tokens.
  */
 
-// Environmental variables for Twilio credentials (would be set on the server in production)
-const TWILIO_ACCOUNT_SID = import.meta.env.VITE_TWILIO_ACCOUNT_SID;
-const TWILIO_API_KEY = import.meta.env.VITE_TWILIO_API_KEY;
-const TWILIO_API_SECRET = import.meta.env.VITE_TWILIO_API_SECRET;
+// Environmental variables for Twilio credentials (using config for development)
+const TWILIO_ACCOUNT_SID = twilioConfig.accountSid;
+const TWILIO_API_KEY = twilioConfig.apiKey;
+const TWILIO_API_SECRET = twilioConfig.apiSecret;
 
 /**
  * Generate a Twilio access token
