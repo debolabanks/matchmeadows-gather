@@ -6,6 +6,10 @@ export type User = {
   provider: "email";
   profile?: UserProfile;
   verified?: boolean;
+  swipes?: {
+    count: number;
+    resetAt: string;
+  };
 };
 
 export type UserProfile = {
@@ -78,4 +82,6 @@ export type AuthContextType = {
   confirmPasswordReset: (email: string, newPassword: string) => Promise<void>;
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   requestVerification: () => Promise<void>;
+  useSwipe: () => Promise<boolean>;
+  getSwipesRemaining: () => number;
 };

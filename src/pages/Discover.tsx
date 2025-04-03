@@ -4,12 +4,13 @@ import ProfileCard, { ProfileCardProps } from "@/components/ProfileCard";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Filter, MapPin, Users } from "lucide-react";
+import { ChevronDown, ChevronUp, Filter, MapPin, Users, Clock } from "lucide-react";
 import MatchPreferences from "@/components/MatchPreferences";
 import { MatchCriteria, filterProfilesByPreferences, rankProfilesByCompatibility } from "@/utils/matchingAlgorithm";
 import { useAuth } from "@/hooks/useAuth";
 import AdBanner from "@/components/AdBanner";
 import { Link } from "react-router-dom";
+import { format, formatDistanceToNow } from "date-fns";
 
 // Enhanced sample data for profiles
 const sampleProfiles: Omit<ProfileCardProps, 'onLike' | 'onDislike'>[] = [
@@ -100,12 +101,14 @@ const sampleProfiles: Omit<ProfileCardProps, 'onLike' | 'onDislike'>[] = [
 ];
 
 const Discover = () => {
-  const { user } = useAuth();
+  const { user, useSwipe, getSwipesRemaining } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProfiles, setFilteredProfiles] = useState(sampleProfiles);
   const [currentProfiles, setCurrentProfiles] = useState(sampleProfiles);
   const [matches, setMatches] = useState<string[]>([]);
   const [rejected, setRejected] = useState<string[]>([]);
+  const [swipesRemaining, setSwipesRemaining] = useState(10);
+  const [remainingTime, setRemainingTime] = useState<string>("");
   const [preferences, setPreferences] = useState<MatchCriteria>({
     minAge: 18,
     maxAge: 50,
@@ -141,7 +144,48 @@ const Discover = () => {
     setCurrentProfiles(filtered);
   }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates]);
   
-  const handleLike = (id: string) => {
+  // Update swipes remaining
+  useEffect(() => {
+    if (user) {
+      setSwipesRemaining(getSwipesRemaining());
+      
+      // Set timer for swipe reset
+      if (user.swipes?.resetAt && !isPremium) {
+        const resetTime = new Date(user.swipes.resetAt);
+        const updateTimer = () => {
+          const now = new Date();
+          if (now >= resetTime) {
+            setSwipesRemaining(10);
+            setRemainingTime("");
+          } else {
+            setRemainingTime(formatDistanceToNow(resetTime, { addSuffix: true }));
+          }
+        };
+        
+        updateTimer();
+        const interval = setInterval(updateTimer, 60000); // Update every minute
+        
+        return () => clearInterval(interval);
+      }
+    }
+  }, [user, isPremium, getSwipesRemaining]);
+  
+  const handleLike = async (id: string) => {
+    // Check if user can swipe
+    const canSwipe = await useSwipe();
+    
+    if (!canSwipe) {
+      toast({
+        title: "Swipe limit reached",
+        description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Update swipes remaining display
+    setSwipesRemaining(getSwipesRemaining());
+    
     // Simulating a 20% chance of a match
     const isMatch = Math.random() < 0.2;
     
@@ -160,7 +204,22 @@ const Discover = () => {
     setCurrentProfiles(prev => prev.filter(profile => profile.id !== id));
   };
   
-  const handleDislike = (id: string) => {
+  const handleDislike = async (id: string) => {
+    // Check if user can swipe
+    const canSwipe = await useSwipe();
+    
+    if (!canSwipe) {
+      toast({
+        title: "Swipe limit reached",
+        description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Update swipes remaining display
+    setSwipesRemaining(getSwipesRemaining());
+    
     // Add to rejected list
     setRejected(prev => [...prev, id]);
     
@@ -207,6 +266,33 @@ const Discover = () => {
           )}
         </Button>
       </div>
+      
+      {!isPremium && (
+        <div className="mb-4 bg-primary-foreground p-3 rounded-lg border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-primary/10 p-2 rounded-full">
+              <Clock className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">
+                {swipesRemaining === Infinity ? 
+                  "Unlimited swipes" : 
+                  `${swipesRemaining} swipe${swipesRemaining !== 1 ? 's' : ''} remaining today`
+                }
+              </p>
+              {!isPremium && remainingTime && swipesRemaining < 10 && (
+                <p className="text-xs text-muted-foreground">Resets {remainingTime}</p>
+              )}
+            </div>
+          </div>
+          
+          {!isPremium && (
+            <Button variant="default" size="sm" asChild>
+              <Link to="/subscription">Upgrade</Link>
+            </Button>
+          )}
+        </div>
+      )}
       
       {showFilters && (
         <div className="mb-8 animate-in fade-in slide-in-from-top-5 duration-300">
@@ -273,7 +359,7 @@ const Discover = () => {
           {!isPremium && (
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground mb-2">
-                Upgrade to Premium for an ad-free experience!
+                Upgrade to Premium for unlimited swipes and an ad-free experience!
               </p>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/subscription">
