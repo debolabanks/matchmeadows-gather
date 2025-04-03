@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gamepad2 } from "lucide-react";
@@ -68,16 +67,32 @@ const Games = () => {
   };
 
   const handleGameSelect = (gameId: string) => {
-    // For now, just show a placeholder for game selection
-    // In a real implementation, this would navigate to the actual game
-    console.log(`Selected game: ${gameId} with contact: ${contactInfo.contactName}`);
+    // If game is coming soon, just log the selection
+    const selectedGame = GAMES.find(game => game.id === gameId);
+    if (selectedGame?.comingSoon) {
+      console.log(`Selected game: ${gameId} with contact: ${contactInfo.contactName}`);
+      return;
+    }
     
-    // For demonstration, we'll just go back to messages after a delay
-    setTimeout(() => {
-      navigate("/messages", { 
-        state: contactInfo.contactId ? { contactId: contactInfo.contactId } : undefined
+    // Navigate to the game with contact info
+    if (gameId === "tic-tac-toe") {
+      navigate(`/games/${gameId}`, { 
+        state: { 
+          contactId: contactInfo.contactId,
+          contactName: contactInfo.contactName
+        } 
       });
-    }, 1500);
+    } else {
+      // For other games, just log for now and go back to messages
+      console.log(`Selected game: ${gameId} with contact: ${contactInfo.contactName}`);
+      
+      // For demonstration, we'll just go back to messages after a delay for non-implemented games
+      setTimeout(() => {
+        navigate("/messages", { 
+          state: contactInfo.contactId ? { contactId: contactInfo.contactId } : undefined
+        });
+      }, 1500);
+    }
   };
 
   return (
