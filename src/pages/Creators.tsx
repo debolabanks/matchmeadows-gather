@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageSquare, Star, Users, Video, Clock } from "lucide-react";
+import { Heart, MessageSquare, Search, Star, Users, Video, Clock } from "lucide-react";
+import AdBanner from "@/components/AdBanner";
 
 // Creator type definition
 interface Creator {
@@ -108,14 +109,19 @@ const Creators = () => {
           <p className="text-muted-foreground mt-1">Connect with relationship experts and coaches</p>
         </div>
         <div className="flex items-center gap-2">
-          <Input 
-            placeholder="Search creators..." 
-            className="max-w-xs"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input 
+              placeholder="Search creators..." 
+              className="pl-10 text-foreground"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
+      
+      <AdBanner variant="small" position="top" />
       
       <Tabs defaultValue="all" className="mb-8">
         <TabsList>
