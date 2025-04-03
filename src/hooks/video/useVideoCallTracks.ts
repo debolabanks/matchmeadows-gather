@@ -19,6 +19,11 @@ export const useVideoCallTracks = (
     if (localVideoTrack && localVideoRef.current) {
       const videoElement = localVideoRef.current;
       try {
+        // Detach any existing tracks first
+        if (videoElement.childNodes.length > 0) {
+          Array.from(videoElement.childNodes).forEach(node => node.remove());
+        }
+        
         attachTrackToElement(localVideoTrack as any, videoElement);
         console.log("Local video track attached successfully");
       } catch (error) {
@@ -39,7 +44,13 @@ export const useVideoCallTracks = (
     
     const handleTrackSubscribed = (track: any) => {
       if (track.kind === 'video' && remoteVideoRef.current) {
+        // Detach any existing tracks first
+        if (remoteVideoRef.current.childNodes.length > 0) {
+          Array.from(remoteVideoRef.current.childNodes).forEach(node => node.remove());
+        }
+        
         attachTrackToElement(track, remoteVideoRef.current);
+        console.log("Remote video track attached successfully");
       }
     };
     
@@ -88,5 +99,5 @@ export const useVideoCallTracks = (
         }
       }
     };
-  }, [twilioRoom, localTracks, localVideoRef, remoteVideoRef, updateState, state.remoteParticipant]);
+  }, [twilioRoom, remoteVideoRef, updateState, state.remoteParticipant]);
 };

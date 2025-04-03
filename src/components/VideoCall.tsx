@@ -54,6 +54,11 @@ const VideoCall = ({
     };
   }, [isIncoming, state.callStatus]);
 
+  // Determine when to show the avatar (for voice calls or when video is not yet connected)
+  const showAvatar = callType === "voice" || 
+                     state.callStatus !== "connected" || 
+                     !state.remoteParticipant;
+
   return (
     <CallLayout
       remoteVideoRef={refs.remoteVideoRef}
@@ -64,7 +69,7 @@ const VideoCall = ({
       contactName={contactName}
       isFullscreen={state.isFullscreen}
     >
-      {(callType === "voice" || state.callStatus !== "connected" || !state.remoteParticipant) && (
+      {showAvatar && (
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <CallAvatar
             contactName={contactName}

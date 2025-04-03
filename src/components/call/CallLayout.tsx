@@ -31,14 +31,17 @@ const CallLayout = ({
       }`}
     >
       <div className="relative flex-1 flex items-center justify-center bg-gray-900">
-        {callType === "video" && (
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        )}
+        {/* Remote video container - always render the video element but control visibility with CSS */}
+        <div className="w-full h-full absolute inset-0">
+          {callType === "video" && (
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className={`w-full h-full object-cover ${!state.remoteParticipant ? 'opacity-0' : 'opacity-100'}`}
+            />
+          )}
+        </div>
         
         <div className="absolute top-8 left-0 right-0 text-center z-10">
           {state.callStatus === "connecting" && !state.remoteParticipant && (
@@ -48,7 +51,7 @@ const CallLayout = ({
           )}
         </div>
         
-        {/* Always show local video preview for video calls, regardless of state */}
+        {/* Local video preview for video calls */}
         {callType === "video" && (
           <div className="absolute top-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-lg overflow-hidden border-2 border-white z-10 bg-gray-800">
             <video
@@ -56,8 +59,13 @@ const CallLayout = ({
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${state.isVideoOff ? 'opacity-0' : 'opacity-100'}`}
             />
+            {state.isVideoOff && (
+              <div className="absolute inset-0 flex items-center justify-center text-white">
+                <span>Camera off</span>
+              </div>
+            )}
           </div>
         )}
         
