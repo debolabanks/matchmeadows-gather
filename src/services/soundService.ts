@@ -20,7 +20,8 @@ export const playIncomingCallSound = (): void => {
   stopAllSounds();
   
   if (!incomingCallSound) {
-    incomingCallSound = createAudioElement('/assets/incoming-call.mp3');
+    // Use absolute path with origin to ensure correct resolution
+    incomingCallSound = createAudioElement(`${window.location.origin}/assets/incoming-call.mp3`);
     incomingCallSound.loop = true;
   }
   
@@ -34,7 +35,8 @@ export const playIncomingCallSound = (): void => {
  */
 export const playNewMessageSound = (): void => {
   if (!newMessageSound) {
-    newMessageSound = createAudioElement('/assets/new-message.mp3');
+    // Use absolute path with origin to ensure correct resolution
+    newMessageSound = createAudioElement(`${window.location.origin}/assets/new-message.mp3`);
   }
   
   // Reset to beginning if already playing
@@ -60,12 +62,15 @@ export const stopAllSounds = (): void => {
  */
 export const preloadSounds = (): void => {
   if (!incomingCallSound) {
-    incomingCallSound = createAudioElement('/assets/incoming-call.mp3');
+    incomingCallSound = createAudioElement(`${window.location.origin}/assets/incoming-call.mp3`);
     incomingCallSound.preload = 'auto';
   }
   
   if (!newMessageSound) {
-    newMessageSound = createAudioElement('/assets/new-message.mp3');
+    newMessageSound = createAudioElement(`${window.location.origin}/assets/new-message.mp3`);
     newMessageSound.preload = 'auto';
   }
 };
+
+// Call preloadSounds when the module is imported
+preloadSounds();

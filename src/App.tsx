@@ -24,10 +24,17 @@ import Subscription from "./pages/Subscription";
 import Creators from "./pages/Creators";
 import CreatorChannel from "./pages/CreatorChannel";
 import StreamPage from "./pages/StreamPage";
+import { useEffect } from "react";
+import { preloadSounds } from "./services/soundService";
 
 // Include any additional imports needed for your app
 
 function App() {
+  // Preload sounds when the app first loads
+  useEffect(() => {
+    preloadSounds();
+  }, []);
+
   return (
     <Router>
       <ThemeProvider>
