@@ -36,7 +36,7 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
   }, []);
   
   const startBroadcastHandler = async () => {
-    if (!user?.profile?.subscriptionStatus === "active") {
+    if (user?.profile?.subscriptionStatus !== "active") {
       toast({
         title: "Premium Feature",
         description: "Only premium members can host a live session. Please upgrade your subscription.",
