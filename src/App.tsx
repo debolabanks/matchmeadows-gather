@@ -26,6 +26,7 @@ import About from "./pages/About";
 import Subscription from "./pages/Subscription";
 import Games from "./pages/Games";
 import TicTacToe from "./games/TicTacToe";
+import WordGuess from "./games/WordGuess";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,11 @@ const App = () => (
                   <Route path="/games/tic-tac-toe" element={
                     <ProtectedRoute>
                       <TicTacToe />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/games/word-guess" element={
+                    <ProtectedRoute>
+                      <WordGuess />
                     </ProtectedRoute>
                   } />
                   <Route path="/profile" element={

@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gamepad2 } from "lucide-react";
@@ -74,8 +75,8 @@ const Games = () => {
       return;
     }
     
-    // Navigate to the game with contact info
-    if (gameId === "tic-tac-toe") {
+    // Navigate to the selected game with contact info
+    if (gameId === "tic-tac-toe" || gameId === "word-guess") {
       navigate(`/games/${gameId}`, { 
         state: { 
           contactId: contactInfo.contactId,
