@@ -16,12 +16,21 @@ const WordDisplay = ({ word, guessedLetters }: WordDisplayProps) => {
             key={index} 
             className="text-2xl font-bold mx-1"
             initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            animate={{ 
+              y: 0, 
+              opacity: 1,
+              scale: [1, 1.2, 1]
+            }}
             transition={{ 
               type: "spring",
               stiffness: 300,
               damping: 20,
-              delay: index * 0.05
+              delay: index * 0.05,
+              scale: {
+                duration: 0.3,
+                repeat: 1,
+                repeatType: "reverse"
+              }
             }}
           >
             {letter}

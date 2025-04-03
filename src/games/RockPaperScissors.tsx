@@ -7,6 +7,7 @@ import GameResult from "./rock-paper-scissors/GameResult";
 import ScoreBoard from "./rock-paper-scissors/ScoreBoard";
 import GameHeader from "./rock-paper-scissors/GameHeader";
 import GameControls from "./rock-paper-scissors/GameControls";
+import WinnerDisplay from "./rock-paper-scissors/WinnerDisplay";
 import { useRockPaperScissors, GameOption } from "./rock-paper-scissors/useRockPaperScissors";
 
 interface GameState {
@@ -70,6 +71,13 @@ const RockPaperScissors = () => {
           opponentScore={opponentScore}
           opponentName={contactInfo.contactName}
         />
+        
+        {result && (
+          <WinnerDisplay 
+            result={result}
+            opponentName={contactInfo.contactName}
+          />
+        )}
         
         <GameResult 
           result={result}

@@ -30,6 +30,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
     exit: { scale: 0.8, opacity: 0 }
   };
 
+  // Winner animation variants
+  const winnerVariants = {
+    initial: { scale: 1 },
+    animate: { 
+      scale: [1, 1.2, 1],
+      transition: { 
+        repeat: Infinity,
+        repeatType: "reverse", 
+        duration: 1
+      }
+    }
+  };
+
   return (
     <>
       <div className="grid grid-cols-3 gap-2 mb-4">
@@ -54,6 +67,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                    variants={winner === cell ? winnerVariants : undefined}
                   >
                     {cell}
                   </motion.span>
@@ -64,8 +78,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
         )}
       </div>
       
-      <div className="text-center text-sm text-muted-foreground">
-        {currentPlayer === "X" ? "Your turn" : `${contactName}'s turn`}
+      <div className="text-center mt-4">
+        <motion.div 
+          className="flex justify-center items-center gap-2 p-2 bg-accent/20 rounded-md"
+          animate={{ 
+            y: [0, -3, 0],
+            transition: { repeat: Infinity, repeatType: "reverse", duration: 1.5 }
+          }}
+        >
+          <div className="h-3 w-3 rounded-full bg-primary"></div>
+          <div className="text-sm font-medium">
+            {currentPlayer === "X" ? "Your turn" : `${contactName}'s turn`}
+          </div>
+        </motion.div>
       </div>
     </>
   );
