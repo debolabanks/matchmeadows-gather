@@ -1,6 +1,6 @@
 
 import React from "react";
-import { FlagOff } from "lucide-react";
+import { Flag } from "lucide-react";
 import { Button, ButtonProps } from "@/components/ui/button";
 import ReportDialog from "@/components/ReportDialog";
 
@@ -33,7 +33,7 @@ const ReportButton = ({
         className={className}
         {...props}
       >
-        <FlagOff className={`h-4 w-4 ${!iconOnly ? 'mr-2' : ''}`} />
+        <Flag className={`h-4 w-4 ${!iconOnly ? 'mr-2' : ''}`} />
         {!iconOnly && "Report"}
         {iconOnly && <span className="sr-only">Report</span>}
       </Button>

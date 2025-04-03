@@ -1,9 +1,23 @@
 
-import { MessageSquare, Star } from "lucide-react";
+import { MessageSquare, Star, Ban, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { MatchScore as MatchScoreType } from "@/utils/gamification";
 import MatchScore from "@/components/MatchScore";
+import ReportDialog from "@/components/ReportDialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 export interface Match {
   id: string;
@@ -20,7 +34,21 @@ interface MatchesListProps {
   matches: Match[];
 }
 
-const MatchesList = ({ matches }: MatchesListProps) => {
+const MatchesList = ({ matches: initialMatches }: MatchesListProps) => {
+  const [matches, setMatches] = useState(initialMatches);
+
+  const handleBlockUser = (id: string, name: string) => {
+    // Remove the match from the list
+    setMatches(matches.filter(match => match.id !== id));
+    
+    toast({
+      title: "User Blocked",
+      description: `You have blocked ${name}. They will no longer be able to contact you.`,
+    });
+    
+    // In a real implementation, this would call an API to block the user
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Your Matches</h2>
@@ -49,6 +77,23 @@ const MatchesList = ({ matches }: MatchesListProps) => {
                     {match.compatibilityPercentage}% compatible
                   </div>
                 )}
+                
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <ReportDialog 
+                    reportType="profile" 
+                    targetId={match.id}
+                    targetName={match.name}
+                  >
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 rounded-full bg-black/40 text-white hover:bg-black/60"
+                    >
+                      <Flag className="h-3 w-3" />
+                      <span className="sr-only">Report {match.name}</span>
+                    </Button>
+                  </ReportDialog>
+                </div>
               </div>
               
               <div className="p-4">
@@ -69,12 +114,37 @@ const MatchesList = ({ matches }: MatchesListProps) => {
                   </div>
                 )}
                 
-                <Link to={`/messages`} state={{ contactId: match.id }}>
-                  <Button className="w-full" variant="outline">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Message
-                  </Button>
-                </Link>
+                <div className="flex gap-2">
+                  <Link to={`/messages`} state={{ contactId: match.id }} className="flex-1">
+                    <Button className="w-full" variant="outline">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
+                  </Link>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-10 w-10">
+                        <Ban className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Block {match.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will prevent {match.name} from seeing your profile or contacting you. 
+                          You won't see their profile anymore either.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleBlockUser(match.id, match.name)}>
+                          Block User
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </div>
           ))}

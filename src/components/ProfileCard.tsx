@@ -1,10 +1,23 @@
 
-import { Heart, X, MessageSquare, Map, Shield } from "lucide-react";
+import { Heart, X, MessageSquare, Map, Shield, Flag, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import ProfileCardActions from "./ProfileCardActions";
 
 export interface ProfileCardProps {
   id: string;
@@ -39,6 +52,8 @@ const ProfileCard = ({
   onDislike
 }: ProfileCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const { user } = useAuth();
   
   const toggleDetails = () => {
     setShowDetails(!showDetails);
@@ -54,11 +69,27 @@ const ProfileCard = ({
     // or open a new chat with this user
   };
 
+  const handleBlockUser = () => {
+    setIsBlocked(true);
+    toast({
+      title: "User Blocked",
+      description: `You have blocked ${name}. They will no longer be able to contact you.`,
+    });
+    // In a real implementation, this would call an API to block the user
+    onDislike(id); // Dislike the user to remove from current stack
+  };
+
+  if (isBlocked) {
+    return null; // Don't render blocked profiles
+  }
+
   return (
     <div 
-      className="profile-card animate-fade-in rounded-lg overflow-hidden shadow-lg border border-border"
+      className="profile-card animate-fade-in rounded-lg overflow-hidden shadow-lg border border-border relative"
       onClick={toggleDetails}
     >
+      <ProfileCardActions profileId={id} profileName={name} />
+      
       <div className="relative h-96">
         <img 
           src={imageUrl} 
@@ -127,6 +158,32 @@ const ProfileCard = ({
         >
           <MessageSquare className="h-6 w-6 text-blue-500" />
         </Button>
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              onClick={(e) => e.stopPropagation()}
+              variant="outline" 
+              size="icon" 
+              className="swipe-button bg-white hover:bg-gray-50 rounded-full h-12 w-12"
+            >
+              <Ban className="h-6 w-6 text-gray-500" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Block {name}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will prevent {name} from seeing your profile or contacting you. 
+                You won't see their profile anymore either.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleBlockUser}>Block User</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         
         <Button 
           onClick={(e) => {
