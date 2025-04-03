@@ -1,275 +1,63 @@
+
 import { useState, useEffect } from "react";
-import MatchesList, { Match } from "@/components/MatchesList";
-import { getDefaultMatchScore, calculateBadges } from "@/utils/gamification";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Users, Clock, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { getAIMatchRecommendations } from "@/utils/matchingAlgorithm";
-import { enhanceMatchesWithPersonalization } from "@/utils/activityTracker";
 import { useAuth } from "@/hooks/useAuth";
-
-const userProfile = {
-  id: "current-user",
-  name: "You",
-  age: 28,
-  gender: "non-binary",
-  location: "San Francisco, CA",
-  interests: ["Hiking", "Coffee", "Reading", "Travel", "Photography"],
-  coordinates: {
-    latitude: 37.7749,
-    longitude: -122.4194
-  }
-};
-
-const sampleMatches: Match[] = [
-  {
-    id: "1",
-    name: "Emma",
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80",
-    lastActive: "2 hours ago",
-    matchDate: "2 days ago",
-    hasUnreadMessage: true,
-    score: {
-      ...getDefaultMatchScore(),
-      level: 2,
-      points: 215,
-      streak: 2,
-      badges: calculateBadges(55, 0.92, 2, 7)
-    },
-    compatibilityPercentage: 87,
-    aiCompatibility: {
-      score: 87,
-      insights: ["You share 3 interests", "You're close in age", "Similar communication patterns"],
-      commonInterests: ["Hiking", "Coffee", "Photography"],
-      compatibilityReasons: ["Common interests: Hiking, Coffee, Photography", "Similar age group", "Compatible communication styles"]
-    }
-  },
-  {
-    id: "3",
-    name: "Sophia",
-    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=776&q=80",
-    lastActive: "5 mins ago",
-    matchDate: "1 week ago",
-    hasUnreadMessage: true,
-    score: {
-      ...getDefaultMatchScore(),
-      level: 3,
-      points: 420,
-      streak: 7,
-      badges: calculateBadges(70, 0.95, 6, 32)
-    },
-    compatibilityPercentage: 92,
-    aiCompatibility: {
-      score: 92,
-      insights: ["You share 4 interests", "You're very close to each other", "Similar communication patterns"],
-      commonInterests: ["Coffee", "Reading", "Travel", "Photography"],
-      compatibilityReasons: ["Common interests: Coffee, Reading, Travel, Photography", "Close proximity", "Compatible communication styles"]
-    }
-  },
-  {
-    id: "5",
-    name: "Olivia",
-    imageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=776&q=80",
-    lastActive: "1 day ago",
-    matchDate: "3 days ago",
-    hasUnreadMessage: false,
-    score: {
-      ...getDefaultMatchScore(),
-      level: 1,
-      points: 85,
-      streak: 0,
-      badges: calculateBadges(25, 0.80, 1, 5)
-    },
-    compatibilityPercentage: 75,
-    aiCompatibility: {
-      score: 75,
-      insights: ["You share 2 interests", "You're close in age"],
-      commonInterests: ["Reading", "Travel"],
-      compatibilityReasons: ["Common interests: Reading, Travel", "Similar age group"]
-    }
-  }
-];
-
-const additionalProfiles = [
-  {
-    id: "7",
-    name: "Maya",
-    age: 29,
-    gender: "female",
-    location: "Oakland, CA",
-    interests: ["Hiking", "Yoga", "Coffee", "Art", "Photography"],
-    coordinates: {
-      latitude: 37.8044,
-      longitude: -122.2711
-    },
-    imageUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80",
-    lastActive: "3 hours ago",
-    matchDate: "Just now",
-    hasUnreadMessage: false,
-    score: {
-      ...getDefaultMatchScore(),
-      level: 2,
-      points: 180,
-      streak: 1,
-      badges: calculateBadges(40, 0.85, 3, 12)
-    }
-  },
-  {
-    id: "8",
-    name: "Lily",
-    age: 27,
-    gender: "female",
-    location: "San Jose, CA",
-    interests: ["Reading", "Travel", "Music", "Cinema"],
-    coordinates: {
-      latitude: 37.3382,
-      longitude: -121.8863
-    },
-    imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80",
-    lastActive: "1 day ago",
-    matchDate: "Just now",
-    hasUnreadMessage: false,
-    score: {
-      ...getDefaultMatchScore(),
-      level: 1,
-      points: 95,
-      streak: 0,
-      badges: calculateBadges(25, 0.75, 1, 8)
-    }
-  }
-];
+import { enhanceMatchesWithPersonalization } from "@/utils/activityTracker";
+import { Match } from "@/components/MatchesList";
+import MatchesHeader from "@/components/matches/MatchesHeader";
+import CrossAppAlert from "@/components/matches/CrossAppAlert";
+import MatchTabs from "@/components/matches/MatchTabs";
+import { useMatchRecommendations } from "@/components/matches/MatchRecommendations";
+import { defaultUserProfile } from "@/components/matches/defaultUserProfile";
+import { sampleMatches } from "@/components/matches/sampleMatches";
 
 const Matches = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
   const [matches, setMatches] = useState<Match[]>([]);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  
+  // Use the current user's profile or default to sample profile
+  const userProfile = user?.profile || defaultUserProfile;
+  
+  // Get recommendations using our custom hook
+  const { recommendations, aiRecommendations } = useMatchRecommendations({
+    userProfile,
+    existingMatches: sampleMatches
+  });
   
   useEffect(() => {
-    const baseRecommendations = getAIMatchRecommendations(
-      user?.profile || userProfile,
-      [...sampleMatches, ...additionalProfiles]
-    );
-    
-    setRecommendations(baseRecommendations);
-    
-    const enhancedMatches = sampleMatches.map(match => {
-      if (match.aiCompatibility) return match;
-      const recommendation = baseRecommendations.find(r => r.id === match.id);
-      return {
-        ...match,
-        aiCompatibility: recommendation?.aiCompatibility || {
-          score: match.compatibilityPercentage || 50,
-          insights: [],
-          commonInterests: [],
-          compatibilityReasons: []
-        }
-      };
-    });
-    
-    setMatches(enhancedMatches);
-  }, [user]);
-  
-  const aiRecommendations = recommendations
-    .filter(profile => !sampleMatches.some(match => match.id === profile.id))
-    .map(profile => ({
-      id: profile.id,
-      name: profile.name,
-      imageUrl: profile.imageUrl,
-      lastActive: profile.lastActive,
-      matchDate: "AI Recommendation",
-      hasUnreadMessage: false,
-      compatibilityPercentage: profile.aiCompatibility.score,
-      aiCompatibility: profile.aiCompatibility,
-      score: profile.score || getDefaultMatchScore()
-    }));
+    // If there are recommendations, enhance the existing matches with AI compatibility data
+    if (recommendations.length > 0) {
+      const enhancedMatches = sampleMatches.map(match => {
+        if (match.aiCompatibility) return match;
+        const recommendation = recommendations.find(r => r.id === match.id);
+        return {
+          ...match,
+          aiCompatibility: recommendation?.aiCompatibility || {
+            score: match.compatibilityPercentage || 50,
+            insights: [],
+            commonInterests: [],
+            compatibilityReasons: []
+          }
+        };
+      });
+      
+      setMatches(enhancedMatches);
+    } else {
+      setMatches(sampleMatches);
+    }
+  }, [recommendations]);
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Your Matches</h2>
-        
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span>AI Powered</span>
-          </Button>
-          
-          <Button variant="outline" size="sm" className="gap-1">
-            <Globe className="h-4 w-4 text-emerald-500" />
-            <span>Cross-App Personalization</span>
-          </Button>
-        </div>
-      </div>
+      <MatchesHeader title="Your Matches" />
+      <CrossAppAlert />
       
-      <div className="mb-4 bg-emerald-50 text-emerald-800 rounded-lg p-3 text-sm border border-emerald-200">
-        <p className="flex items-center gap-1.5">
-          <Globe className="h-4 w-4 text-emerald-500" />
-          <span>
-            <strong>Cross-App Activity Tracking:</strong> We're analyzing your activity across
-            partner apps to provide better personalized matches.
-          </span>
-        </p>
-      </div>
-      
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-4">
-          <TabsTrigger value="all" className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>All Matches</span>
-          </TabsTrigger>
-          <TabsTrigger value="ai" className="flex items-center gap-1">
-            <Sparkles className="h-4 w-4" />
-            <span>AI Recommendations</span>
-          </TabsTrigger>
-          <TabsTrigger value="personalized" className="flex items-center gap-1">
-            <Globe className="h-4 w-4" />
-            <span>Personalized</span>
-          </TabsTrigger>
-          <TabsTrigger value="recent" className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            <span>Recent Activity</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all">
-          <MatchesList matches={matches} />
-        </TabsContent>
-        
-        <TabsContent value="ai">
-          <div className="mb-4 bg-amber-50 text-amber-800 rounded-lg p-3 text-sm border border-amber-200">
-            <p className="flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-amber-500" />
-              <span>Our AI has analyzed your profile and found these potential matches for you.</span>
-            </p>
-          </div>
-          <MatchesList matches={[...aiRecommendations, ...matches.sort((a, b) => 
-            (b.aiCompatibility?.score || 0) - (a.aiCompatibility?.score || 0)
-          ).slice(0, 3)]} />
-        </TabsContent>
-        
-        <TabsContent value="personalized">
-          <div className="mb-4 bg-emerald-50 text-emerald-800 rounded-lg p-3 text-sm border border-emerald-200">
-            <p className="flex items-center gap-1.5">
-              <Globe className="h-4 w-4 text-emerald-500" />
-              <span>Recommendations based on your activity across our partner apps and websites.</span>
-            </p>
-          </div>
-          <MatchesList matches={[...matches, ...aiRecommendations].sort((a, b) => {
-            const aScore = a.aiCompatibility?.personalizedScore || a.aiCompatibility?.score || 0;
-            const bScore = b.aiCompatibility?.personalizedScore || b.aiCompatibility?.score || 0;
-            return bScore - aScore;
-          })} />
-        </TabsContent>
-        
-        <TabsContent value="recent">
-          <MatchesList matches={matches.sort((a, b) => {
-            if (a.hasUnreadMessage && !b.hasUnreadMessage) return -1;
-            if (!a.hasUnreadMessage && b.hasUnreadMessage) return 1;
-            return 0;
-          })} />
-        </TabsContent>
-      </Tabs>
+      <MatchTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        matches={matches}
+        aiRecommendations={aiRecommendations}
+      />
     </div>
   );
 };
