@@ -15,7 +15,9 @@ export {
 export {
   // Export these from twilioConnection
   connectToRoom,
-  ConnectOptions,
   createLocalAudioTrack,
   createLocalVideoTrack
 } from "./twilioConnection";
+
+// Export type definitions - using 'export type' syntax for TypeScript isolated modules
+export type { ConnectOptions } from "./twilioConnection";
