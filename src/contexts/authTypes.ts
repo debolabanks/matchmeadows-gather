@@ -24,6 +24,10 @@ export type UserProfile = {
   faceVerificationDate?: string;
   locationPrivacy?: "public" | "friends" | "private";
   language?: "en" | "es" | "fr" | "de" | "zh" | "ja" | "ko" | "pt" | "ru";
+  subscriptionStatus?: "none" | "active" | "expired";
+  subscriptionPlan?: "monthly" | "biannual" | "yearly";
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
   privacySettings?: {
     showActivity?: boolean;
     showDistance?: boolean;

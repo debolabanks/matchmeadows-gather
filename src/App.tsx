@@ -23,6 +23,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorChannel from "./pages/CreatorChannel";
 import Creators from "./pages/Creators";
 import About from "./pages/About";
+import Subscription from "./pages/Subscription";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
                   <Route path="/sign-up" element={<SignUp />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/subscription" element={<Subscription />} />
                   <Route path="/discover" element={
                     <ProtectedRoute>
                       <Discover />

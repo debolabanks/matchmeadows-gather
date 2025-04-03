@@ -8,6 +8,8 @@ import { ChevronDown, ChevronUp, Filter, MapPin, Users } from "lucide-react";
 import MatchPreferences from "@/components/MatchPreferences";
 import { MatchCriteria, filterProfilesByPreferences, rankProfilesByCompatibility } from "@/utils/matchingAlgorithm";
 import { useAuth } from "@/hooks/useAuth";
+import AdBanner from "@/components/AdBanner";
+import { Link } from "react-router-dom";
 
 // Enhanced sample data for profiles
 const sampleProfiles: Omit<ProfileCardProps, 'onLike' | 'onDislike'>[] = [
@@ -113,6 +115,9 @@ const Discover = () => {
   });
   const { toast } = useToast();
   
+  // Check if user has an active subscription
+  const isPremium = user?.profile?.subscriptionStatus === "active";
+  
   // Apply filters when preferences change
   useEffect(() => {
     // Filter profiles by preferences
@@ -182,6 +187,8 @@ const Discover = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
+      {!isPremium && <AdBanner variant="large" />}
+      
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Discover</h1>
         
@@ -209,6 +216,8 @@ const Discover = () => {
           />
         </div>
       )}
+      
+      {!isPremium && <AdBanner position="sidebar" variant="small" />}
       
       {filteredProfiles.length === 0 && currentProfiles.length === 0 ? (
         <div className="text-center py-12">
@@ -258,6 +267,19 @@ const Discover = () => {
                   </svg>
                 </div>
               </div>
+            </div>
+          )}
+          
+          {!isPremium && (
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                Upgrade to Premium for an ad-free experience!
+              </p>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/subscription">
+                  View Subscription Plans
+                </Link>
+              </Button>
             </div>
           )}
         </div>
