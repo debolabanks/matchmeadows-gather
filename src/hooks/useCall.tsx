@@ -1,7 +1,6 @@
-
 import { useState, useRef, useCallback } from "react";
 import { CallSession } from "@/types/message";
-import { connectToRoom, createLocalAudioTrack, createLocalVideoTrack } from "@/services/twilioService";
+import { connectToRoom, createLocalAudioTrack, createLocalVideoTrack } from "@/services/twilio";
 import Video, { LocalTrack, LocalAudioTrack, LocalVideoTrack, Room } from "twilio-video";
 
 type CallType = "video" | "voice";
@@ -33,9 +32,7 @@ export const useCall = (): UseCallReturn => {
   
   const timerRef = useRef<number | null>(null);
 
-  // Cleanup function for when call ends
   const cleanupResources = useCallback(() => {
-    // Stop all local tracks with proper type checking
     localTracks.forEach(track => {
       if (track instanceof LocalAudioTrack || track instanceof LocalVideoTrack) {
         track.stop();
@@ -45,27 +42,22 @@ export const useCall = (): UseCallReturn => {
     });
     setLocalTracks([]);
     
-    // Disconnect from Twilio room if active
     if (twilioRoom) {
       twilioRoom.disconnect();
       setTwilioRoom(null);
     }
     
-    // Clear any active timers
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
   }, [localTracks, twilioRoom]);
 
-  // Start a new outgoing call
   const startCall = useCallback(async (contactId: string, contactName: string, contactImage: string, type: CallType) => {
-    // End any existing call first
     if (activeCall) {
       endCall();
     }
     
-    // Create a new call session
     const newCall: CallSession = {
       id: `call-${Date.now()}`,
       type,
@@ -77,7 +69,6 @@ export const useCall = (): UseCallReturn => {
     setActiveCall(newCall);
     
     try {
-      // Connect to Twilio room
       const room = await connectToRoom({
         name: `room-${contactId}-${Date.now()}`,
         audio: true,
@@ -86,14 +77,12 @@ export const useCall = (): UseCallReturn => {
       
       setTwilioRoom(room);
       
-      // Get local tracks from room
       const tracks = Array.from(room.localParticipant.tracks.values())
         .map(publication => publication.track)
         .filter(track => track !== null) as LocalTrack[];
       
       setLocalTracks(tracks);
       
-      // Update call status
       setActiveCall(prev => prev ? {
         ...prev,
         status: "connected"
@@ -103,22 +92,18 @@ export const useCall = (): UseCallReturn => {
     } catch (error) {
       console.error("Failed to start call:", error);
       
-      // Update call status to reflect error
       setActiveCall(prev => prev ? {
         ...prev,
         status: "ended",
         endTime: new Date().toISOString()
       } : null);
       
-      // Clean up anyway
       cleanupResources();
     }
   }, [activeCall, cleanupResources]);
 
-  // End the current call
   const endCall = useCallback(() => {
     if (activeCall) {
-      // Update call status and set end time
       const endedCall: CallSession = {
         ...activeCall,
         status: "ended",
@@ -128,18 +113,14 @@ export const useCall = (): UseCallReturn => {
           0
       };
       
-      // In a real app, you would save the call to history here
       console.log("Call ended:", endedCall);
       
-      // Clean up resources
       cleanupResources();
       
-      // Clear the active call
       setActiveCall(null);
     }
   }, [activeCall, cleanupResources]);
 
-  // Simulate receiving an incoming call (for demo purposes)
   const simulateIncomingCall = useCallback((fromId: string, fromName: string, fromImage: string, type: CallType) => {
     if (!activeCall) {
       setIncomingCall({
@@ -151,7 +132,6 @@ export const useCall = (): UseCallReturn => {
         type
       });
       
-      // Auto-reject after 30 seconds if not answered
       timerRef.current = window.setTimeout(() => {
         setIncomingCall(prev => {
           if (prev && prev.from.id === fromId) {
@@ -163,7 +143,6 @@ export const useCall = (): UseCallReturn => {
     }
   }, [activeCall]);
 
-  // Accept an incoming call
   const acceptIncomingCall = useCallback(async () => {
     if (incomingCall) {
       const newCall: CallSession = {
@@ -177,7 +156,6 @@ export const useCall = (): UseCallReturn => {
       setActiveCall(newCall);
       setIncomingCall(null);
       
-      // Connect to Twilio room
       try {
         const room = await connectToRoom({
           name: `room-${incomingCall.from.id}-${Date.now()}`,
@@ -187,14 +165,12 @@ export const useCall = (): UseCallReturn => {
         
         setTwilioRoom(room);
         
-        // Get local tracks from room
         const tracks = Array.from(room.localParticipant.tracks.values())
           .map(publication => publication.track)
           .filter(track => track !== null) as LocalTrack[];
         
         setLocalTracks(tracks);
         
-        // Update call status
         setActiveCall(prev => prev ? {
           ...prev,
           status: "connected"
@@ -204,23 +180,19 @@ export const useCall = (): UseCallReturn => {
       } catch (error) {
         console.error("Failed to accept call:", error);
         
-        // Update call status to reflect error
         setActiveCall(prev => prev ? {
           ...prev,
           status: "ended",
           endTime: new Date().toISOString()
         } : null);
         
-        // Clean up anyway
         cleanupResources();
       }
     }
   }, [incomingCall, cleanupResources]);
 
-  // Reject an incoming call
   const rejectIncomingCall = useCallback(() => {
     if (incomingCall) {
-      // In a real app, you would notify the caller
       console.log(`Rejected call from ${incomingCall.from.name}`);
       
       if (timerRef.current) {

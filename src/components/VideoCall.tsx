@@ -1,9 +1,8 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CallSession } from "@/types/message";
-import { attachTrackToElement } from "@/services/twilioService";
+import { attachTrackToElement } from "@/services/twilio";
 import { useCallContext } from "@/contexts/CallContext";
 import { Room, RemoteParticipant, RemoteTrack, RemoteTrackPublication } from "twilio-video";
 import { 
@@ -57,16 +56,13 @@ const VideoCall = ({
   const { toast } = useToast();
   const { twilioRoom, localTracks } = useCallContext();
 
-  // Initialize call when component mounts
   useEffect(() => {
     if (isIncoming && callStatus === "connecting") {
-      // Don't start for incoming calls until accepted
       return;
     }
     
     setCallStatus("connecting");
     
-    // Start call timer when connected
     if (callStatus === "connected") {
       startTimer();
     }
@@ -78,21 +74,17 @@ const VideoCall = ({
     };
   }, [callStatus, isIncoming]);
 
-  // Handle Twilio room and tracks
   useEffect(() => {
     if (!twilioRoom) return;
     
-    // Mark call as connected when room is ready
     setCallStatus("connected");
     
-    // Set up local video
     const localVideoTrack = localTracks.find(track => track.kind === 'video');
     if (localVideoTrack && localVideoRef.current) {
       const videoElement = localVideoRef.current;
       attachTrackToElement(localVideoTrack as any, videoElement);
     }
     
-    // Handle remote participants
     const handleTrackSubscribed = (track: RemoteTrack) => {
       if (track.kind === 'video' && remoteVideoRef.current) {
         attachTrackToElement(track as any, remoteVideoRef.current);
@@ -114,11 +106,9 @@ const VideoCall = ({
     twilioRoom.participants.forEach(handleParticipantConnected);
     twilioRoom.on('participantConnected', handleParticipantConnected);
     
-    // Start timer when connected to room
     startTimer();
     
     return () => {
-      // Safely remove event listeners
       if (twilioRoom && typeof twilioRoom.off === 'function') {
         twilioRoom.off('participantConnected', handleParticipantConnected);
       }
@@ -129,9 +119,7 @@ const VideoCall = ({
     };
   }, [twilioRoom, localTracks]);
 
-  // Start call duration timer
   const startTimer = () => {
-    // Clear any existing timer
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -141,7 +129,6 @@ const VideoCall = ({
     }, 1000);
   };
 
-  // Handle call end
   const endCall = () => {
     setCallStatus("ended");
     if (timerRef.current) {
@@ -150,7 +137,6 @@ const VideoCall = ({
     onEnd();
   };
 
-  // Handle accepting an incoming call
   const acceptCall = () => {
     if (onAccept) {
       onAccept();
@@ -158,7 +144,6 @@ const VideoCall = ({
     setCallStatus("connecting");
   };
 
-  // Handle rejecting an incoming call
   const rejectCall = () => {
     if (onReject) {
       onReject();
@@ -167,7 +152,6 @@ const VideoCall = ({
     setTimeout(onEnd, 1000);
   };
 
-  // Toggle mute
   const toggleMute = () => {
     const audioTrack = localTracks.find(track => track.kind === 'audio');
     if (audioTrack) {
@@ -176,7 +160,6 @@ const VideoCall = ({
     setIsMuted(!isMuted);
   };
 
-  // Toggle video
   const toggleVideo = () => {
     const videoTrack = localTracks.find(track => track.kind === 'video');
     if (videoTrack) {
@@ -185,10 +168,7 @@ const VideoCall = ({
     setIsVideoOff(!isVideoOff);
   };
 
-  // Toggle speaker
   const toggleSpeaker = () => {
-    // In a real app, you would switch audio output devices
-    // This is just for UI demonstration
     setIsSpeakerOn(!isSpeakerOn);
     
     toast({
@@ -197,7 +177,6 @@ const VideoCall = ({
     });
   };
 
-  // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!callContainerRef.current) return;
     
@@ -214,7 +193,6 @@ const VideoCall = ({
     setIsFullscreen(!isFullscreen);
   };
 
-  // Format duration as mm:ss
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -228,7 +206,6 @@ const VideoCall = ({
         isFullscreen ? 'fullscreen' : ''
       }`}
     >
-      {/* Remote video (main view) */}
       <div className="relative flex-1 flex items-center justify-center bg-gray-900">
         {callType === "video" && (
           <video
@@ -255,7 +232,6 @@ const VideoCall = ({
           </div>
         )}
         
-        {/* Call status indicator */}
         <div className="absolute top-8 left-0 right-0 text-center">
           {callStatus === "connecting" && !isIncoming && (
             <p className="text-white bg-black/30 py-1 px-3 rounded-full inline-block">
@@ -264,7 +240,6 @@ const VideoCall = ({
           )}
         </div>
         
-        {/* Local video (picture-in-picture) */}
         {callType === "video" && !isVideoOff && (
           <div className="absolute top-4 right-4 w-28 h-40 md:w-40 md:h-56 rounded-lg overflow-hidden border-2 border-white">
             <video
@@ -278,10 +253,8 @@ const VideoCall = ({
         )}
       </div>
       
-      {/* Call controls */}
       <div className="bg-black p-4 flex justify-center">
         {isIncoming && callStatus === "connecting" ? (
-          // Incoming call controls
           <div className="flex gap-4">
             <Button 
               onClick={rejectCall}
@@ -301,7 +274,6 @@ const VideoCall = ({
             </Button>
           </div>
         ) : (
-          // Active call controls
           <div className="flex gap-3 flex-wrap justify-center">
             <Button
               onClick={toggleMute}
