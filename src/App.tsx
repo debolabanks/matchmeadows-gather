@@ -1,6 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthProvider";
 import { CallProvider } from "./contexts/CallContext";
 import { Toaster } from "./components/ui/toaster";
