@@ -1,49 +1,71 @@
 
-/**
- * Sound service for playing notification sounds
- */
+// Sound effect handlers for calls and messages
 
-// Sound files - using URL paths to ensure they work properly
-const INCOMING_CALL_SOUND = new Audio('/src/assets/incoming-call.mp3');
-const NEW_MESSAGE_SOUND = new Audio('/src/assets/new-message.mp3');
-
-// Configure audio settings
-INCOMING_CALL_SOUND.loop = true;
-NEW_MESSAGE_SOUND.loop = false;
-
-let activeSound: HTMLAudioElement | null = null;
+let incomingCallSound: HTMLAudioElement | null = null;
+let newMessageSound: HTMLAudioElement | null = null;
 
 /**
- * Play incoming call sound
+ * Initialize a sound element
  */
-export const playIncomingCallSound = () => {
-  stopAllSounds();
-  INCOMING_CALL_SOUND.play().catch(err => console.error('Error playing call sound:', err));
-  activeSound = INCOMING_CALL_SOUND;
+const createAudioElement = (src: string): HTMLAudioElement => {
+  const audio = new Audio(src);
+  audio.loop = false;
+  return audio;
 };
 
 /**
- * Play new message sound
+ * Play the incoming call sound
  */
-export const playNewMessageSound = () => {
+export const playIncomingCallSound = (): void => {
   stopAllSounds();
-  NEW_MESSAGE_SOUND.play().catch(err => console.error('Error playing message sound:', err));
-  activeSound = NEW_MESSAGE_SOUND;
+  
+  if (!incomingCallSound) {
+    incomingCallSound = createAudioElement('/assets/incoming-call.mp3');
+    incomingCallSound.loop = true;
+  }
+  
+  incomingCallSound.play().catch(error => {
+    console.error("Error playing incoming call sound:", error);
+  });
+};
+
+/**
+ * Play the new message notification sound
+ */
+export const playNewMessageSound = (): void => {
+  if (!newMessageSound) {
+    newMessageSound = createAudioElement('/assets/new-message.mp3');
+  }
+  
+  // Reset to beginning if already playing
+  newMessageSound.currentTime = 0;
+  
+  newMessageSound.play().catch(error => {
+    console.error("Error playing new message sound:", error);
+  });
 };
 
 /**
  * Stop all currently playing sounds
  */
-export const stopAllSounds = () => {
-  if (activeSound) {
-    activeSound.pause();
-    activeSound.currentTime = 0;
-    activeSound = null;
+export const stopAllSounds = (): void => {
+  if (incomingCallSound) {
+    incomingCallSound.pause();
+    incomingCallSound.currentTime = 0;
+  }
+};
+
+/**
+ * Preload all sounds for better performance
+ */
+export const preloadSounds = (): void => {
+  if (!incomingCallSound) {
+    incomingCallSound = createAudioElement('/assets/incoming-call.mp3');
+    incomingCallSound.preload = 'auto';
   }
   
-  // Ensure both sounds are stopped
-  INCOMING_CALL_SOUND.pause();
-  INCOMING_CALL_SOUND.currentTime = 0;
-  NEW_MESSAGE_SOUND.pause();
-  NEW_MESSAGE_SOUND.currentTime = 0;
+  if (!newMessageSound) {
+    newMessageSound = createAudioElement('/assets/new-message.mp3');
+    newMessageSound.preload = 'auto';
+  }
 };
