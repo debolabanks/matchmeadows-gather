@@ -19,6 +19,11 @@ const useGameState = () => {
   const [winner, setWinner] = useState<Player>(null);
   const [isDraw, setIsDraw] = useState(false);
   const [opponentMoveTimeout, setOpponentMoveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [scores, setScores] = useState({
+    player: 0,
+    opponent: 0,
+    draws: 0
+  });
   
   // Play game start sound when component mounts
   useEffect(() => {
@@ -51,9 +56,12 @@ const useGameState = () => {
     
     if (gameWinner) {
       setWinner(gameWinner);
+      // Update scores
       if (gameWinner === "X") {
+        setScores(prev => ({ ...prev, player: prev.player + 1 }));
         playWinSound();
       } else {
+        setScores(prev => ({ ...prev, opponent: prev.opponent + 1 }));
         playLoseSound();
       }
       toast({
@@ -66,6 +74,7 @@ const useGameState = () => {
     
     if (gameDraw) {
       setIsDraw(true);
+      setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
       playDrawSound();
       toast({
         title: "Game Over!",
@@ -113,9 +122,12 @@ const useGameState = () => {
       
       if (gameWinner) {
         setWinner(gameWinner);
+        // Update scores
         if (gameWinner === "X") {
+          setScores(prev => ({ ...prev, player: prev.player + 1 }));
           playWinSound();
         } else {
+          setScores(prev => ({ ...prev, opponent: prev.opponent + 1 }));
           playLoseSound();
         }
         toast({
@@ -128,6 +140,7 @@ const useGameState = () => {
       
       if (gameDraw) {
         setIsDraw(true);
+        setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
         playDrawSound();
         toast({
           title: "Game Over!",
@@ -160,6 +173,7 @@ const useGameState = () => {
     currentPlayer,
     winner,
     isDraw,
+    scores,
     opponentMoveTimeout,
     makeMove,
     resetGame

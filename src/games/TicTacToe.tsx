@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import GameHeader from "./tic-tac-toe/GameHeader";
 import GameBoard from "./tic-tac-toe/GameBoard";
 import GameStatus from "./tic-tac-toe/GameStatus";
+import ScoreBoard from "./tic-tac-toe/ScoreBoard";
 import { initialBoard, checkWinner, checkDraw } from "./tic-tac-toe/gameUtils";
 import useGameState from "./tic-tac-toe/useGameState";
 
@@ -25,6 +26,7 @@ const TicTacToe = () => {
     currentPlayer,
     winner,
     isDraw,
+    scores,
     opponentMoveTimeout,
     makeMove,
     resetGame
@@ -73,6 +75,13 @@ const TicTacToe = () => {
           currentPlayer={currentPlayer} 
           contactName={contactInfo.contactName}
           onResetGame={resetGame}
+        />
+        
+        <ScoreBoard
+          playerScore={scores.player}
+          opponentScore={scores.opponent}
+          draws={scores.draws}
+          contactName={contactInfo.contactName}
         />
         
         <GameBoard

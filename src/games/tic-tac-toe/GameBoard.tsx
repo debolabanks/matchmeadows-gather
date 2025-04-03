@@ -34,10 +34,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const winnerVariants = {
     initial: { scale: 1 },
     animate: { 
-      scale: [1, 1.2, 1],
+      scale: [1, 1.2, 1] as number[],
       transition: { 
         repeat: Infinity,
-        repeatType: "reverse", 
+        repeatType: "reverse" as const, 
         duration: 1
       }
     }
