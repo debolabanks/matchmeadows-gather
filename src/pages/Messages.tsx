@@ -9,6 +9,7 @@ import { ChatContact, ChatMessage } from "@/types/message";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import MessageCallButtons from "@/components/MessageCallButtons";
+import { playNewMessageSound } from "@/services/soundService";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -160,6 +161,46 @@ const Messages = () => {
       ));
     }
   };
+
+  const simulateIncomingMessage = () => {
+    if (selectedContact) {
+      const incomingMessage: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        senderId: selectedContact.id,
+        text: "Hey, just checking in! How are you doing today?",
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+
+      setMessages(prev => [...prev, incomingMessage]);
+      
+      setContacts(contacts.map(contact => 
+        contact.id === selectedContact.id
+          ? {
+              ...contact,
+              lastMessage: {
+                text: incomingMessage.text,
+                timestamp: incomingMessage.timestamp,
+                isFromContact: true,
+                read: false,
+              }
+            }
+          : contact
+      ));
+      
+      playNewMessageSound();
+    }
+  };
+
+  useEffect(() => {
+    if (selectedContact) {
+      const timer = setInterval(() => {
+        simulateIncomingMessage();
+      }, 45000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [selectedContact]);
 
   const formatMessageTime = (timestamp: string) => {
     return format(new Date(timestamp), 'h:mm a');

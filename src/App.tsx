@@ -21,6 +21,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorChannel from "./pages/CreatorChannel";
+import Creators from "./pages/Creators";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,11 @@ const App = () => (
                   <Route path="/profile" element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/creators" element={
+                    <ProtectedRoute>
+                      <Creators />
                     </ProtectedRoute>
                   } />
                   <Route path="/creators/:creatorId" element={

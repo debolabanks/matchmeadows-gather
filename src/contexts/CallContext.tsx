@@ -5,6 +5,7 @@ import VideoCall from "@/components/VideoCall";
 import { Button } from "@/components/ui/button";
 import { Phone, Video, X } from "lucide-react";
 import { Room, LocalTrack } from "twilio-video";
+import { playIncomingCallSound, stopAllSounds } from "@/services/soundService";
 
 interface CallContextType {
   startCall: (contactId: string, contactName: string, contactImage: string, type: "video" | "voice") => void;
@@ -27,6 +28,19 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     twilioRoom,
     localTracks
   } = useCall();
+
+  // Play sound when there's an incoming call
+  useEffect(() => {
+    if (incomingCall && !activeCall) {
+      playIncomingCallSound();
+    } else {
+      stopAllSounds();
+    }
+    
+    return () => {
+      stopAllSounds();
+    };
+  }, [incomingCall, activeCall]);
 
   // Simulate an incoming call after the app loads (demo purpose)
   useEffect(() => {
