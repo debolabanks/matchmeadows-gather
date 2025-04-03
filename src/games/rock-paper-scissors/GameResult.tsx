@@ -1,6 +1,7 @@
 
 import React from "react";
 import type { GameOption, GameResult as GameResultType } from "./useRockPaperScissors";
+import { motion } from "framer-motion";
 
 interface GameResultProps {
   result: GameResultType;
@@ -35,38 +36,88 @@ const GameResult = ({ result, playerChoice, opponentChoice, isPlaying }: GameRes
       {(playerChoice || opponentChoice) && (
         <>
           <div className="flex justify-around w-full mb-4">
-            <div className="flex flex-col items-center">
+            <motion.div 
+              className="flex flex-col items-center"
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
               <span className="text-sm text-muted-foreground mb-2">You</span>
-              <div className="text-5xl">
+              <motion.div 
+                className="text-5xl"
+                animate={{ 
+                  scale: result === "win" ? [1, 1.2, 1] : 1,
+                  rotate: result ? [0, 10, -10, 0] : 0,
+                }}
+                transition={{ duration: 0.5 }}
+              >
                 {playerChoice ? getEmoji(playerChoice) : "❓"}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
             
-            <div className="flex flex-col items-center">
+            <motion.div 
+              className="flex flex-col items-center"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
               <span className="text-sm text-muted-foreground mb-2">VS</span>
               <div className="text-2xl">🆚</div>
-            </div>
+            </motion.div>
             
-            <div className="flex flex-col items-center">
+            <motion.div 
+              className="flex flex-col items-center"
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
               <span className="text-sm text-muted-foreground mb-2">Opponent</span>
-              <div className="text-5xl">
-                {isPlaying && !opponentChoice ? "🤔" : opponentChoice ? getEmoji(opponentChoice) : "❓"}
-              </div>
-            </div>
+              <motion.div 
+                className="text-5xl"
+                animate={{ 
+                  scale: result === "lose" ? [1, 1.2, 1] : 1,
+                  rotate: result ? [0, 10, -10, 0] : 0,
+                }}
+                transition={{ duration: 0.5 }}
+              >
+                {isPlaying && !opponentChoice ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                  >
+                    🤔
+                  </motion.div>
+                ) : opponentChoice ? (
+                  getEmoji(opponentChoice)
+                ) : (
+                  "❓"
+                )}
+              </motion.div>
+            </motion.div>
           </div>
           
           {result && (
-            <div className="mt-4 text-xl font-bold">
+            <motion.div 
+              className="mt-4 text-xl font-bold"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
+            >
               {getResultMessage()}
-            </div>
+            </motion.div>
           )}
         </>
       )}
       
       {!playerChoice && !opponentChoice && !isPlaying && (
-        <div className="text-center text-lg my-8">
+        <motion.div 
+          className="text-center text-lg my-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
           Select rock, paper, or scissors to start
-        </div>
+        </motion.div>
       )}
     </div>
   );

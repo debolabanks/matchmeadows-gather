@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -7,6 +8,14 @@ import {
   checkLoss,
   DEFAULT_CATEGORY,
 } from "./gameUtils";
+import { 
+  playCorrectSound, 
+  playWrongSound, 
+  playWinSound, 
+  playLoseSound, 
+  playGameStartSound,
+  playClickSound
+} from "../utils/gameSounds";
 
 interface WordGuessHookProps {
   contactInfo: {
@@ -69,6 +78,9 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
     if (opponentTimeout) {
       clearTimeout(opponentTimeout);
     }
+    
+    // Play game start sound
+    playGameStartSound();
   };
 
   // Handle category change
@@ -86,6 +98,9 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
         setGameWon(false);
         setPlayerTurn(1);
         setIsOpponentTurn(false);
+        
+        // Play game start sound
+        playGameStartSound();
       }, 0);
     }
   };
@@ -104,6 +119,9 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
     // In single player mode, ignore if it's the opponent's turn
     if (!isMultiplayer && isOpponentTurn) return;
     
+    // Play click sound
+    playClickSound();
+    
     // Convert to uppercase for consistency
     letter = letter.toUpperCase();
     
@@ -114,11 +132,15 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
     setGuessedLetters(newGuessedLetters);
     
     if (!word.includes(letter)) {
+      // Play wrong guess sound
+      playWrongSound();
+      
       const newWrongGuesses = wrongGuesses + 1;
       setWrongGuesses(newWrongGuesses);
       
       if (checkLoss(newWrongGuesses)) {
         setGameOver(true);
+        playLoseSound();
         toast({
           title: "Game Over!",
           description: `${isMultiplayer 
@@ -137,10 +159,14 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
         }
       }
     } else {
+      // Play correct guess sound
+      playCorrectSound();
+      
       // Check if player won after a correct guess
       if (checkWin(word, newGuessedLetters)) {
         setGameOver(true);
         setGameWon(true);
+        playWinSound();
         
         // Update score for the winning player
         if (isMultiplayer) {
@@ -171,6 +197,9 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
         .filter(letter => !currentGuessedLetters.includes(letter));
       
       if (remainingLetters.length > 0) {
+        // Play click sound for opponent
+        playClickSound();
+        
         // Random letter selection strategy
         const randomIndex = Math.floor(Math.random() * remainingLetters.length);
         const opponentGuess = remainingLetters[randomIndex];
@@ -179,12 +208,18 @@ export const useWordGuess = ({ contactInfo }: WordGuessHookProps) => {
         setGuessedLetters(newGuessedLetters);
         
         if (!word.includes(opponentGuess)) {
+          // Play wrong guess sound
+          playWrongSound();
           setIsOpponentTurn(false); // Back to player's turn
         } else {
+          // Play correct guess sound
+          playCorrectSound();
+          
           // If opponent guessed correctly, check win and maybe guess again
           if (checkWin(word, newGuessedLetters)) {
             setGameOver(true);
             setGameWon(false);
+            playLoseSound();
             toast({
               title: "Game Over!",
               description: `${contactInfo.contactName || "Opponent"} won the game!`,

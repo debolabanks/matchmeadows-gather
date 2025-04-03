@@ -2,6 +2,15 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Board, Player, initialBoard, checkWinner, checkDraw } from "./gameUtils";
+import { 
+  playCorrectSound, 
+  playWrongSound, 
+  playWinSound, 
+  playLoseSound, 
+  playDrawSound,
+  playGameStartSound,
+  playClickSound
+} from "../utils/gameSounds";
 
 const useGameState = () => {
   const { toast } = useToast();
@@ -11,7 +20,10 @@ const useGameState = () => {
   const [isDraw, setIsDraw] = useState(false);
   const [opponentMoveTimeout, setOpponentMoveTimeout] = useState<NodeJS.Timeout | null>(null);
   
+  // Play game start sound when component mounts
   useEffect(() => {
+    playGameStartSound();
+    
     // Clean up timeouts on unmount
     return () => {
       if (opponentMoveTimeout) {
@@ -27,6 +39,9 @@ const useGameState = () => {
     // Don't allow moves if it's the opponent's turn
     if (currentPlayer === "O") return;
     
+    // Play click sound
+    playClickSound();
+    
     const newBoard = [...board.map(r => [...r])];
     newBoard[row][col] = currentPlayer;
     setBoard(newBoard);
@@ -36,6 +51,11 @@ const useGameState = () => {
     
     if (gameWinner) {
       setWinner(gameWinner);
+      if (gameWinner === "X") {
+        playWinSound();
+      } else {
+        playLoseSound();
+      }
       toast({
         title: "Game Over!",
         description: `${gameWinner === "X" ? "You" : "Opponent"} won the game!`,
@@ -46,6 +66,7 @@ const useGameState = () => {
     
     if (gameDraw) {
       setIsDraw(true);
+      playDrawSound();
       toast({
         title: "Game Over!",
         description: "It's a draw!",
@@ -77,6 +98,9 @@ const useGameState = () => {
     }
     
     if (availableMoves.length > 0) {
+      // Play click sound for opponent
+      playClickSound();
+      
       // Pick a random available move
       const [row, col] = availableMoves[Math.floor(Math.random() * availableMoves.length)];
       
@@ -89,6 +113,11 @@ const useGameState = () => {
       
       if (gameWinner) {
         setWinner(gameWinner);
+        if (gameWinner === "X") {
+          playWinSound();
+        } else {
+          playLoseSound();
+        }
         toast({
           title: "Game Over!",
           description: `${gameWinner === "X" ? "You" : "Opponent"} won the game!`,
@@ -99,6 +128,7 @@ const useGameState = () => {
       
       if (gameDraw) {
         setIsDraw(true);
+        playDrawSound();
         toast({
           title: "Game Over!",
           description: "It's a draw!",
@@ -117,6 +147,7 @@ const useGameState = () => {
     setCurrentPlayer("X");
     setWinner(null);
     setIsDraw(false);
+    playGameStartSound();
     
     if (opponentMoveTimeout) {
       clearTimeout(opponentMoveTimeout);

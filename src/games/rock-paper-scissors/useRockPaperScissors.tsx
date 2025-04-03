@@ -1,6 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  playWinSound, 
+  playLoseSound, 
+  playDrawSound,
+  playGameStartSound,
+  playClickSound
+} from "../utils/gameSounds";
 
 export type GameOption = "rock" | "paper" | "scissors" | null;
 export type GameResult = "win" | "lose" | "draw" | null;
@@ -20,6 +27,18 @@ export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps)
   const [isPlaying, setIsPlaying] = useState(false);
   const [opponentTimeout, setOpponentTimeout] = useState<NodeJS.Timeout | null>(null);
 
+  // Play game start sound on component mount
+  useEffect(() => {
+    playGameStartSound();
+    
+    // Clean up timeouts on unmount
+    return () => {
+      if (opponentTimeout) {
+        clearTimeout(opponentTimeout);
+      }
+    };
+  }, []);
+
   const determineWinner = (player: GameOption, opponent: GameOption): GameResult => {
     if (player === opponent) return "draw";
     
@@ -37,6 +56,9 @@ export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps)
   const handlePlayerChoice = (choice: GameOption) => {
     if (isPlaying || !choice) return;
     
+    // Play click sound when player makes a choice
+    playClickSound();
+    
     setIsPlaying(true);
     setPlayerChoice(choice);
     
@@ -49,8 +71,9 @@ export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps)
       const gameResult = determineWinner(choice, randomChoice);
       setResult(gameResult);
       
-      // Update scores
+      // Play appropriate sound based on result
       if (gameResult === "win") {
+        playWinSound();
         setPlayerScore(prev => prev + 1);
         toast({
           title: "You won!",
@@ -58,6 +81,7 @@ export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps)
           duration: 3000,
         });
       } else if (gameResult === "lose") {
+        playLoseSound();
         setOpponentScore(prev => prev + 1);
         toast({
           title: `${contactName || "Opponent"} won!`,
@@ -65,6 +89,7 @@ export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps)
           duration: 3000,
         });
       } else {
+        playDrawSound();
         toast({
           title: "It's a draw!",
           description: `Both chose ${choice}`,
@@ -89,6 +114,7 @@ export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps)
     setPlayerScore(0);
     setOpponentScore(0);
     setIsPlaying(false);
+    playGameStartSound();
     
     if (opponentTimeout) {
       clearTimeout(opponentTimeout);
