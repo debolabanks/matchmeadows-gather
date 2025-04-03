@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { useVideoCall } from "@/hooks/useVideoCall";
+import { useVideoCall } from "@/hooks/video";
 import { ActiveCallControls, IncomingCallControls } from "@/components/call/CallControls";
 import CallAvatar from "@/components/call/CallAvatar";
 import CallLayout from "@/components/call/CallLayout";
