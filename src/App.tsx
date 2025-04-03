@@ -24,6 +24,7 @@ import CreatorChannel from "./pages/CreatorChannel";
 import Creators from "./pages/Creators";
 import About from "./pages/About";
 import Subscription from "./pages/Subscription";
+import Games from "./pages/Games";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,11 @@ const App = () => (
                   <Route path="/messages" element={
                     <ProtectedRoute>
                       <Messages />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/games" element={
+                    <ProtectedRoute>
+                      <Games />
                     </ProtectedRoute>
                   } />
                   <Route path="/profile" element={
