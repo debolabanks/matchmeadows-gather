@@ -108,16 +108,17 @@ const Creators = () => {
           <h1 className="text-3xl font-bold tracking-tight">Creators</h1>
           <p className="text-muted-foreground mt-1">Connect with relationship experts and coaches</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input 
-              placeholder="Search creators..." 
-              className="pl-10 text-foreground"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+      </div>
+      
+      <div className="mb-6">
+        <div className="relative w-full max-w-xs">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input 
+            placeholder="Search creators..." 
+            className="pl-10 text-foreground"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
       
