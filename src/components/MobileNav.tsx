@@ -1,14 +1,50 @@
 
 import { Heart, Home, MessageSquare, Search, User, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const MobileNav = () => {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
+  // Show limited navigation for non-authenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden z-50">
+        <div className="flex items-center justify-around py-3">
+          <Link 
+            to="/" 
+            className={`flex flex-col items-center ${isActive('/') ? 'text-love-500' : 'text-muted-foreground'}`}
+          >
+            <Home className="h-6 w-6" />
+            <span className="text-xs mt-1">Home</span>
+          </Link>
+          
+          <Link 
+            to="/about" 
+            className={`flex flex-col items-center ${isActive('/about') ? 'text-love-500' : 'text-muted-foreground'}`}
+          >
+            <User className="h-6 w-6" />
+            <span className="text-xs mt-1">About</span>
+          </Link>
+          
+          <Link 
+            to="/sign-in" 
+            className={`flex flex-col items-center ${isActive('/sign-in') ? 'text-love-500' : 'text-muted-foreground'}`}
+          >
+            <User className="h-6 w-6" />
+            <span className="text-xs mt-1">Sign In</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Full navigation for authenticated users
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden z-50">
       <div className="flex items-center justify-around py-3">
