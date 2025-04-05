@@ -1,15 +1,91 @@
 
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
+import ProfileBoost from "@/components/ProfileBoost";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { checkSubscription } from "@/services/stripeService";
 
 const Subscription = () => {
-  const { user } = useAuth();
-  
-  // Check if user has a subscription (in a real app, this would come from a subscription service)
-  const isSubscribed = user?.profile?.subscriptionStatus === "active";
-  
+  const { user, updateProfile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("subscription");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const canceled = searchParams.get("canceled");
+    const plan = searchParams.get("plan");
+
+    if (success === "true" && plan) {
+      toast({
+        title: "Subscription Successful",
+        description: `You have successfully subscribed to the ${plan} plan.`,
+      });
+    } else if (canceled === "true") {
+      toast({
+        title: "Subscription Canceled",
+        description: "Your subscription process was canceled.",
+      });
+    }
+    
+    // Check current subscription status
+    const fetchSubscriptionStatus = async () => {
+      try {
+        setIsLoading(true);
+        const { isSubscribed, plan } = await checkSubscription();
+        setIsSubscribed(isSubscribed);
+        setSubscriptionPlan(plan);
+      } catch (error) {
+        console.error("Error checking subscription:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (user) {
+      fetchSubscriptionStatus();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user, searchParams, toast, updateProfile]);
+
+  // Check if boost params are present and show toast
+  useEffect(() => {
+    const boostSuccess = searchParams.get("boost_success");
+    const boostCanceled = searchParams.get("boost_canceled");
+    const duration = searchParams.get("duration");
+    
+    if (boostSuccess === "true") {
+      toast({
+        title: "Profile Boost Activated",
+        description: `Your profile boost for ${duration} has been activated.`,
+      });
+      setActiveTab("boost");
+    } else if (boostCanceled === "true") {
+      toast({
+        title: "Boost Canceled",
+        description: "Your profile boost process was canceled.",
+      });
+      setActiveTab("boost");
+    }
+  }, [searchParams, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12 pt-24 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-12 pt-24">
       <div className="max-w-4xl mx-auto">
@@ -21,18 +97,36 @@ const Subscription = () => {
           </p>
         </div>
         
-        {isSubscribed ? (
-          <Card className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">You're already subscribed!</h2>
-            <p className="mb-6">
-              You have full access to all premium features including Go Live streaming, 
-              ad-free browsing, and priority matching.
-            </p>
-            <Button variant="outline">Manage Subscription</Button>
-          </Card>
-        ) : (
-          <SubscriptionPlans />
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
+            <TabsTrigger value="boost">Profile Boost</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="subscription" className="animate-in fade-in">
+            {isSubscribed ? (
+              <Card className="p-8 text-center">
+                <h2 className="text-2xl font-bold mb-4">You're already subscribed!</h2>
+                <p className="mb-6">
+                  You have full access to all premium features including Go Live streaming, 
+                  ad-free browsing, and priority matching with the {subscriptionPlan} plan.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open('https://billing.stripe.com/p/login/test', '_blank')}
+                >
+                  Manage Subscription
+                </Button>
+              </Card>
+            ) : (
+              <SubscriptionPlans />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="boost" className="animate-in fade-in">
+            <ProfileBoost />
+          </TabsContent>
+        </Tabs>
         
         <div className="mt-12 text-center">
           <h3 className="text-xl font-semibold mb-4">All Premium Features</h3>

@@ -1,3 +1,4 @@
+
 // Matching algorithm utility functions
 import { enhanceMatchesWithPersonalization } from "./activity";
 
@@ -73,8 +74,12 @@ const toRad = (value: number): number => {
   return value * Math.PI / 180;
 };
 
-// Enhanced matching algorithm that considers compatibility factors
-export const rankProfilesByCompatibility = (profiles: any[], userInterests: string[]) => {
+// Enhanced matching algorithm that considers compatibility factors and premium/boost status
+export const rankProfilesByCompatibility = (
+  profiles: any[], 
+  userInterests: string[], 
+  currentUser?: any
+) => {
   return profiles.map(profile => {
     let compatibilityScore = 0;
     
@@ -84,6 +89,22 @@ export const rankProfilesByCompatibility = (profiles: any[], userInterests: stri
         userInterests.includes(interest)
       );
       compatibilityScore += sharedInterests.length * 10; // 10 points per shared interest
+    }
+    
+    // Add boost multiplier if profile is boosted
+    // This would be based on real data in a production app
+    if (profile.boosted) {
+      const now = new Date();
+      const boostExpiry = new Date(profile.boostExpiry);
+      
+      if (now < boostExpiry) {
+        compatibilityScore *= 2; // Double the score for boosted profiles
+      }
+    }
+    
+    // Premium users get higher scores (for other premium users)
+    if (currentUser?.profile?.subscriptionStatus === "active" && profile.subscriptionStatus === "active") {
+      compatibilityScore += 50; // Premium users see other premium users higher
     }
     
     // Add more compatibility factors here as needed
@@ -155,6 +176,23 @@ export const calculateAICompatibility = (
     if (ageScore > 10) {
       insights.push("You're close in age");
       compatibilityReasons.push("Similar age group");
+    }
+  }
+  
+  // Premium profile boosting
+  if (targetProfile.subscriptionStatus === "active") {
+    score += 15;
+    compatibilityReasons.push("Premium member");
+  }
+  
+  // Boosted profile (temporary boost)
+  if (targetProfile.boosted) {
+    const now = new Date();
+    const boostExpiry = new Date(targetProfile.boostExpiry);
+    
+    if (now < boostExpiry) {
+      score += 20;
+      insights.push("Currently featured profile");
     }
   }
   

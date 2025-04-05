@@ -4,19 +4,33 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Check, ArrowRight, ArrowLeft, CreditCard } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, CreditCard, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createSubscriptionCheckout, STRIPE_PLANS } from "@/services/stripeService";
 
 interface PlanProps {
   title: string;
+  priceId: string;
   price: number;
   period: string;
   description: string;
   features: string[];
   onSubscribe: () => void;
   popular?: boolean;
+  isLoading?: boolean;
 }
 
-const Plan = ({ title, price, period, description, features, onSubscribe, popular }: PlanProps) => (
+const Plan = ({ 
+  title, 
+  priceId, 
+  price, 
+  period, 
+  description, 
+  features, 
+  onSubscribe, 
+  popular, 
+  isLoading 
+}: PlanProps) => (
   <Card className={`w-full max-w-sm mx-auto ${popular ? 'border-primary shadow-lg' : ''}`}>
     <CardHeader>
       {popular && (
@@ -29,7 +43,7 @@ const Plan = ({ title, price, period, description, features, onSubscribe, popula
     </CardHeader>
     <CardContent>
       <div className="mb-4">
-        <span className="text-3xl font-bold">${price}</span>
+        <span className="text-3xl font-bold">${(price / 100).toFixed(2)}</span>
         <span className="text-muted-foreground">/{period}</span>
       </div>
       <ul className="space-y-2">
@@ -42,9 +56,23 @@ const Plan = ({ title, price, period, description, features, onSubscribe, popula
       </ul>
     </CardContent>
     <CardFooter>
-      <Button onClick={onSubscribe} className="w-full" variant={popular ? "default" : "outline"}>
-        <CreditCard className="mr-2 h-4 w-4" />
-        Subscribe
+      <Button 
+        onClick={onSubscribe} 
+        className="w-full" 
+        variant={popular ? "default" : "outline"}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Subscribe
+          </>
+        )}
       </Button>
     </CardFooter>
   </Card>
@@ -53,24 +81,40 @@ const Plan = ({ title, price, period, description, features, onSubscribe, popula
 const SubscriptionPlans = () => {
   const planContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(1);
-  const totalPlans = 3;
+  const totalPlans = STRIPE_PLANS.length;
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const handleSubscribe = (plan: string) => {
+  const handleSubscribe = async (plan: StripeSubscriptionPlan) => {
     if (!user) {
       toast({
         title: "Sign in required",
         description: "Please sign in to subscribe",
         variant: "destructive",
       });
+      navigate("/sign-in", { state: { from: "/subscription" } });
       return;
     }
     
-    toast({
-      title: "Subscription",
-      description: `Thank you for choosing the ${plan} plan. This is a demo - real payment would be processed here.`,
-    });
+    try {
+      setLoadingPlan(plan.id);
+      const { url } = await createSubscriptionCheckout(plan.id);
+      
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error("Subscription error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process subscription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
   const scroll = (direction: "left" | "right") => {
@@ -138,57 +182,27 @@ const SubscriptionPlans = () => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="flex-shrink-0 w-full snap-center px-4 md:w-1/3">
-            <Plan
-              title="Monthly"
-              price={9.99}
-              period="month"
-              description="Flexible monthly billing"
-              features={[
-                "Go Live Streaming",
-                "Ad-free browsing",
-                "Priority matching",
-                "Exclusive features"
-              ]}
-              onSubscribe={() => handleSubscribe("Monthly")}
-            />
-          </div>
-          
-          <div className="flex-shrink-0 w-full snap-center px-4 md:w-1/3">
-            <Plan
-              title="Bi-Annual"
-              price={55.99}
-              period="6 months"
-              description="Save 7% compared to monthly"
-              features={[
-                "Go Live Streaming",
-                "Ad-free browsing",
-                "Priority matching",
-                "Exclusive features",
-                "Profile highlighting"
-              ]}
-              onSubscribe={() => handleSubscribe("Bi-Annual")}
-              popular={true}
-            />
-          </div>
-          
-          <div className="flex-shrink-0 w-full snap-center px-4 md:w-1/3">
-            <Plan
-              title="Annual"
-              price={100}
-              period="year"
-              description="Save 16% compared to monthly"
-              features={[
-                "Go Live Streaming",
-                "Ad-free browsing",
-                "Priority matching",
-                "Exclusive features",
-                "Profile highlighting",
-                "Advanced analytics"
-              ]}
-              onSubscribe={() => handleSubscribe("Annual")}
-            />
-          </div>
+          {STRIPE_PLANS.map((plan, index) => (
+            <div key={plan.id} className="flex-shrink-0 w-full snap-center px-4 md:w-1/3">
+              <Plan
+                title={plan.name}
+                priceId={plan.priceId}
+                price={plan.amount}
+                period={plan.interval}
+                description={
+                  plan.interval === "month" 
+                    ? "Flexible monthly billing" 
+                    : plan.interval === "biannual" 
+                    ? "Save 7% compared to monthly" 
+                    : "Save 16% compared to monthly"
+                }
+                features={plan.features}
+                onSubscribe={() => handleSubscribe(plan)}
+                popular={index === 1}
+                isLoading={loadingPlan === plan.id}
+              />
+            </div>
+          ))}
         </div>
         
         <div className="hidden md:flex absolute -right-4 top-1/2 transform -translate-y-1/2 z-10">
