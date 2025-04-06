@@ -22,7 +22,7 @@ export const useAuthState = () => {
             console.log("AuthProvider - User authenticated, fetching profile");
             
             // Get profile data from our profiles table
-            const { data: profileData, error: profileError } = await supabase
+            let { data: profileData, error: profileError } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
