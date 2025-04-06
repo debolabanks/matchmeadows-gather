@@ -11,11 +11,11 @@ const SplashScreen = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-      // Redirect based on authentication state
+      // Refresh the browser and redirect based on authentication state
       if (user) {
-        navigate("/discover");
+        window.location.href = "/discover";
       } else {
-        navigate("/");
+        window.location.href = "/";
       }
     }, 3000);
 
