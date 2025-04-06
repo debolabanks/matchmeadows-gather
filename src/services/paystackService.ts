@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SubscriptionStatus {
@@ -74,21 +75,21 @@ export const BOOST_OPTIONS: BoostOption[] = [
     id: "1hour",
     name: "Quick Boost",
     duration: "1 hour",
-    amount: 299,
+    amount: 300,
     description: "Increase your profile visibility for 1 hour"
   },
   {
     id: "3hours",
     name: "Super Boost",
     duration: "3 hours",
-    amount: 499,
+    amount: 500,
     description: "Increase your profile visibility for 3 hours"
   },
   {
     id: "24hours",
     name: "Mega Boost",
     duration: "24 hours",
-    amount: 999,
+    amount: 700,
     description: "Increase your profile visibility for 24 hours"
   }
 ];

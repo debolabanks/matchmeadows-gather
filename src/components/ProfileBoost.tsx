@@ -89,7 +89,7 @@ const ProfileBoost = () => {
                   </>
                 ) : (
                   <>
-                    <span className="mr-2">₦{(boost.amount / 100).toFixed(2)}</span>
+                    <span className="mr-2">₦{boost.amount.toFixed(2)}</span>
                     <span>Boost Now</span>
                   </>
                 )}

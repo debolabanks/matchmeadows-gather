@@ -99,13 +99,13 @@ serve(async (req) => {
 function getAmountForBoost(boostDuration: string): number {
   switch (boostDuration) {
     case "1hour":
-      return 29900; // 299 * 100
+      return 30000; // 300 * 100
     case "3hours":
-      return 49900; // 499 * 100
+      return 50000; // 500 * 100
     case "24hours":
-      return 99900; // 999 * 100
+      return 70000; // 700 * 100
     default:
-      return 29900;
+      return 30000;
   }
 }
 
