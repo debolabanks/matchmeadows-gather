@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthProvider";
 import { CallProvider } from "./contexts/CallContext";
 import { Toaster } from "./components/ui/toaster";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { preloadSounds } from "./services/soundService";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -27,37 +27,12 @@ import CreatorChannel from "./pages/CreatorChannel";
 import StreamPage from "./pages/StreamPage";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
-import SplashScreen from "./components/SplashScreen";
 
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
-
   // Preload sounds when the app first loads
   useEffect(() => {
     preloadSounds();
   }, []);
-
-  // Check if the splash screen has been shown before
-  useEffect(() => {
-    const hasSeenSplash = sessionStorage.getItem("hasSeenSplash");
-    if (hasSeenSplash) {
-      setShowSplash(false);
-    } else {
-      sessionStorage.setItem("hasSeenSplash", "true");
-    }
-  }, []);
-
-  if (showSplash) {
-    return (
-      <Router>
-        <ThemeProvider>
-          <AuthProvider>
-            <SplashScreen />
-          </AuthProvider>
-        </ThemeProvider>
-      </Router>
-    );
-  }
 
   return (
     <Router>

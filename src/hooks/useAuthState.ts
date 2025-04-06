@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,9 +108,9 @@ export const useAuthState = () => {
           return;
         }
         
-        // Validate session
-        if (!session || !validateSession(session)) {
-          console.log("AuthProvider - No active or invalid session, checking localStorage");
+        // Session validation now handled by the auth state change listener
+        if (!session) {
+          console.log("AuthProvider - No active session, checking localStorage");
           
           // No active session, check local storage as fallback
           const storedUser = localStorage.getItem("matchmeadows_user");
