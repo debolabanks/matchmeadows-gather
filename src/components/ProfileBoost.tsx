@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { BadgeCheck, Rocket, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { createBoostCheckout, BOOST_OPTIONS } from '@/services/stripeService';
+import { createBoostCheckout, BOOST_OPTIONS } from '@/services/paystackService';
 
 const ProfileBoost = () => {
   const { user } = useAuth();
@@ -24,10 +24,10 @@ const ProfileBoost = () => {
 
     try {
       setLoadingBoost(boostId);
-      const { url } = await createBoostCheckout(boostId);
+      const { authorizationUrl } = await createBoostCheckout(boostId);
       
-      if (url) {
-        window.location.href = url;
+      if (authorizationUrl) {
+        window.location.href = authorizationUrl;
       }
     } catch (error) {
       console.error('Boost error:', error);
@@ -89,7 +89,7 @@ const ProfileBoost = () => {
                   </>
                 ) : (
                   <>
-                    <span className="mr-2">${(boost.amount / 100).toFixed(2)}</span>
+                    <span className="mr-2">₦{(boost.amount / 100).toFixed(2)}</span>
                     <span>Boost Now</span>
                   </>
                 )}

@@ -1,10 +1,10 @@
 
 project_id = "yxdxwfzkqyovznqjffcm"
 
-[functions.stripe-checkout]
+[functions.paystack-checkout]
 verify_jwt = true
 
-[functions.stripe-webhook]
+[functions.paystack-webhook]
 verify_jwt = false
 
 [functions.check-subscription]
@@ -12,3 +12,4 @@ verify_jwt = true
 
 [functions.boost-profile]
 verify_jwt = true
+

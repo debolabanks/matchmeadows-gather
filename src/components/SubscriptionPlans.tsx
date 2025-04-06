@@ -5,11 +5,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Check, ArrowRight, ArrowLeft, CreditCard, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { createSubscriptionCheckout, STRIPE_PLANS, StripeSubscriptionPlan } from "@/services/stripeService";
+import { createSubscriptionCheckout, PAYSTACK_PLANS, PaystackSubscriptionPlan } from "@/services/paystackService";
 
 interface PlanProps {
   title: string;
-  priceId: string;
+  planCode: string;
   price: number;
   period: string;
   description: string;
@@ -21,7 +21,7 @@ interface PlanProps {
 
 const Plan = ({ 
   title, 
-  priceId, 
+  planCode, 
   price, 
   period, 
   description, 
@@ -42,7 +42,7 @@ const Plan = ({
     </CardHeader>
     <CardContent>
       <div className="mb-4">
-        <span className="text-3xl font-bold">${(price / 100).toFixed(2)}</span>
+        <span className="text-3xl font-bold">₦{(price / 100).toFixed(2)}</span>
         <span className="text-muted-foreground">/{period}</span>
       </div>
       <ul className="space-y-2">
@@ -80,13 +80,13 @@ const Plan = ({
 const SubscriptionPlans = () => {
   const planContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(1);
-  const totalPlans = STRIPE_PLANS.length;
+  const totalPlans = PAYSTACK_PLANS.length;
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const handleSubscribe = async (plan: StripeSubscriptionPlan) => {
+  const handleSubscribe = async (plan: PaystackSubscriptionPlan) => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -99,10 +99,10 @@ const SubscriptionPlans = () => {
     
     try {
       setLoadingPlan(plan.id);
-      const { url } = await createSubscriptionCheckout(plan.id);
+      const { authorizationUrl } = await createSubscriptionCheckout(plan.id);
       
-      if (url) {
-        window.location.href = url;
+      if (authorizationUrl) {
+        window.location.href = authorizationUrl;
       }
     } catch (error) {
       console.error("Subscription error:", error);
@@ -178,15 +178,15 @@ const SubscriptionPlans = () => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {STRIPE_PLANS.map((plan, index) => (
+          {PAYSTACK_PLANS.map((plan, index) => (
             <div key={plan.id} className="flex-shrink-0 w-full snap-center px-4 md:w-1/3">
               <Plan
                 title={plan.name}
-                priceId={plan.priceId}
+                planCode={plan.planCode}
                 price={plan.amount}
                 period={plan.interval}
                 description={
-                  plan.interval === "month" 
+                  plan.interval === "monthly" 
                     ? "Flexible monthly billing" 
                     : plan.interval === "biannual" 
                     ? "Save 7% compared to monthly" 

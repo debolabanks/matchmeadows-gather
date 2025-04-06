@@ -14,8 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    // Get boost details from request
-    const { boostDuration } = await req.json();
+    const { planCode, plan, redirectUrl } = await req.json();
     
     // Initialize Supabase client
     const supabaseUrl = "https://yxdxwfzkqyovznqjffcm.supabase.co";
@@ -42,15 +41,15 @@ serve(async (req) => {
       );
     }
     
-    // Initialize Paystack
+    // Initialize Paystack API request
     const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY") || "";
     if (!paystackSecretKey) {
       throw new Error("Paystack secret key is not configured");
     }
     
-    // Get amount based on boost duration
-    const amount = getAmountForBoost(boostDuration);
-    const duration = getDurationLabel(boostDuration);
+    // Prepare the response URL
+    const successUrl = `${redirectUrl || req.headers.get("origin")}/subscription?success=true&plan=${plan}`;
+    const cancelUrl = `${redirectUrl || req.headers.get("origin")}/subscription?canceled=true`;
     
     // Create initialization request to Paystack
     const response = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -61,12 +60,13 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         email: user.email,
-        amount: amount,
-        callback_url: `${req.headers.get("origin")}/profile?boost_success=true&duration=${duration}`,
+        amount: getAmountForPlan(plan), // Amount in kobo (smallest currency unit)
+        plan: planCode,
+        callback_url: successUrl,
         metadata: {
           userId: user.id,
-          boostDuration: boostDuration,
-          cancel_url: `${req.headers.get("origin")}/profile?boost_canceled=true`
+          plan: plan,
+          cancel_url: cancelUrl,
         },
       }),
     });
@@ -86,7 +86,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Boost profile error:", error);
+    console.error("Paystack checkout error:", error);
     
     return new Response(
       JSON.stringify({ error: error.message }),
@@ -95,30 +95,16 @@ serve(async (req) => {
   }
 });
 
-// Helper function to get amount for boost in kobo (smallest currency unit)
-function getAmountForBoost(boostDuration: string): number {
-  switch (boostDuration) {
-    case "1hour":
-      return 29900; // 299 * 100
-    case "3hours":
-      return 49900; // 499 * 100
-    case "24hours":
-      return 99900; // 999 * 100
+// Helper function to get amount for plan
+function getAmountForPlan(planId: string): number {
+  switch (planId) {
+    case "monthly":
+      return 99900; // 999 * 100 (convert to kobo)
+    case "biannual":
+      return 559900; // 5599 * 100
+    case "annual":
+      return 1000000; // 10000 * 100
     default:
-      return 29900;
-  }
-}
-
-// Helper function to get human-readable duration
-function getDurationLabel(boostDuration: string): string {
-  switch (boostDuration) {
-    case "1hour":
-      return "1 hour";
-    case "3hours":
-      return "3 hours";
-    case "24hours":
-      return "24 hours";
-    default:
-      return "1 hour";
+      return 99900;
   }
 }
