@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SubscriptionStatus {
@@ -22,7 +21,7 @@ export const STRIPE_PLANS: StripeSubscriptionPlan[] = [
     id: "monthly",
     name: "Monthly",
     priceId: "price_monthly", // Replace with your actual Stripe price ID
-    amount: 999,
+    amount: 300000, // 3000 Naira (in kobo)
     interval: "month",
     features: [
       "Go Live Streaming",
@@ -35,7 +34,7 @@ export const STRIPE_PLANS: StripeSubscriptionPlan[] = [
     id: "biannual",
     name: "Bi-Annual",
     priceId: "price_biannual", // Replace with your actual Stripe price ID
-    amount: 5599,
+    amount: 1750000, // 17,500 Naira (in kobo)
     interval: "biannual",
     features: [
       "Go Live Streaming",
@@ -49,7 +48,7 @@ export const STRIPE_PLANS: StripeSubscriptionPlan[] = [
     id: "annual",
     name: "Annual",
     priceId: "price_annual", // Replace with your actual Stripe price ID
-    amount: 10000,
+    amount: 3500000, // 35,000 Naira (in kobo)
     interval: "year",
     features: [
       "Go Live Streaming",

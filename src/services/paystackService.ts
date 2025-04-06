@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SubscriptionStatus {
@@ -22,7 +21,7 @@ export const PAYSTACK_PLANS: PaystackSubscriptionPlan[] = [
     id: "monthly",
     name: "Monthly",
     planCode: "PLN_monthly", // Replace with your actual Paystack plan code
-    amount: 999,
+    amount: 300000, // 3000 Naira (in kobo)
     interval: "monthly",
     features: [
       "Go Live Streaming",
@@ -35,7 +34,7 @@ export const PAYSTACK_PLANS: PaystackSubscriptionPlan[] = [
     id: "biannual",
     name: "Bi-Annual",
     planCode: "PLN_biannual", // Replace with your actual Paystack plan code
-    amount: 5599,
+    amount: 1750000, // 17,500 Naira (in kobo)
     interval: "biannual",
     features: [
       "Go Live Streaming",
@@ -49,7 +48,7 @@ export const PAYSTACK_PLANS: PaystackSubscriptionPlan[] = [
     id: "annual",
     name: "Annual",
     planCode: "PLN_annual", // Replace with your actual Paystack plan code
-    amount: 10000,
+    amount: 3500000, // 35,000 Naira (in kobo)
     interval: "annually",
     features: [
       "Go Live Streaming",
