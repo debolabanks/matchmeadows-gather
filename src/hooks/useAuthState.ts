@@ -19,14 +19,41 @@ export const useAuthState = () => {
         
         if (session && session.user) {
           try {
+            console.log("AuthProvider - User authenticated, fetching profile");
+            
             // Get profile data from our profiles table
-            const { data: profileData } = await supabase
+            const { data: profileData, error: profileError } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .single();
             
-            console.log("AuthProvider - Profile data fetched:", !!profileData);
+            if (profileError) {
+              console.error("AuthProvider - Error fetching profile:", profileError);
+              
+              // If profile not found, create a new one
+              if (profileError.code === 'PGRST116') {
+                console.log("AuthProvider - Profile not found, creating new profile");
+                const { data: newProfile, error: createError } = await supabase
+                  .from('profiles')
+                  .insert({
+                    id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || "",
+                    avatar_url: session.user.user_metadata?.avatar_url || ""
+                  })
+                  .select()
+                  .single();
+                
+                if (createError) {
+                  console.error("AuthProvider - Error creating profile:", createError);
+                } else {
+                  console.log("AuthProvider - New profile created:", !!newProfile);
+                  profileData = newProfile;
+                }
+              }
+            } else {
+              console.log("AuthProvider - Profile data fetched:", !!profileData);
+            }
             
             // Convert to our app's User format
             const appUser: User = {
@@ -48,13 +75,14 @@ export const useAuthState = () => {
             localStorage.setItem("matchmeadows_user", JSON.stringify(userWithSwipes));
           } catch (error) {
             console.error("Failed to load user profile:", error);
+          } finally {
+            setIsLoading(false);
           }
         } else {
           setUser(null);
           localStorage.removeItem("matchmeadows_user");
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
@@ -63,7 +91,13 @@ export const useAuthState = () => {
       try {
         console.log("AuthProvider - Checking existing auth session");
         
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("AuthProvider - Error getting session:", sessionError);
+          setIsLoading(false);
+          return;
+        }
         
         if (!session) {
           console.log("AuthProvider - No active session, checking localStorage");
@@ -79,9 +113,12 @@ export const useAuthState = () => {
               console.log("AuthProvider - Found user in localStorage, verifying with Supabase");
               
               // Verify this user actually exists in Supabase
-              const { data } = await supabase.auth.getUser();
+              const { data, error: userError } = await supabase.auth.getUser();
               
-              if (data.user && data.user.id === parsedUser.id) {
+              if (userError) {
+                console.error("AuthProvider - Error verifying user:", userError);
+                localStorage.removeItem("matchmeadows_user");
+              } else if (data.user && data.user.id === parsedUser.id) {
                 console.log("AuthProvider - User verified, setting auth state");
                 localStorage.setItem("matchmeadows_user", JSON.stringify(parsedUser));
                 setUser(parsedUser);

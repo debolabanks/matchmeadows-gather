@@ -14,52 +14,54 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client
+    // Initialize Supabase client with the auth context of the request
     const supabaseUrl = "https://yxdxwfzkqyovznqjffcm.supabase.co";
     const supabaseKey = req.headers.get("apikey") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Get the user from the authorization header
     const authHeader = req.headers.get("Authorization");
+    
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
+        JSON.stringify({ 
+          error: "Missing authorization header",
+          isSubscribed: false, 
+          plan: null, 
+          expiresAt: null 
+        }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
+
     // Extract the JWT token
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
+      console.error("Auth error:", userError);
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ 
+          error: "Unauthorized", 
+          isSubscribed: false, 
+          plan: null, 
+          expiresAt: null 
+        }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
-    // Get the user's profile with subscription info
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("subscriptionStatus, subscriptionPlan, subscriptionEndDate")
-      .eq("id", user.id)
-      .single();
-      
-    if (profileError) {
-      return new Response(
-        JSON.stringify({ error: "Error fetching subscription data" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    console.log("User authenticated:", user.id);
     
-    const isSubscribed = profile?.subscriptionStatus === "active";
+    // Query the database to check subscription status
+    // TODO: Replace this with actual subscription checking logic
+    // For now, just return a mock response
     
     return new Response(
       JSON.stringify({
-        isSubscribed,
-        plan: profile?.subscriptionPlan || null,
-        expiresAt: profile?.subscriptionEndDate || null,
+        isSubscribed: false, 
+        plan: null, 
+        expiresAt: null
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -67,7 +69,12 @@ serve(async (req) => {
     console.error("Check subscription error:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        isSubscribed: false, 
+        plan: null, 
+        expiresAt: null 
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

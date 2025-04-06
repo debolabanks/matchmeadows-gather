@@ -12,4 +12,3 @@ verify_jwt = true
 
 [functions.boost-profile]
 verify_jwt = true
-

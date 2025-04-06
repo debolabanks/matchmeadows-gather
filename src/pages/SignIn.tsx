@@ -41,9 +41,16 @@ const SignIn = () => {
       console.error("Sign in error:", error);
       
       if (error instanceof Error) {
-        setErrorMessage(error.message);
+        // Check for specific Supabase auth errors
+        if (error.message.includes("Email not confirmed")) {
+          setErrorMessage("Please check your email to confirm your account before signing in.");
+        } else if (error.message.includes("Invalid login credentials")) {
+          setErrorMessage("Invalid email or password. Please try again.");
+        } else {
+          setErrorMessage(error.message);
+        }
       } else {
-        setErrorMessage("Invalid email or password");
+        setErrorMessage("An unexpected error occurred. Please try again.");
       }
       
       toast({
