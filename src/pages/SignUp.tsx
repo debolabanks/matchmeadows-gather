@@ -43,7 +43,6 @@ const SignUp = () => {
         title: "Account created!",
         description: "Welcome to MatchMeadows!"
       });
-      console.log("Sign up successful, redirecting to discover page");
       navigate("/discover");
     } catch (error) {
       console.error("Sign up error:", error);

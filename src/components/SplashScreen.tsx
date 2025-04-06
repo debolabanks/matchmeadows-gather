@@ -9,18 +9,13 @@ const SplashScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("SplashScreen - Auth state:", user ? "authenticated" : "unauthenticated");
-    
     const timer = setTimeout(() => {
       setShowSplash(false);
-      
-      console.log("SplashScreen - Redirecting based on auth state:", user ? "to /discover" : "to /");
-      
-      // Redirect based on authentication state
+      // Refresh the browser and redirect based on authentication state
       if (user) {
-        navigate("/discover", { replace: true });
+        window.location.href = "/discover";
       } else {
-        navigate("/", { replace: true });
+        window.location.href = "/";
       }
     }, 3000);
 
