@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { validateSession, logoutUser, redirectToLogin } from "@/utils/authUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 const SplashScreen = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -9,13 +11,24 @@ const SplashScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       setShowSplash(false);
-      // Refresh the browser and redirect based on authentication state
-      if (user) {
-        window.location.href = "/discover";
+      
+      console.info("SplashScreen - Auth state:", user ? "authenticated" : "unauthenticated");
+      
+      // Get current session from Supabase directly
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      
+      // Validate session before redirecting
+      if (user && session && validateSession(session)) {
+        navigate("/discover");
+      } else if (user && (!session || !validateSession(session))) {
+        console.warn("User exists but session is invalid, logging out");
+        logoutUser();
+        redirectToLogin("Session could not be confirmed.");
       } else {
-        window.location.href = "/";
+        navigate("/");
       }
     }, 3000);
 

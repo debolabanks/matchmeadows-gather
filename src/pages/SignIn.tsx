@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,16 @@ const SignIn = () => {
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check for auth error messages from session storage
+  useEffect(() => {
+    const sessionErrorMsg = sessionStorage.getItem("auth_error_message");
+    if (sessionErrorMsg) {
+      setErrorMessage(sessionErrorMsg);
+      // Clear the message after retrieving it
+      sessionStorage.removeItem("auth_error_message");
+    }
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

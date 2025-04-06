@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { User } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
+import { validateSession, logoutUser } from "@/utils/authUtils";
 
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -17,7 +17,8 @@ export const useAuthState = () => {
       async (event, session) => {
         console.log("AuthProvider - Auth state changed:", event, !!session);
         
-        if (session && session.user) {
+        // Validate session before proceeding
+        if (session && validateSession(session)) {
           try {
             console.log("AuthProvider - User authenticated, fetching profile");
             
@@ -75,10 +76,17 @@ export const useAuthState = () => {
             localStorage.setItem("matchmeadows_user", JSON.stringify(userWithSwipes));
           } catch (error) {
             console.error("Failed to load user profile:", error);
+            logoutUser();
           } finally {
             setIsLoading(false);
           }
         } else {
+          // Invalid or no session
+          if (session && !validateSession(session)) {
+            console.warn("Invalid session detected in auth state change");
+            logoutUser();
+          }
+          
           setUser(null);
           localStorage.removeItem("matchmeadows_user");
           setIsLoading(false);
@@ -99,8 +107,9 @@ export const useAuthState = () => {
           return;
         }
         
-        if (!session) {
-          console.log("AuthProvider - No active session, checking localStorage");
+        // Validate session
+        if (!session || !validateSession(session)) {
+          console.log("AuthProvider - No active or invalid session, checking localStorage");
           
           // No active session, check local storage as fallback
           const storedUser = localStorage.getItem("matchmeadows_user");
