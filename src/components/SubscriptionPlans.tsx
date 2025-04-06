@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Check, ArrowRight, ArrowLeft, CreditCard, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { createSubscriptionCheckout, STRIPE_PLANS } from "@/services/stripeService";
+import { createSubscriptionCheckout, STRIPE_PLANS, StripeSubscriptionPlan } from "@/services/stripeService";
 
 interface PlanProps {
   title: string;
@@ -132,7 +131,6 @@ const SubscriptionPlans = () => {
     }
   };
 
-  // Handle touch events for swipe
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   
@@ -146,13 +144,11 @@ const SubscriptionPlans = () => {
   
   const handleTouchEnd = () => {
     const diff = touchStartX.current - touchEndX.current;
-    const threshold = 50; // Minimum difference to trigger swipe
+    const threshold = 50;
     
     if (diff > threshold) {
-      // Swipe left to right
       scroll("right");
     } else if (diff < -threshold) {
-      // Swipe right to left
       scroll("left");
     }
   };
