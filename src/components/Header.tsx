@@ -45,31 +45,25 @@ const Header = () => {
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
-          {isAuthenticated ? (
-            <>
-              <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
-                Discover
-              </Link>
-              <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
-                Matches
-              </Link>
-              <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
-                Messages
-              </Link>
-              <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
-                Creators
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link to="/about" className="text-foreground hover:text-love-500 transition-colors">
-                About
-              </Link>
-              <Link to="/terms" className="text-foreground hover:text-love-500 transition-colors">
-                Terms
-              </Link>
-            </>
-          )}
+          {/* Show all navigation links regardless of authentication status */}
+          <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
+            Discover
+          </Link>
+          <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
+            Matches
+          </Link>
+          <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
+            Messages
+          </Link>
+          <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
+            Creators
+          </Link>
+          <Link to="/about" className="text-foreground hover:text-love-500 transition-colors">
+            About
+          </Link>
+          <Link to="/terms" className="text-foreground hover:text-love-500 transition-colors">
+            Terms
+          </Link>
         </nav>
         
         <div className="flex items-center gap-2">
