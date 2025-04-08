@@ -45,20 +45,22 @@ const ProfileActions = ({ id, name, onLike, onDislike, onBlock, isMatched = fals
           <X className="h-6 w-6 text-red-500" />
         </Button>
         
-        <Link 
-          to="/messages" 
-          state={{ contactId: id, isMatched: isMatched }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="swipe-button bg-white hover:bg-blue-50 rounded-full h-12 w-12"
-            title={isMatched ? "Send message" : "Match required to message"}
+        {isMatched && (
+          <Link 
+            to="/messages" 
+            state={{ contactId: id, isMatched: true }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <MessageSquare className="h-6 w-6 text-blue-500" />
-          </Button>
-        </Link>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="swipe-button bg-white hover:bg-blue-50 rounded-full h-12 w-12"
+              title="Send message"
+            >
+              <MessageSquare className="h-6 w-6 text-blue-500" />
+            </Button>
+          </Link>
+        )}
         
         <AlertDialog>
           <AlertDialogTrigger asChild>
