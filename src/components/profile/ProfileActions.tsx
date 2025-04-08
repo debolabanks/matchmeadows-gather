@@ -101,7 +101,7 @@ const ProfileActions = ({ id, name, onLike, onDislike, onBlock, isMatched = fals
       
       {!isSubscribed && (
         <div className="mt-2 p-2 border-t">
-          <AdBanner variant="small" position="profile-card" adSlot="profile-action-ad" />
+          <AdBanner variant="small" position="sidebar" adSlot="profile-action-ad" />
         </div>
       )}
     </>
