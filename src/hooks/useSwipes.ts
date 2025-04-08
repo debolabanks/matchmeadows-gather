@@ -53,7 +53,7 @@ export const useSwipes = () => {
     const updatedUser = checkAndResetSwipes({ ...user });
     
     // Check if user has used all swipes
-    if (updatedUser.swipes.count >= 10) {
+    if (updatedUser.swipes.count >= 20) {
       return { success: false, updatedUser };
     }
     
@@ -74,17 +74,17 @@ export const useSwipes = () => {
     
     // Check if swipes are initialized
     if (!user.swipes) {
-      return 10;
+      return 20;
     }
     
     // Check if swipes need to be reset
     const now = new Date();
     if (new Date(user.swipes.resetAt) < now) {
-      return 10;
+      return 20;
     }
     
     // Return remaining swipes
-    return Math.max(0, 10 - user.swipes.count);
+    return Math.max(0, 20 - user.swipes.count);
   };
 
   return {

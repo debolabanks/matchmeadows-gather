@@ -23,7 +23,7 @@ const SwipeStatus = ({ swipesRemaining, remainingTime, isPremium }: SwipeStatusP
               `${swipesRemaining} swipe${swipesRemaining !== 1 ? 's' : ''} remaining today`
             }
           </p>
-          {!isPremium && remainingTime && swipesRemaining < 10 && (
+          {!isPremium && remainingTime && swipesRemaining < 20 && (
             <p className="text-xs text-muted-foreground">Resets {remainingTime}</p>
           )}
         </div>
