@@ -93,14 +93,14 @@ const Discover = () => {
   
   useEffect(() => {
     if (user) {
-      setSwipesRemaining(getSwipesRemaining());
+      setSwipesRemaining(0);
       
       if (user.swipes?.resetAt && !isSubscribed) {
         const resetTime = new Date(user.swipes.resetAt);
         const updateTimer = () => {
           const now = new Date();
           if (now >= resetTime) {
-            setSwipesRemaining(10);
+            setSwipesRemaining(0);
             setRemainingTime("");
           } else {
             setRemainingTime(formatDistanceToNow(resetTime, { addSuffix: true }));
@@ -113,7 +113,7 @@ const Discover = () => {
         return () => clearInterval(interval);
       }
     }
-  }, [user, isSubscribed, getSwipesRemaining]);
+  }, [user, isSubscribed]);
   
   const handleLike = async (id: string) => {
     if (!isSubscribed) {
