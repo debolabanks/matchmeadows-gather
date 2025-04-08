@@ -2,6 +2,7 @@
 import { useRef, useEffect } from "react";
 import { StreamComment } from "@/types/stream";
 import ChatMessageItem from "./ChatMessageItem";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatMessageListProps {
   comments: StreamComment[];
@@ -19,25 +20,24 @@ const ChatMessageList = ({ comments, formatTimestamp }: ChatMessageListProps) =>
   }, [comments]);
 
   return (
-    <div
-      ref={chatContainerRef}
-      className="flex-1 overflow-y-auto p-3 space-y-3"
-    >
-      {comments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-          <p>No chat messages yet</p>
-          <p className="text-sm">Be the first to say hello!</p>
-        </div>
-      ) : (
-        comments.map((comment) => (
-          <ChatMessageItem 
-            key={comment.id} 
-            comment={comment} 
-            formatTimestamp={formatTimestamp} 
-          />
-        ))
-      )}
-    </div>
+    <ScrollArea className="flex-1 h-full">
+      <div ref={chatContainerRef} className="p-3 space-y-3">
+        {comments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+            <p>No chat messages yet</p>
+            <p className="text-sm">Be the first to say hello!</p>
+          </div>
+        ) : (
+          comments.map((comment) => (
+            <ChatMessageItem 
+              key={comment.id} 
+              comment={comment} 
+              formatTimestamp={formatTimestamp} 
+            />
+          ))
+        )}
+      </div>
+    </ScrollArea>
   );
 };
 

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -14,17 +13,29 @@ import { playNewMessageSound } from "@/services/soundService";
 import { useLocation } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Messages = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const initialContactId = location.state?.contactId;
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null);
   const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages]);
 
   useEffect(() => {
     const mockContacts: ChatContact[] = [
@@ -83,7 +94,6 @@ const Messages = () => {
 
     setContacts(mockContacts);
     
-    // Select contact if ID is passed through location state
     if (initialContactId) {
       const contact = mockContacts.find(c => c.id === initialContactId);
       if (contact) {
@@ -376,6 +386,7 @@ const Messages = () => {
                     </div>
                   </div>
                 )}
+                <div ref={messagesEndRef} />
               </div>
               
               <MessageInput onSendMessage={handleSendMessage} disabled={!selectedContact.isMatched} />
