@@ -1,6 +1,7 @@
 
 import { Heart, X, MessageSquare, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { 
   AlertDialog,
@@ -23,15 +24,6 @@ interface ProfileActionsProps {
 }
 
 const ProfileActions = ({ id, name, onLike, onDislike, onBlock }: ProfileActionsProps) => {
-  const handleMessageClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast({
-      title: "Starting conversation",
-      description: `Starting a new conversation with ${name}`
-    });
-    // In a real app, this would navigate to the messages page
-  };
-
   return (
     <div className="flex justify-center gap-4 p-4 border-t">
       <Button 
@@ -46,14 +38,19 @@ const ProfileActions = ({ id, name, onLike, onDislike, onBlock }: ProfileActions
         <X className="h-6 w-6 text-red-500" />
       </Button>
       
-      <Button 
-        onClick={handleMessageClick}
-        variant="outline" 
-        size="icon" 
-        className="swipe-button bg-white hover:bg-blue-50 rounded-full h-12 w-12"
+      <Link 
+        to="/messages" 
+        state={{ contactId: id }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <MessageSquare className="h-6 w-6 text-blue-500" />
-      </Button>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="swipe-button bg-white hover:bg-blue-50 rounded-full h-12 w-12"
+        >
+          <MessageSquare className="h-6 w-6 text-blue-500" />
+        </Button>
+      </Link>
       
       <AlertDialog>
         <AlertDialogTrigger asChild>

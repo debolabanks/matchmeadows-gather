@@ -57,6 +57,7 @@ function App() {
                 
                 {/* Former protected routes - now accessible to all */}
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<Profile />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/discover/streams" element={<StreamsDiscovery />} />

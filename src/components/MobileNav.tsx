@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const MobileNav = () => {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -56,8 +56,8 @@ const MobileNav = () => {
         </Link>
         
         <Link 
-          to="/profile" 
-          className={`flex flex-col items-center ${isActive('/profile') ? 'text-love-500' : 'text-muted-foreground'}`}
+          to={isAuthenticated ? `/profile/${user?.id || ''}` : "/profile"}
+          className={`flex flex-col items-center ${location.pathname.includes('/profile') ? 'text-love-500' : 'text-muted-foreground'}`}
         >
           <User className="h-6 w-6" />
           <span className="text-xs mt-1">Profile</span>

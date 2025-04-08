@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 import ProfileCardActions from "./ProfileCardActions";
 import ProfileImage from "./profile/ProfileImage";
 import ProfileDetails from "./profile/ProfileDetails";
@@ -91,6 +94,16 @@ const ProfileCard = ({
         onDislike={onDislike}
         onBlock={handleBlockUser}
       />
+      
+      <div className="absolute top-4 right-4">
+        <Link
+          to={`/profile/${id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white/90 transition-colors"
+        >
+          <User className="h-5 w-5 text-gray-700" />
+        </Link>
+      </div>
     </div>
   );
 };
