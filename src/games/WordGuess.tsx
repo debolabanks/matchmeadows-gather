@@ -22,6 +22,7 @@ import { MAX_WRONG_GUESSES, CATEGORY_NAMES } from "./word-guess/gameUtils";
 interface GameState {
   contactId?: string;
   contactName?: string;
+  multiplayer?: boolean;
 }
 
 const WordGuess = () => {
@@ -33,8 +34,8 @@ const WordGuess = () => {
   // Initialize contact info from location state
   useEffect(() => {
     if (location.state) {
-      const { contactId, contactName } = location.state as GameState;
-      setContactInfo({ contactId, contactName });
+      const { contactId, contactName, multiplayer } = location.state as GameState;
+      setContactInfo({ contactId, contactName, multiplayer });
     }
   }, [location.state]);
 
@@ -57,6 +58,18 @@ const WordGuess = () => {
     });
   };
 
+  // Enable multiplayer mode by default if we have a contact
+  useEffect(() => {
+    if (contactInfo.contactName && contactInfo.multiplayer && !gameState.isMultiplayer) {
+      // Add a small delay to ensure the component is fully mounted
+      const timer = setTimeout(() => {
+        gameState.toggleMultiplayerMode();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [contactInfo.contactName, contactInfo.multiplayer, gameState.isMultiplayer]);
+
   return (
     <div className="container py-6 max-w-lg mx-auto">
       <GameHeader 
@@ -70,8 +83,8 @@ const WordGuess = () => {
             isMultiplayer={gameState.isMultiplayer}
             onToggleMode={gameState.toggleMultiplayerMode}
             playerTurn={gameState.playerTurn}
-            player1Name="Player 1"
-            player2Name={gameState.isMultiplayer ? "Player 2" : contactInfo.contactName || "Opponent"}
+            player1Name="You"
+            player2Name={gameState.isMultiplayer ? (contactInfo.contactName || "Player 2") : contactInfo.contactName || "Opponent"}
           />
           <Button 
             onClick={gameState.startNewGame} 
@@ -102,7 +115,7 @@ const WordGuess = () => {
           gameWon={gameState.gameWon}
           playerName={gameState.getCurrentPlayerName()}
           opponentName={gameState.isMultiplayer ? 
-            (gameState.playerTurn === 1 ? "Player 2" : "Player 1") : 
+            (gameState.playerTurn === 1 ? (contactInfo.contactName || "Player 2") : "You") : 
             (contactInfo.contactName || "Opponent")}
         />
         

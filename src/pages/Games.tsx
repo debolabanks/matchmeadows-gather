@@ -1,9 +1,10 @@
 
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Gamepad2 } from "lucide-react";
+import { ArrowLeft, Gamepad2, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface GameState {
   contactId?: string;
@@ -17,7 +18,8 @@ const GAMES = [
     description: "Classic game of X's and O's",
     icon: "🎮",
     comingSoon: false,
-    route: "/games/tic-tac-toe"
+    route: "/games/tic-tac-toe",
+    multiplayer: true,
   },
   {
     id: "word-guess",
@@ -25,7 +27,8 @@ const GAMES = [
     description: "Guess the word with hints",
     icon: "🔤",
     comingSoon: false,
-    route: "/games/word-guess"
+    route: "/games/word-guess",
+    multiplayer: true,
   },
   {
     id: "rock-paper-scissors",
@@ -33,7 +36,8 @@ const GAMES = [
     description: "Test your luck against your match",
     icon: "✂️",
     comingSoon: false,
-    route: "/games/rock-paper-scissors"
+    route: "/games/rock-paper-scissors",
+    multiplayer: true,
   },
   {
     id: "chess",
@@ -41,7 +45,8 @@ const GAMES = [
     description: "Strategic board game",
     icon: "♟️",
     comingSoon: true,
-    route: "/games/chess"
+    route: "/games/chess",
+    multiplayer: true,
   },
   {
     id: "trivia",
@@ -49,7 +54,8 @@ const GAMES = [
     description: "Test your knowledge together",
     icon: "🧠",
     comingSoon: true,
-    route: "/games/trivia"
+    route: "/games/trivia",
+    multiplayer: true,
   }
 ];
 
@@ -83,7 +89,8 @@ const Games = () => {
     navigate(game.route, { 
       state: { 
         contactId: contactInfo.contactId,
-        contactName: contactInfo.contactName
+        contactName: contactInfo.contactName,
+        multiplayer: true
       } 
     });
   };
@@ -110,6 +117,15 @@ const Games = () => {
         </h1>
       </div>
 
+      {!contactInfo.contactName && (
+        <div className="mb-6 p-4 bg-yellow-50 text-yellow-800 rounded-md">
+          <p className="flex items-center">
+            <Users className="h-4 w-4 mr-2" />
+            Select a contact from the messages page to play games together!
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {GAMES.map(game => (
           <Card 
@@ -121,12 +137,25 @@ const Games = () => {
           >
             <div className="flex flex-col items-center text-center p-4">
               <div className="text-4xl mb-2">{game.icon}</div>
-              <h3 className="text-lg font-semibold">{game.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold">{game.name}</h3>
+                {game.multiplayer && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    <span className="text-xs">Multiplayer</span>
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">{game.description}</p>
               {game.comingSoon && (
                 <span className="mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
                   Coming Soon
                 </span>
+              )}
+              {contactInfo.contactName && game.multiplayer && !game.comingSoon && (
+                <Button variant="outline" size="sm" className="mt-2">
+                  Play with {contactInfo.contactName}
+                </Button>
               )}
             </div>
           </Card>

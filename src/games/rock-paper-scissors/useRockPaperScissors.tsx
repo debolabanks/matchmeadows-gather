@@ -1,45 +1,39 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  playWinSound, 
-  playLoseSound, 
-  playDrawSound,
+import {
   playGameStartSound,
-  playClickSound
+  playWinSound,
+  playLoseSound,
+  playDrawSound
 } from "../utils/gameSounds";
 
 export type GameOption = "rock" | "paper" | "scissors" | null;
 export type GameResult = "win" | "lose" | "draw" | null;
 
-interface UseRockPaperScissorsProps {
+interface RockPaperScissorsProps {
   contactName?: string;
+  isMultiplayer?: boolean;
 }
 
-export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps) => {
-  const { toast } = useToast();
-  
+export const useRockPaperScissors = ({
+  contactName,
+  isMultiplayer = false
+}: RockPaperScissorsProps) => {
   const [playerChoice, setPlayerChoice] = useState<GameOption>(null);
   const [opponentChoice, setOpponentChoice] = useState<GameOption>(null);
   const [result, setResult] = useState<GameResult>(null);
   const [playerScore, setPlayerScore] = useState(0);
   const [opponentScore, setOpponentScore] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [opponentTimeout, setOpponentTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [useAI, setUseAI] = useState(!isMultiplayer);
+  
+  const { toast } = useToast();
 
-  // Play game start sound on component mount
-  useEffect(() => {
-    playGameStartSound();
+  // Determine the winner
+  const determineWinner = useCallback((player: GameOption, opponent: GameOption): GameResult => {
+    if (!player || !opponent) return null;
     
-    // Clean up timeouts on unmount
-    return () => {
-      if (opponentTimeout) {
-        clearTimeout(opponentTimeout);
-      }
-    };
-  }, []);
-
-  const determineWinner = (player: GameOption, opponent: GameOption): GameResult => {
     if (player === opponent) return "draw";
     
     if (
@@ -51,93 +45,134 @@ export const useRockPaperScissors = ({ contactName }: UseRockPaperScissorsProps)
     }
     
     return "lose";
-  };
+  }, []);
 
-  const handlePlayerChoice = (choice: GameOption) => {
+  // Play appropriate sound based on result
+  const playResultSound = useCallback((gameResult: GameResult) => {
+    if (gameResult === "win") {
+      playWinSound();
+    } else if (gameResult === "lose") {
+      playLoseSound();
+    } else if (gameResult === "draw") {
+      playDrawSound();
+    }
+  }, []);
+
+  // Generate AI opponent's choice
+  const generateOpponentChoice = useCallback((): GameOption => {
+    const options: GameOption[] = ["rock", "paper", "scissors"];
+    const randomIndex = Math.floor(Math.random() * 3);
+    return options[randomIndex];
+  }, []);
+
+  // Handle player choice
+  const handlePlayerChoice = useCallback((choice: GameOption) => {
     if (isPlaying || !choice) return;
     
-    // Play click sound when player makes a choice
-    playClickSound();
-    
-    setIsPlaying(true);
     setPlayerChoice(choice);
+    setIsPlaying(true);
     
-    // Simulate opponent thinking and choosing
-    const timeout = setTimeout(() => {
-      const options: GameOption[] = ["rock", "paper", "scissors"];
-      const randomChoice = options[Math.floor(Math.random() * options.length)];
-      setOpponentChoice(randomChoice);
-      
-      const gameResult = determineWinner(choice, randomChoice);
-      setResult(gameResult);
-      
-      // Play appropriate sound based on result
-      if (gameResult === "win") {
-        playWinSound();
-        setPlayerScore(prev => prev + 1);
-        toast({
-          title: "You won!",
-          description: `${choice} beats ${randomChoice}`,
-          duration: 3000,
-        });
-      } else if (gameResult === "lose") {
-        playLoseSound();
-        setOpponentScore(prev => prev + 1);
-        toast({
-          title: `${contactName || "Opponent"} won!`,
-          description: `${randomChoice} beats ${choice}`,
-          duration: 3000,
-        });
-      } else {
-        playDrawSound();
-        toast({
-          title: "It's a draw!",
-          description: `Both chose ${choice}`,
-          duration: 3000,
-        });
-      }
-      
-      // Reset for next round
+    // In multiplayer mode with a real opponent, we would wait for their choice
+    // For now, we'll still use AI for opponent's move in multiplayer mode
+    if (useAI) {
       setTimeout(() => {
+        const aiChoice = generateOpponentChoice();
+        setOpponentChoice(aiChoice);
+        
+        const gameResult = determineWinner(choice, aiChoice);
+        setResult(gameResult);
+        
+        // Update scores
+        if (gameResult === "win") {
+          setPlayerScore(prev => prev + 1);
+          toast({
+            title: "You won!",
+            description: `${choice} beats ${aiChoice}`,
+          });
+        } else if (gameResult === "lose") {
+          setOpponentScore(prev => prev + 1);
+          toast({
+            title: `${contactName || "Opponent"} won!`,
+            description: `${aiChoice} beats ${choice}`,
+          });
+        } else {
+          toast({
+            title: "It's a draw!",
+            description: `Both chose ${choice}`,
+          });
+        }
+        
+        playResultSound(gameResult);
         setIsPlaying(false);
       }, 1500);
-      
-    }, 1000);
-    
-    setOpponentTimeout(timeout);
-  };
+    } else if (isMultiplayer) {
+      // In a real multiplayer implementation, we would send the choice to the opponent
+      // and wait for their response, but for now we'll simulate this
+      setTimeout(() => {
+        const simulatedOpponentChoice = generateOpponentChoice();
+        setOpponentChoice(simulatedOpponentChoice);
+        
+        const gameResult = determineWinner(choice, simulatedOpponentChoice);
+        setResult(gameResult);
+        
+        // Update scores
+        if (gameResult === "win") {
+          setPlayerScore(prev => prev + 1);
+          toast({
+            title: "You won!",
+            description: `${choice} beats ${simulatedOpponentChoice}`,
+          });
+        } else if (gameResult === "lose") {
+          setOpponentScore(prev => prev + 1);
+          toast({
+            title: `${contactName || "Opponent"} won!`,
+            description: `${simulatedOpponentChoice} beats ${choice}`,
+          });
+        } else {
+          toast({
+            title: "It's a draw!",
+            description: `Both chose ${choice}`,
+          });
+        }
+        
+        playResultSound(gameResult);
+        setIsPlaying(false);
+      }, 1500);
+    }
+  }, [
+    isPlaying, 
+    useAI, 
+    isMultiplayer, 
+    generateOpponentChoice, 
+    determineWinner, 
+    contactName, 
+    toast, 
+    playResultSound
+  ]);
 
-  const resetGame = () => {
+  // Reset the game
+  const resetGame = useCallback(() => {
     setPlayerChoice(null);
     setOpponentChoice(null);
     setResult(null);
-    setPlayerScore(0);
-    setOpponentScore(0);
     setIsPlaying(false);
     playGameStartSound();
-    
-    if (opponentTimeout) {
-      clearTimeout(opponentTimeout);
-    }
-  };
-
-  // Clean up timeouts on unmount
+  }, []);
+  
+  // Play game start sound on initial mount
   useEffect(() => {
-    return () => {
-      if (opponentTimeout) {
-        clearTimeout(opponentTimeout);
-      }
-    };
-  }, [opponentTimeout]);
-
+    playGameStartSound();
+  }, []);
+  
   return {
     playerChoice,
-    opponentChoice, 
+    opponentChoice,
     result,
     playerScore,
     opponentScore,
     isPlaying,
     handlePlayerChoice,
-    resetGame
+    resetGame,
+    setUseAI
   };
 };

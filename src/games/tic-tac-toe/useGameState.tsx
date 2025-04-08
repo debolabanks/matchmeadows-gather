@@ -1,170 +1,139 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Board, Player, initialBoard, checkWinner, checkDraw } from "./gameUtils";
-import { 
-  playCorrectSound, 
-  playWrongSound, 
-  playWinSound, 
-  playLoseSound, 
-  playDrawSound,
-  playGameStartSound,
-  playClickSound
-} from "../utils/gameSounds";
+import { useState, useEffect, useCallback } from "react";
+
+type BoardType = Array<string | null>;
+type Player = "X" | "O";
+
+interface Scores {
+  player: number;
+  opponent: number;
+  draws: number;
+}
 
 const useGameState = () => {
-  const { toast } = useToast();
-  const [board, setBoard] = useState<Board>(initialBoard());
-  const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">("X");
-  const [winner, setWinner] = useState<Player>(null);
+  const [board, setBoard] = useState<BoardType>(Array(9).fill(null));
+  const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
+  const [winner, setWinner] = useState<Player | null>(null);
   const [isDraw, setIsDraw] = useState(false);
-  const [opponentMoveTimeout, setOpponentMoveTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [scores, setScores] = useState({
+  const [scores, setScores] = useState<Scores>({
     player: 0,
     opponent: 0,
-    draws: 0
+    draws: 0,
   });
-  
-  // Play game start sound when component mounts
+  const [useAI, setUseAI] = useState(true);
+  const [opponentMoveTimeout, setOpponentMoveTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Check for winner or draw after each move
   useEffect(() => {
-    playGameStartSound();
+    const checkGameStatus = () => {
+      // Check for winner
+      const winningPatterns = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+        [0, 4, 8], [2, 4, 6]             // Diagonals
+      ];
+
+      for (const pattern of winningPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          setWinner(board[a] as Player);
+          
+          // Update scores
+          if (board[a] === "X") {
+            setScores(prev => ({ ...prev, player: prev.player + 1 }));
+          } else {
+            setScores(prev => ({ ...prev, opponent: prev.opponent + 1 }));
+          }
+          
+          return;
+        }
+      }
+
+      // Check for draw
+      if (!board.includes(null)) {
+        setIsDraw(true);
+        setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
+      }
+    };
+
+    checkGameStatus();
+  }, [board]);
+
+  // AI opponent move
+  useEffect(() => {
+    if (useAI && currentPlayer === "O" && !winner && !isDraw) {
+      const timeout = setTimeout(() => {
+        makeAIMove();
+      }, 1000);
+      
+      setOpponentMoveTimeout(timeout);
+      
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
     
-    // Clean up timeouts on unmount
     return () => {
       if (opponentMoveTimeout) {
         clearTimeout(opponentMoveTimeout);
       }
     };
-  }, [opponentMoveTimeout]);
+  }, [currentPlayer, winner, isDraw, useAI]);
 
-  const makeMove = (row: number, col: number) => {
-    // Don't allow moves if there's a winner or it's a draw
-    if (winner || isDraw || board[row][col] !== null) return;
+  // Make a move
+  const makeMove = (index: number) => {
+    // Return early if the cell is already occupied, or if there's a winner or draw
+    if (board[index] || winner || isDraw) {
+      return;
+    }
+    
+    // Return early if trying to make a move for the AI
+    if (useAI && currentPlayer === "O") {
+      return;
+    }
 
-    // Don't allow moves if it's the opponent's turn
-    if (currentPlayer === "O") return;
-    
-    // Play click sound
-    playClickSound();
-    
-    const newBoard = [...board.map(r => [...r])];
-    newBoard[row][col] = currentPlayer;
+    const newBoard = [...board];
+    newBoard[index] = currentPlayer;
     setBoard(newBoard);
     
-    const gameWinner = checkWinner(newBoard);
-    const gameDraw = checkDraw(newBoard);
-    
-    if (gameWinner) {
-      setWinner(gameWinner);
-      // Update scores
-      if (gameWinner === "X") {
-        setScores(prev => ({ ...prev, player: prev.player + 1 }));
-        playWinSound();
-      } else {
-        setScores(prev => ({ ...prev, opponent: prev.opponent + 1 }));
-        playLoseSound();
-      }
-      toast({
-        title: "Game Over!",
-        description: `${gameWinner === "X" ? "You" : "Opponent"} won the game!`,
-        duration: 5000,
-      });
-      return;
-    }
-    
-    if (gameDraw) {
-      setIsDraw(true);
-      setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
-      playDrawSound();
-      toast({
-        title: "Game Over!",
-        description: "It's a draw!",
-        duration: 5000,
-      });
-      return;
-    }
-    
-    // Switch player
-    setCurrentPlayer("O");
-    
-    // Simulate opponent move after a delay
-    const timeout = setTimeout(() => {
-      makeOpponentMove(newBoard);
-    }, 1000);
-    
-    setOpponentMoveTimeout(timeout);
+    // Switch turns
+    setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
   };
 
-  const makeOpponentMove = (currentBoard: Board) => {
-    // Find available moves
-    const availableMoves: [number, number][] = [];
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        if (currentBoard[i][j] === null) {
-          availableMoves.push([i, j]);
-        }
-      }
+  // AI makes a move
+  const makeAIMove = () => {
+    // If there's a winner or draw, return early
+    if (winner || isDraw) {
+      return;
     }
-    
+
+    const availableMoves = board
+      .map((cell, index) => (cell === null ? index : null))
+      .filter((index): index is number => index !== null);
+
     if (availableMoves.length > 0) {
-      // Play click sound for opponent
-      playClickSound();
+      // Choose a random move from available moves
+      const randomIndex = Math.floor(Math.random() * availableMoves.length);
+      const selectedMove = availableMoves[randomIndex];
       
-      // Pick a random available move
-      const [row, col] = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-      
-      const newBoard = [...currentBoard.map(r => [...r])];
-      newBoard[row][col] = "O";
+      const newBoard = [...board];
+      newBoard[selectedMove] = "O";
       setBoard(newBoard);
       
-      const gameWinner = checkWinner(newBoard);
-      const gameDraw = checkDraw(newBoard);
-      
-      if (gameWinner) {
-        setWinner(gameWinner);
-        // Update scores
-        if (gameWinner === "X") {
-          setScores(prev => ({ ...prev, player: prev.player + 1 }));
-          playWinSound();
-        } else {
-          setScores(prev => ({ ...prev, opponent: prev.opponent + 1 }));
-          playLoseSound();
-        }
-        toast({
-          title: "Game Over!",
-          description: `${gameWinner === "X" ? "You" : "Opponent"} won the game!`,
-          duration: 5000,
-        });
-        return;
-      }
-      
-      if (gameDraw) {
-        setIsDraw(true);
-        setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
-        playDrawSound();
-        toast({
-          title: "Game Over!",
-          description: "It's a draw!",
-          duration: 5000,
-        });
-        return;
-      }
-      
-      // Switch back to player
+      // Switch turns
       setCurrentPlayer("X");
     }
   };
 
+  // Reset the game
   const resetGame = () => {
-    setBoard(initialBoard());
+    setBoard(Array(9).fill(null));
     setCurrentPlayer("X");
     setWinner(null);
     setIsDraw(false);
-    playGameStartSound();
     
     if (opponentMoveTimeout) {
       clearTimeout(opponentMoveTimeout);
-      setOpponentMoveTimeout(null);
     }
   };
 
@@ -176,7 +145,8 @@ const useGameState = () => {
     scores,
     opponentMoveTimeout,
     makeMove,
-    resetGame
+    resetGame,
+    setUseAI
   };
 };
 
