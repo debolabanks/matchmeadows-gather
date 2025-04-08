@@ -27,6 +27,7 @@ import CreatorChannel from "./pages/CreatorChannel";
 import StreamPage from "./pages/StreamPage";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
+import Footer from "./components/Footer";
 
 function App() {
   // Preload sounds when the app first loads
@@ -69,6 +70,7 @@ function App() {
               </Routes>
             </div>
             <MobileNav />
+            <Footer />
             <Toaster />
           </CallProvider>
         </AuthProvider>

@@ -58,11 +58,11 @@ const Header = () => {
           <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
             Creators
           </Link>
-          <Link to="/about" className="text-foreground hover:text-love-500 transition-colors">
-            About
+          <Link to="/games" className="text-foreground hover:text-love-500 transition-colors">
+            Games
           </Link>
-          <Link to="/terms" className="text-foreground hover:text-love-500 transition-colors">
-            Terms
+          <Link to="/subscription" className="text-foreground hover:text-love-500 transition-colors">
+            Premium
           </Link>
         </nav>
         
@@ -90,6 +90,12 @@ const Header = () => {
                   </div>
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/verification" className="cursor-pointer">Verification</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/subscription" className="cursor-pointer">Premium</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />

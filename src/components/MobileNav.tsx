@@ -1,5 +1,5 @@
 
-import { Heart, Home, MessageSquare, Search, User, Users } from "lucide-react";
+import { Heart, Home, MessageSquare, Search, User, Users, Gamepad2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -48,11 +48,19 @@ const MobileNav = () => {
         </Link>
         
         <Link 
-          to="/creators" 
-          className={`flex flex-col items-center ${isActive('/creators') ? 'text-love-500' : 'text-muted-foreground'}`}
+          to="/games" 
+          className={`flex flex-col items-center ${isActive('/games') ? 'text-love-500' : 'text-muted-foreground'}`}
         >
-          <Users className="h-6 w-6" />
-          <span className="text-xs mt-1">Creators</span>
+          <Gamepad2 className="h-6 w-6" />
+          <span className="text-xs mt-1">Games</span>
+        </Link>
+        
+        <Link 
+          to="/profile" 
+          className={`flex flex-col items-center ${isActive('/profile') ? 'text-love-500' : 'text-muted-foreground'}`}
+        >
+          <User className="h-6 w-6" />
+          <span className="text-xs mt-1">Profile</span>
         </Link>
       </div>
     </div>

@@ -133,6 +133,11 @@ const SignIn = () => {
                 Sign Up
               </Link>
             </div>
+            <div className="text-center text-xs text-muted-foreground">
+              <Link to="/terms" className="hover:underline">Terms of Use</Link>
+              {" • "}
+              <Link to="/about" className="hover:underline">About</Link>
+            </div>
           </CardFooter>
         </form>
       </Card>
