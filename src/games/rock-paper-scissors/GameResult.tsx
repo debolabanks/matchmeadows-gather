@@ -8,9 +8,10 @@ interface GameResultProps {
   playerChoice: GameOption;
   opponentChoice: GameOption;
   isPlaying: boolean;
+  isMultiplayer?: boolean;  // Added the missing prop
 }
 
-const GameResult = ({ result, playerChoice, opponentChoice, isPlaying }: GameResultProps) => {
+const GameResult = ({ result, playerChoice, opponentChoice, isPlaying, isMultiplayer }: GameResultProps) => {
   const getEmoji = (choice: GameOption): string => {
     switch (choice) {
       case "rock": return "✊";

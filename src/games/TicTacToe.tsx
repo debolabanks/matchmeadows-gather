@@ -8,7 +8,7 @@ import GameHeader from "./tic-tac-toe/GameHeader";
 import GameBoard from "./tic-tac-toe/GameBoard";
 import GameStatus from "./tic-tac-toe/GameStatus";
 import ScoreBoard from "./tic-tac-toe/ScoreBoard";
-import { initialBoard, checkWinner, checkDraw } from "./tic-tac-toe/gameUtils";
+import { checkWinner, checkDraw } from "./tic-tac-toe/gameUtils";
 import useGameState from "./tic-tac-toe/useGameState";
 import { Badge } from "@/components/ui/badge";
 

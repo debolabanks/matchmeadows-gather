@@ -9,6 +9,7 @@ interface GameStatusProps {
   currentPlayer: "X" | "O";
   contactName?: string;
   onResetGame: () => void;
+  isMultiplayerMode?: boolean;  // Added the missing prop
 }
 
 const GameStatus: React.FC<GameStatusProps> = ({
@@ -16,7 +17,8 @@ const GameStatus: React.FC<GameStatusProps> = ({
   isDraw,
   currentPlayer,
   contactName,
-  onResetGame
+  onResetGame,
+  isMultiplayerMode
 }) => {
   return (
     <div className="flex justify-between items-center mb-4">

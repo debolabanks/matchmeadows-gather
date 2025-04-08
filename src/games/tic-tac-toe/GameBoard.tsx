@@ -3,16 +3,19 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
+// Update the Player type to match with useGameState
 type Player = "X" | "O" | null;
-type Board = (Player)[][];
+// Using the same board type as in useGameState
+type BoardType = Array<string | null>;
 
 interface GameBoardProps {
-  board: Board;
-  onMakeMove: (row: number, col: number) => void;
+  board: BoardType;  // Updated to match the type used in useGameState
+  onMakeMove: (index: number) => void;  // Update to match how useGameState.makeMove works
   winner: Player;
   isDraw: boolean;
   currentPlayer: "X" | "O";
   contactName: string;
+  isMultiplayerMode?: boolean;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -21,7 +24,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   winner,
   isDraw,
   currentPlayer,
-  contactName
+  contactName,
+  isMultiplayerMode
 }) => {
   // Animation variants for cells
   const cellVariants = {
@@ -43,24 +47,29 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   };
 
-  return (
-    <>
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {board.map((row, rowIndex) => 
-          row.map((cell, colIndex) => (
+  // Render the 3x3 grid from the flat array
+  const renderBoard = () => {
+    return Array(3).fill(null).map((_, rowIndex) => (
+      <div key={`row-${rowIndex}`} className="flex gap-2">
+        {Array(3).fill(null).map((_, colIndex) => {
+          const index = rowIndex * 3 + colIndex;
+          const cell = board[index];
+          
+          return (
             <motion.div
-              key={`${rowIndex}-${colIndex}`}
+              key={`cell-${index}`}
               initial="initial"
               animate="animate"
               exit="exit"
               variants={cellVariants}
-              transition={{ duration: 0.2, delay: rowIndex * 0.1 + colIndex * 0.1 }}
+              transition={{ duration: 0.2, delay: index * 0.05 }}
+              className="flex-1"
             >
               <Button
                 variant="outline"
                 className="h-24 w-full text-4xl font-bold"
-                onClick={() => onMakeMove(rowIndex, colIndex)}
-                disabled={!!winner || isDraw || !!cell || currentPlayer === "O"}
+                onClick={() => onMakeMove(index)}
+                disabled={!!winner || isDraw || !!cell || (currentPlayer === "O" && !isMultiplayerMode)}
               >
                 {cell && (
                   <motion.span
@@ -74,8 +83,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 )}
               </Button>
             </motion.div>
-          ))
-        )}
+          );
+        })}
+      </div>
+    ));
+  };
+
+  return (
+    <>
+      <div className="flex flex-col gap-2 mb-4">
+        {renderBoard()}
       </div>
       
       <div className="text-center mt-4">
