@@ -25,6 +25,7 @@ export interface ProfileCardProps {
   preferredLanguage?: string;
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
+  isMatched?: boolean;
 }
 
 const ProfileCard = ({
@@ -40,7 +41,8 @@ const ProfileCard = ({
   isVerified,
   preferredLanguage,
   onLike,
-  onDislike
+  onDislike,
+  isMatched = false
 }: ProfileCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -93,6 +95,7 @@ const ProfileCard = ({
         onLike={onLike}
         onDislike={onDislike}
         onBlock={handleBlockUser}
+        isMatched={isMatched}
       />
       
       <div className="absolute top-4 right-4">

@@ -21,9 +21,10 @@ interface ProfileActionsProps {
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
   onBlock: () => void;
+  isMatched?: boolean;
 }
 
-const ProfileActions = ({ id, name, onLike, onDislike, onBlock }: ProfileActionsProps) => {
+const ProfileActions = ({ id, name, onLike, onDislike, onBlock, isMatched = false }: ProfileActionsProps) => {
   return (
     <div className="flex justify-center gap-4 p-4 border-t">
       <Button 
@@ -40,13 +41,14 @@ const ProfileActions = ({ id, name, onLike, onDislike, onBlock }: ProfileActions
       
       <Link 
         to="/messages" 
-        state={{ contactId: id }}
+        state={{ contactId: id, isMatched: isMatched }}
         onClick={(e) => e.stopPropagation()}
       >
         <Button 
           variant="outline" 
           size="icon" 
           className="swipe-button bg-white hover:bg-blue-50 rounded-full h-12 w-12"
+          title={isMatched ? "Send message" : "Match required to message"}
         >
           <MessageSquare className="h-6 w-6 text-blue-500" />
         </Button>

@@ -23,7 +23,7 @@ interface MatchCardActionsProps {
 const MatchCardActions = ({ match, onBlockUser }: MatchCardActionsProps) => {
   return (
     <div className="flex gap-2">
-      <Link to={`/messages`} state={{ contactId: match.id }} className="flex-1">
+      <Link to={`/messages`} state={{ contactId: match.id, isMatched: true }} className="flex-1">
         <Button className="w-full" variant="outline">
           <MessageSquare className="h-4 w-4 mr-2" />
           Message
