@@ -5,6 +5,7 @@ import { MapPin } from "lucide-react";
 import ProfileCard from "@/components/ProfileCard";
 import { MatchCriteria } from "@/utils/matchingAlgorithm";
 import { ProfileCardProps } from "@/components/ProfileCard";
+import AdBanner from "@/components/AdBanner";
 
 interface ProfileDisplayProps {
   currentProfiles: Omit<ProfileCardProps, 'onLike' | 'onDislike'>[];
@@ -31,6 +32,13 @@ const ProfileDisplay = ({
               Showing profiles within {preferences.maxDistance} miles
             </span>
           </div>
+          
+          {!isPremium && (
+            <div className="mb-4">
+              <AdBanner variant="small" position="top" adSlot="profile-display-top" />
+            </div>
+          )}
+          
           <ProfileCard
             {...currentProfiles[0]}
             onLike={handleLike}

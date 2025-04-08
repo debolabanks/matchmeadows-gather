@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Filter, ChevronUp, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import AdBanner from "@/components/AdBanner";
 import { 
   MatchCriteria, 
   filterProfilesByPreferences, 
@@ -39,7 +37,6 @@ const Discover = () => {
   });
   const { toast } = useToast();
   
-  // Check subscription status
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       if (user) {
@@ -56,12 +53,9 @@ const Discover = () => {
     fetchSubscriptionStatus();
   }, [user]);
   
-  // Sample boosted profiles (in a real app, this would come from the database)
   const boostedProfiles = sampleProfiles.map(profile => {
-    // Randomly boost some profiles (for demo purposes)
     const isBoosted = Math.random() > 0.8;
     if (isBoosted) {
-      // Boost expiry in the next few hours (for demo purposes)
       const boostExpiry = new Date();
       boostExpiry.setHours(boostExpiry.getHours() + Math.floor(Math.random() * 24) + 1);
       
@@ -190,8 +184,6 @@ const Discover = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
-      {!isSubscribed && <AdBanner variant="large" adSlot="1234567890" />}
-      
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Discover</h1>
         
@@ -228,8 +220,6 @@ const Discover = () => {
         </div>
       )}
       
-      {!isSubscribed && <AdBanner position="sidebar" variant="small" adSlot="0987654321" />}
-      
       {filteredProfiles.length === 0 && currentProfiles.length === 0 ? (
         <NoProfilesFound onShowFilters={() => setShowFilters(true)} />
       ) : (
@@ -241,8 +231,6 @@ const Discover = () => {
           isPremium={isSubscribed}
         />
       )}
-      
-      {!isSubscribed && <AdBanner variant="small" position="bottom" adSlot="5678901234" />}
     </div>
   );
 };
