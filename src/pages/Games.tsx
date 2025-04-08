@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gamepad2 } from "lucide-react";
@@ -15,35 +16,40 @@ const GAMES = [
     name: "Tic Tac Toe",
     description: "Classic game of X's and O's",
     icon: "🎮",
-    comingSoon: false
+    comingSoon: false,
+    route: "/games/tic-tac-toe"
   },
   {
     id: "word-guess",
     name: "Word Guess",
     description: "Guess the word with hints",
     icon: "🔤",
-    comingSoon: false
+    comingSoon: false,
+    route: "/games/word-guess"
   },
   {
     id: "rock-paper-scissors",
     name: "Rock Paper Scissors",
     description: "Test your luck against your match",
     icon: "✂️",
-    comingSoon: false
+    comingSoon: false,
+    route: "/games/rock-paper-scissors"
   },
   {
     id: "chess",
     name: "Chess",
     description: "Strategic board game",
     icon: "♟️",
-    comingSoon: true
+    comingSoon: true,
+    route: "/games/chess"
   },
   {
     id: "trivia",
     name: "Trivia Challenge",
     description: "Test your knowledge together",
     icon: "🧠",
-    comingSoon: true
+    comingSoon: true,
+    route: "/games/trivia"
   }
 ];
 
@@ -66,33 +72,20 @@ const Games = () => {
     });
   };
 
-  const handleGameSelect = (gameId: string) => {
+  const handleGameSelect = (game: typeof GAMES[0]) => {
     // If game is coming soon, just log the selection
-    const selectedGame = GAMES.find(game => game.id === gameId);
-    if (selectedGame?.comingSoon) {
-      console.log(`Selected game: ${gameId} with contact: ${contactInfo.contactName}`);
+    if (game.comingSoon) {
+      console.log(`Selected game: ${game.id} with contact: ${contactInfo.contactName}`);
       return;
     }
     
     // Navigate to the selected game with contact info
-    if (gameId === "tic-tac-toe" || gameId === "word-guess" || gameId === "rock-paper-scissors") {
-      navigate(`/games/${gameId}`, { 
-        state: { 
-          contactId: contactInfo.contactId,
-          contactName: contactInfo.contactName
-        } 
-      });
-    } else {
-      // For other games, just log for now and go back to messages
-      console.log(`Selected game: ${gameId} with contact: ${contactInfo.contactName}`);
-      
-      // For demonstration, we'll just go back to messages after a delay for non-implemented games
-      setTimeout(() => {
-        navigate("/messages", { 
-          state: contactInfo.contactId ? { contactId: contactInfo.contactId } : undefined
-        });
-      }, 1500);
-    }
+    navigate(game.route, { 
+      state: { 
+        contactId: contactInfo.contactId,
+        contactName: contactInfo.contactName
+      } 
+    });
   };
 
   return (
@@ -124,7 +117,7 @@ const Games = () => {
             className={`p-4 cursor-pointer hover:bg-accent/50 transition-colors ${
               game.comingSoon ? 'opacity-60' : ''
             }`}
-            onClick={() => !game.comingSoon && handleGameSelect(game.id)}
+            onClick={() => handleGameSelect(game)}
           >
             <div className="flex flex-col items-center text-center p-4">
               <div className="text-4xl mb-2">{game.icon}</div>

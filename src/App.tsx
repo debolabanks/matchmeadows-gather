@@ -28,6 +28,9 @@ import StreamPage from "./pages/StreamPage";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
 import Footer from "./components/Footer";
+import TicTacToe from "./games/TicTacToe";
+import WordGuess from "./games/WordGuess";
+import RockPaperScissors from "./games/RockPaperScissors";
 
 function App() {
   // Preload sounds when the app first loads
@@ -60,6 +63,9 @@ function App() {
                 <Route path="/matches" element={<Matches />} />
                 <Route path="/verification" element={<Verification />} />
                 <Route path="/games" element={<Games />} />
+                <Route path="/games/tic-tac-toe" element={<TicTacToe />} />
+                <Route path="/games/word-guess" element={<WordGuess />} />
+                <Route path="/games/rock-paper-scissors" element={<RockPaperScissors />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/creators" element={<Creators />} />
                 <Route path="/creators/:creatorId" element={<CreatorChannel />} />
