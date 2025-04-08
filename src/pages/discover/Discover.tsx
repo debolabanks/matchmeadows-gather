@@ -24,7 +24,7 @@ const Discover = () => {
   const [currentProfiles, setCurrentProfiles] = useState(sampleProfiles);
   const [matches, setMatches] = useState<string[]>([]);
   const [rejected, setRejected] = useState<string[]>([]);
-  const [swipesRemaining, setSwipesRemaining] = useState(10);
+  const [swipesRemaining, setSwipesRemaining] = useState(20);
   const [remainingTime, setRemainingTime] = useState<string>("");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
@@ -36,6 +36,13 @@ const Discover = () => {
     interests: user?.profile?.interests || []
   });
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (user) {
+      const remaining = getSwipesRemaining();
+      setSwipesRemaining(remaining);
+    }
+  }, [user, getSwipesRemaining]);
   
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -92,34 +99,31 @@ const Discover = () => {
   }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed]);
   
   useEffect(() => {
-    if (user) {
-      setSwipesRemaining(0);
+    if (user && user.swipes?.resetAt && !isSubscribed) {
+      const resetTime = new Date(user.swipes.resetAt);
       
-      if (user.swipes?.resetAt && !isSubscribed) {
-        const resetTime = new Date(user.swipes.resetAt);
-        const updateTimer = () => {
-          const now = new Date();
-          if (now >= resetTime) {
-            setSwipesRemaining(0);
-            setRemainingTime("");
-          } else {
-            setRemainingTime(formatDistanceToNow(resetTime, { addSuffix: true }));
-          }
-        };
-        
-        updateTimer();
-        const interval = setInterval(updateTimer, 60000);
-        
-        return () => clearInterval(interval);
-      }
+      const updateTimer = () => {
+        const now = new Date();
+        if (now >= resetTime) {
+          setSwipesRemaining(20);
+          setRemainingTime("");
+        } else {
+          setRemainingTime(formatDistanceToNow(resetTime, { addSuffix: true }));
+        }
+      };
+      
+      updateTimer();
+      const interval = setInterval(updateTimer, 60000);
+      
+      return () => clearInterval(interval);
     }
   }, [user, isSubscribed]);
   
   const handleLike = async (id: string) => {
     if (!isSubscribed) {
-      const canSwipe = await useSwipe();
+      const { success } = await useSwipe();
       
-      if (!canSwipe) {
+      if (!success) {
         toast({
           title: "Swipe limit reached",
           description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
@@ -149,9 +153,9 @@ const Discover = () => {
   
   const handleDislike = async (id: string) => {
     if (!isSubscribed) {
-      const canSwipe = await useSwipe();
+      const { success } = await useSwipe();
       
-      if (!canSwipe) {
+      if (!success) {
         toast({
           title: "Swipe limit reached",
           description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
