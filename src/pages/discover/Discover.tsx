@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -39,6 +40,9 @@ const Discover = () => {
   
   useEffect(() => {
     if (user) {
+      // Check for premium status from user object
+      setIsSubscribed(user.profile?.subscriptionStatus === "active");
+      
       const remaining = getSwipesRemaining();
       setSwipesRemaining(remaining);
     }
@@ -49,8 +53,13 @@ const Discover = () => {
       if (user) {
         try {
           const { isSubscribed, plan } = await checkSubscription();
-          setIsSubscribed(isSubscribed);
-          setSubscriptionPlan(plan);
+          // Only update subscription status if the user isn't already marked as premium
+          if (!isSubscribed && user.profile?.subscriptionStatus !== "active") {
+            setIsSubscribed(isSubscribed);
+            setSubscriptionPlan(plan);
+          } else if (user.profile?.subscriptionStatus === "active") {
+            setIsSubscribed(true);
+          }
         } catch (error) {
           console.error("Error checking subscription:", error);
         }
@@ -121,9 +130,9 @@ const Discover = () => {
   
   const handleLike = async (id: string) => {
     if (!isSubscribed) {
-      const { success } = await useSwipe();
+      const result = await useSwipe();
       
-      if (!success) {
+      if (!result.success) {
         toast({
           title: "Swipe limit reached",
           description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
@@ -153,9 +162,9 @@ const Discover = () => {
   
   const handleDislike = async (id: string) => {
     if (!isSubscribed) {
-      const { success } = await useSwipe();
+      const result = await useSwipe();
       
-      if (!success) {
+      if (!result.success) {
         toast({
           title: "Swipe limit reached",
           description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",

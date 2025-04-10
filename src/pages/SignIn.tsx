@@ -15,9 +15,16 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { signIn } = useAuth();
+  const { signIn, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/discover");
+    }
+  }, [isAuthenticated, navigate]);
 
   // Check for auth error messages from session storage
   useEffect(() => {
@@ -41,11 +48,14 @@ const SignIn = () => {
     setLoading(true);
     
     try {
-      await signIn(email, password);
+      const user = await signIn(email, password);
+      console.log("Successfully signed in user:", user);
+      
       toast({
         title: "Welcome back!",
-        description: "Successfully signed in"
+        description: `${user?.profile?.subscriptionStatus === "active" ? "Premium user, " : ""}Successfully signed in`
       });
+      
       navigate("/discover");
     } catch (error) {
       console.error("Sign in error:", error);

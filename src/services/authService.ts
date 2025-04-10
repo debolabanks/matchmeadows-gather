@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserProfile } from "@/contexts/authTypes";
 
@@ -30,17 +29,22 @@ export const signInWithEmailAndPassword = async (email: string, password: string
     .eq('id', data.user.id)
     .single();
   
+  // Check if the user is the test premium user
+  const isPremiumTestUser = email.toLowerCase() === "adebolabanjoko@gmail.com";
+  
   // Convert Supabase user to our app's User format
   return {
     id: data.user.id,
     name: profileData?.full_name || data.user.user_metadata?.full_name || "",
     email: data.user.email || "",
     provider: "email",
-    profile: profileData ? {
-      bio: profileData.bio,
-      location: profileData.location,
+    profile: {
+      bio: profileData?.bio,
+      location: profileData?.location,
+      // Set premium status for the test user
+      subscriptionStatus: isPremiumTestUser ? "active" : profileData?.subscriptionStatus || "none",
       // Map other profile fields as needed
-    } : undefined
+    }
   };
 };
 

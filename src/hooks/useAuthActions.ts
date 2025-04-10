@@ -1,4 +1,3 @@
-
 import { User, UserProfile, Report } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
@@ -27,6 +26,7 @@ export const useAuthActions = (
       
       setUser(userWithSwipes);
       localStorage.setItem("matchmeadows_user", JSON.stringify(userWithSwipes));
+      return userWithSwipes;
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +106,7 @@ export const useAuthActions = (
     }
   };
 
-  const useSwipe = async (): Promise<boolean> => {
+  const useSwipe = async () => {
     const { success, updatedUser } = useSwipeHook(user);
     
     if (updatedUser) {
@@ -114,7 +114,7 @@ export const useAuthActions = (
       localStorage.setItem("matchmeadows_user", JSON.stringify(updatedUser));
     }
     
-    return success;
+    return { success };
   };
 
   const getSwipesRemaining = (): number => {
