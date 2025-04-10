@@ -93,7 +93,7 @@ const Header = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.profile?.avatarUrl} alt={user?.name || "User"} />
+                      <AvatarImage src={user?.profile?.photos?.[0]} alt={user?.name || "User"} />
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                   </Button>
