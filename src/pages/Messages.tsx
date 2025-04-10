@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import MessageCallButtons from "@/components/MessageCallButtons";
 import { playNewMessageSound } from "@/services/soundService";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +19,7 @@ const Messages = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const initialContactId = location.state?.contactId;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -253,6 +254,10 @@ const Messages = () => {
     }
   };
 
+  const handleReturnToDiscover = () => {
+    navigate("/discover");
+  };
+
   return (
     <div className="container py-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Messages</h1>
@@ -382,7 +387,14 @@ const Messages = () => {
                   <div className="flex-1 flex items-center justify-center text-muted-foreground">
                     <div className="text-center">
                       <p className="mb-2">You need to match with this user to chat</p>
-                      <Button variant="outline" size="sm" className="mt-2">Return to Discover</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={handleReturnToDiscover}
+                      >
+                        Return to Discover
+                      </Button>
                     </div>
                   </div>
                 )}
