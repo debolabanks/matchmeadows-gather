@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -40,7 +39,6 @@ const Discover = () => {
   
   useEffect(() => {
     if (user) {
-      // Check for premium status from user object
       setIsSubscribed(user.profile?.subscriptionStatus === "active");
       
       const remaining = getSwipesRemaining();
@@ -53,7 +51,6 @@ const Discover = () => {
       if (user) {
         try {
           const { isSubscribed, plan } = await checkSubscription();
-          // Only update subscription status if the user isn't already marked as premium
           if (!isSubscribed && user.profile?.subscriptionStatus !== "active") {
             setIsSubscribed(isSubscribed);
             setSubscriptionPlan(plan);

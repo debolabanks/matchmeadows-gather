@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -88,14 +89,14 @@ export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<User | undefined>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   confirmPasswordReset: (email: string, newPassword: string) => Promise<void>;
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   requestVerification: () => Promise<void>;
-  useSwipe: () => Promise<boolean>;
+  useSwipe: () => Promise<{ success: boolean }>;
   getSwipesRemaining: () => number;
   submitReport: (report: Omit<Report, "id" | "status" | "createdAt">) => Promise<void>;
 }

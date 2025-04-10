@@ -1,3 +1,4 @@
+
 import { User, UserProfile, Report } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
@@ -17,7 +18,7 @@ export const useAuthActions = (
 ) => {
   const { initializeSwipes, useSwipe: useSwipeHook, getSwipesRemaining: getRemainingSwipes } = useSwipes();
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<User | undefined> => {
     setIsLoading(true);
     try {
       const authUser = await signInWithEmailAndPassword(email, password);
@@ -106,7 +107,7 @@ export const useAuthActions = (
     }
   };
 
-  const useSwipe = async () => {
+  const useSwipe = async (): Promise<{ success: boolean }> => {
     const { success, updatedUser } = useSwipeHook(user);
     
     if (updatedUser) {

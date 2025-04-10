@@ -51,10 +51,17 @@ const SignIn = () => {
       const user = await signIn(email, password);
       console.log("Successfully signed in user:", user);
       
-      toast({
-        title: "Welcome back!",
-        description: `${user?.profile?.subscriptionStatus === "active" ? "Premium user, " : ""}Successfully signed in`
-      });
+      if (user) {
+        toast({
+          title: "Welcome back!",
+          description: `${user.profile?.subscriptionStatus === "active" ? "Premium user, " : ""}Successfully signed in`
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in"
+        });
+      }
       
       navigate("/discover");
     } catch (error) {

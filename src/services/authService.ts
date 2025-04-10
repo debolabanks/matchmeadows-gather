@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserProfile } from "@/contexts/authTypes";
 
@@ -42,7 +43,7 @@ export const signInWithEmailAndPassword = async (email: string, password: string
       bio: profileData?.bio,
       location: profileData?.location,
       // Set premium status for the test user
-      subscriptionStatus: isPremiumTestUser ? "active" : profileData?.subscriptionStatus || "none",
+      subscriptionStatus: isPremiumTestUser ? "active" : (profileData as any)?.subscriptionStatus || "none",
       // Map other profile fields as needed
     }
   };
