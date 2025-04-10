@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider"
@@ -6,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 import Index from "@/pages/Index";
 import About from "@/pages/About";
-import Discover from "@/pages/Discover";
 import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
 import Matches from "@/pages/Matches";
@@ -17,7 +17,6 @@ import Subscription from "@/pages/Subscription";
 import Games from "@/pages/Games";
 import Creators from "@/pages/Creators";
 import CreatorChannel from "@/pages/CreatorChannel";
-import StreamsDiscovery from "@/pages/StreamsDiscovery";
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Header from "@/components/Header";
@@ -25,6 +24,10 @@ import Footer from "@/components/Footer";
 import MobileNav from "@/components/MobileNav";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LiveStreamPage from "@/pages/LiveStreamPage";
+
+// Import discover pages correctly
+import Discover from "@/pages/discover";
+import StreamsDiscovery from "@/pages/discover/streams";
 
 const queryClient = new QueryClient()
 
@@ -56,10 +59,10 @@ function App() {
                       <Route path="/discover" element={<Discover />} />
                       <Route path="/sign-in" element={<SignIn />} />
                       <Route path="/sign-up" element={<SignUp />} />
-                      <Route path="/matches" element={<ProtectedRoute element={<Matches />} />} />
-                      <Route path="/messages" element={<ProtectedRoute element={<Messages />} />} />
-                      <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
-                      <Route path="/verification" element={<ProtectedRoute element={<Verification />} />} />
+                      <Route path="/matches" element={<ProtectedRoute>{<Matches />}</ProtectedRoute>} />
+                      <Route path="/messages" element={<ProtectedRoute>{<Messages />}</ProtectedRoute>} />
+                      <Route path="/profile" element={<ProtectedRoute>{<Profile />}</ProtectedRoute>} />
+                      <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
                       <Route path="/subscription" element={<Subscription />} />
                       <Route path="/games" element={<Games />} />
                       <Route path="/creators" element={<Creators />} />

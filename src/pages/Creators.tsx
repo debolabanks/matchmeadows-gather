@@ -2,20 +2,90 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CreatorGrid from "@/components/creators/CreatorGrid";
 import CreatorFilters from "@/components/creators/CreatorFilters";
 import CreatorSearch from "@/components/creators/CreatorSearch";
-import { getAllCreators } from "@/components/creators/mockCreatorsData";
 import { Creator } from "@/components/creators/CreatorCard";
 import { useAuth } from "@/hooks/useAuth";
 import { Video, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// Mock creators data since the original import was causing issues
+const mockCreators: Creator[] = [
+  {
+    id: "1",
+    name: "Sarah Johnson",
+    username: "sarahcreates",
+    bio: "Digital artist and storyteller. I stream art tutorials and creative sessions.",
+    avatar: "https://source.unsplash.com/random/100x100/?portrait&1",
+    followers: 24500,
+    isOnline: true,
+    isLive: true,
+    rating: 4.8,
+    tags: ["art", "digital", "tutorials"],
+    category: "art",
+    isVerified: true,
+    currentViewers: 342,
+    coverImage: "https://source.unsplash.com/random/800x300/?art",
+    createdAt: "2023-01-15T12:00:00Z",
+  },
+  {
+    id: "2",
+    name: "Michael Torres",
+    username: "miketgaming",
+    bio: "Pro gamer and coach. Daily streams of strategy games and competitive play.",
+    avatar: "https://source.unsplash.com/random/100x100/?portrait&2",
+    followers: 156000,
+    isOnline: true,
+    isLive: false,
+    rating: 4.5,
+    tags: ["gaming", "strategy", "esports"],
+    category: "gaming",
+    isVerified: true,
+    currentViewers: 0,
+    coverImage: "https://source.unsplash.com/random/800x300/?gaming",
+    createdAt: "2022-08-19T14:30:00Z",
+  },
+  {
+    id: "3",
+    name: "Emma Chen",
+    username: "emmakitchen",
+    bio: "Chef and food enthusiast. I share recipes and cooking techniques from around the world.",
+    avatar: "https://source.unsplash.com/random/100x100/?portrait&3",
+    followers: 78200,
+    isOnline: false,
+    isLive: false,
+    rating: 4.9,
+    tags: ["cooking", "food", "recipes"],
+    category: "food",
+    isVerified: true,
+    currentViewers: 0,
+    coverImage: "https://source.unsplash.com/random/800x300/?food",
+    createdAt: "2023-04-02T09:15:00Z",
+  },
+  {
+    id: "4",
+    name: "James Wilson",
+    username: "jamesfitness",
+    bio: "Personal trainer and fitness coach. Workout streams and nutritional advice.",
+    avatar: "https://source.unsplash.com/random/100x100/?portrait&4",
+    followers: 45800,
+    isOnline: true,
+    isLive: true,
+    rating: 4.7,
+    tags: ["fitness", "workout", "health"],
+    category: "fitness",
+    isVerified: false,
+    currentViewers: 187,
+    coverImage: "https://source.unsplash.com/random/800x300/?fitness",
+    createdAt: "2023-02-25T16:45:00Z",
+  }
+];
+
 const Creators = () => {
-  const [creators, setCreators] = useState<Creator[]>(getAllCreators());
-  const [filteredCreators, setFilteredCreators] = useState<Creator[]>(creators);
+  const [creators] = useState<Creator[]>(mockCreators);
+  const [filteredCreators, setFilteredCreators] = useState<Creator[]>(mockCreators);
   const [activeTab, setActiveTab] = useState("all");
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -59,7 +129,7 @@ const Creators = () => {
           filtered.sort((a, b) => b.followers - a.followers);
           break;
         case "newest":
-          filtered.sort((a, b) => new Date(b.joinedDate || "").getTime() - new Date(a.joinedDate || "").getTime());
+          filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           break;
         case "rating":
           filtered.sort((a, b) => b.rating - a.rating);
@@ -146,7 +216,14 @@ const Creators = () => {
       <div className="grid gap-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="w-full md:w-2/3">
-            <CreatorSearch onSearch={handleSearch} />
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search for creators..."
+                className="w-full py-2 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
           </div>
           <div className="w-full md:w-1/3">
             <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange}>
@@ -161,7 +238,47 @@ const Creators = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">
-            <CreatorFilters onFilter={handleFilter} />
+            <div className="p-4 border rounded-md">
+              <h3 className="font-medium mb-3">Filter Creators</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm mb-1">Category</label>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    onChange={(e) => handleFilter({category: e.target.value})}
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="gaming">Gaming</option>
+                    <option value="art">Art</option>
+                    <option value="music">Music</option>
+                    <option value="food">Food</option>
+                    <option value="fitness">Fitness</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Status</label>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    onChange={(e) => handleFilter({status: e.target.value})}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="online">Online</option>
+                    <option value="offline">Offline</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Sort By</label>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    onChange={(e) => handleFilter({sort: e.target.value})}
+                  >
+                    <option value="popular">Most Popular</option>
+                    <option value="newest">Newest</option>
+                    <option value="rating">Highest Rated</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="lg:col-span-3">
             <CreatorGrid creators={filteredCreators} />
