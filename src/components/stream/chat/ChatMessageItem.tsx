@@ -1,35 +1,52 @@
 
 import { StreamComment } from "@/types/stream";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface ChatMessageItemProps {
   comment: StreamComment;
   formatTimestamp: (timestamp: string) => string;
+  badge?: React.ReactNode;
 }
 
-const ChatMessageItem = ({ comment, formatTimestamp }: ChatMessageItemProps) => {
+const ChatMessageItem = ({ comment, formatTimestamp, badge }: ChatMessageItemProps) => {
   return (
-    <div 
-      className={`flex gap-2 ${comment.isPinned ? 'bg-muted p-2 rounded-md border-l-4 border-primary' : ''}`}
-    >
-      <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarImage src={comment.userImage} />
-        <AvatarFallback>{comment.userName[0]}</AvatarFallback>
-      </Avatar>
+    <div className="group flex items-start gap-2">
+      <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+        <img
+          src={comment.userImage || "https://source.unsplash.com/random/100x100/?avatar"}
+          alt={comment.userName}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
       <div className="flex-1 min-w-0">
-        <div className="flex gap-1 items-center">
-          <span className={`font-medium text-sm truncate ${comment.isCreator ? 'text-primary' : ''}`}>
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className={cn(
+            "text-xs font-medium",
+            comment.isCreator && "text-primary",
+            comment.isPinned && "text-amber-500"
+          )}>
             {comment.userName}
+            {comment.isCreator && (
+              <Badge variant="outline" className="ml-1 text-[10px] py-0 h-4">
+                Creator
+              </Badge>
+            )}
           </span>
-          {comment.isCreator && (
-            <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-primary text-primary">
-              Host
-            </Badge>
+          
+          {badge && (
+            <span className="ml-1">{badge}</span>
           )}
-          <span className="text-xs text-muted-foreground">{formatTimestamp(comment.timestamp)}</span>
+          
+          <span className="text-[10px] text-muted-foreground hidden group-hover:inline">
+            {formatTimestamp(comment.timestamp)}
+          </span>
         </div>
-        <p className="text-sm break-words">{comment.text}</p>
+        
+        <p className="text-sm break-words">
+          {comment.text}
+        </p>
       </div>
     </div>
   );
