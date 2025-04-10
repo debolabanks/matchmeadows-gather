@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,82 +9,67 @@ import { Creator } from "@/components/creators/CreatorCard";
 import { useAuth } from "@/hooks/useAuth";
 import { Video, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMockCreators } from "@/components/creators/mockCreatorsData";
 
-// Mock creators data since the original import was causing issues
+// Use the correct Creator type from our CreatorCard component
 const mockCreators: Creator[] = [
   {
     id: "1",
     name: "Sarah Johnson",
-    username: "sarahcreates",
+    imageUrl: "https://source.unsplash.com/random/100x100/?portrait&1",
     bio: "Digital artist and storyteller. I stream art tutorials and creative sessions.",
-    avatar: "https://source.unsplash.com/random/100x100/?portrait&1",
     followers: 24500,
     isOnline: true,
-    isLive: true,
+    isVerified: true,
     rating: 4.8,
     tags: ["art", "digital", "tutorials"],
     category: "art",
-    isVerified: true,
-    currentViewers: 342,
-    coverImage: "https://source.unsplash.com/random/800x300/?art",
-    createdAt: "2023-01-15T12:00:00Z",
+    nextSession: "Tomorrow at 3:00 PM"
   },
   {
     id: "2",
     name: "Michael Torres",
-    username: "miketgaming",
+    imageUrl: "https://source.unsplash.com/random/100x100/?portrait&2",
     bio: "Pro gamer and coach. Daily streams of strategy games and competitive play.",
-    avatar: "https://source.unsplash.com/random/100x100/?portrait&2",
     followers: 156000,
     isOnline: true,
-    isLive: false,
+    isVerified: true,
     rating: 4.5,
     tags: ["gaming", "strategy", "esports"],
     category: "gaming",
-    isVerified: true,
-    currentViewers: 0,
-    coverImage: "https://source.unsplash.com/random/800x300/?gaming",
-    createdAt: "2022-08-19T14:30:00Z",
+    nextSession: "Today at 8:00 PM"
   },
   {
     id: "3",
     name: "Emma Chen",
-    username: "emmakitchen",
+    imageUrl: "https://source.unsplash.com/random/100x100/?portrait&3",
     bio: "Chef and food enthusiast. I share recipes and cooking techniques from around the world.",
-    avatar: "https://source.unsplash.com/random/100x100/?portrait&3",
     followers: 78200,
     isOnline: false,
-    isLive: false,
+    isVerified: true,
     rating: 4.9,
     tags: ["cooking", "food", "recipes"],
     category: "food",
-    isVerified: true,
-    currentViewers: 0,
-    coverImage: "https://source.unsplash.com/random/800x300/?food",
-    createdAt: "2023-04-02T09:15:00Z",
+    nextSession: "Friday at 6:30 PM"
   },
   {
     id: "4",
     name: "James Wilson",
-    username: "jamesfitness",
+    imageUrl: "https://source.unsplash.com/random/100x100/?portrait&4",
     bio: "Personal trainer and fitness coach. Workout streams and nutritional advice.",
-    avatar: "https://source.unsplash.com/random/100x100/?portrait&4",
     followers: 45800,
     isOnline: true,
-    isLive: true,
+    isVerified: false,
     rating: 4.7,
     tags: ["fitness", "workout", "health"],
     category: "fitness",
-    isVerified: false,
-    currentViewers: 187,
-    coverImage: "https://source.unsplash.com/random/800x300/?fitness",
-    createdAt: "2023-02-25T16:45:00Z",
+    nextSession: "Tomorrow at 7:00 AM"
   }
 ];
 
 const Creators = () => {
-  const [creators] = useState<Creator[]>(mockCreators);
-  const [filteredCreators, setFilteredCreators] = useState<Creator[]>(mockCreators);
+  const [creators] = useState<Creator[]>(getMockCreators());
+  const [filteredCreators, setFilteredCreators] = useState<Creator[]>(getMockCreators());
   const [activeTab, setActiveTab] = useState("all");
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -129,7 +113,8 @@ const Creators = () => {
           filtered.sort((a, b) => b.followers - a.followers);
           break;
         case "newest":
-          filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          // Sort by name since we don't have createdAt
+          filtered.sort((a, b) => a.name.localeCompare(b.name));
           break;
         case "rating":
           filtered.sort((a, b) => b.rating - a.rating);
