@@ -1,52 +1,43 @@
 
+import React from "react";
 import { StreamComment } from "@/types/stream";
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle } from "lucide-react";
 
 interface ChatMessageItemProps {
-  comment: StreamComment;
+  message: StreamComment;
   formatTimestamp: (timestamp: string) => string;
-  badge?: React.ReactNode;
+  renderBadge?: (userId: string) => React.ReactNode;
 }
 
-const ChatMessageItem = ({ comment, formatTimestamp, badge }: ChatMessageItemProps) => {
+const ChatMessageItem = ({ 
+  message, 
+  formatTimestamp,
+  renderBadge
+}: ChatMessageItemProps) => {
   return (
-    <div className="group flex items-start gap-2">
-      <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-        <img
-          src={comment.userImage || "https://source.unsplash.com/random/100x100/?avatar"}
-          alt={comment.userName}
-          className="w-full h-full object-cover"
-        />
-      </div>
+    <div className="py-2 px-3 hover:bg-muted/50 flex gap-2">
+      <Avatar className="h-6 w-6">
+        <AvatarImage src={message.userImage} alt={message.userName} />
+        <AvatarFallback>{message.userName.substring(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
       
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className={cn(
-            "text-xs font-medium",
-            comment.isCreator && "text-primary",
-            comment.isPinned && "text-amber-500"
-          )}>
-            {comment.userName}
-            {comment.isCreator && (
-              <Badge variant="outline" className="ml-1 text-[10px] py-0 h-4">
-                Creator
-              </Badge>
-            )}
-          </span>
+        <div className="flex items-center gap-1">
+          <p className={`text-sm font-medium truncate ${message.isCreator ? 'text-love-500' : ''}`}>
+            {message.userName}
+            {message.isCreator && <CheckCircle className="h-3 w-3 inline-block ml-1" />}
+          </p>
           
-          {badge && (
-            <span className="ml-1">{badge}</span>
-          )}
+          {renderBadge && renderBadge(message.userId)}
           
-          <span className="text-[10px] text-muted-foreground hidden group-hover:inline">
-            {formatTimestamp(comment.timestamp)}
+          <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
+            {formatTimestamp(message.timestamp)}
           </span>
         </div>
         
-        <p className="text-sm break-words">
-          {comment.text}
-        </p>
+        <p className="text-sm break-words">{message.text}</p>
       </div>
     </div>
   );

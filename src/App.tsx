@@ -24,6 +24,7 @@ import Footer from "@/components/Footer";
 import MobileNav from "@/components/MobileNav";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LiveStreamPage from "@/pages/LiveStreamPage";
+import BroadcastPage from "@/pages/BroadcastPage";
 
 // Import discover pages correctly
 import Discover from "@/pages/discover";
@@ -68,6 +69,8 @@ function App() {
                       <Route path="/creators" element={<Creators />} />
                       <Route path="/creators/:creatorId" element={<CreatorChannel />} />
                       <Route path="/stream/:streamId" element={<LiveStreamPage />} />
+                      <Route path="/broadcast" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
+                      <Route path="/broadcast/:creatorId" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
                       <Route path="/discover/streams" element={<StreamsDiscovery />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

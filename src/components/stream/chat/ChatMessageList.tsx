@@ -1,8 +1,7 @@
 
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { StreamComment } from "@/types/stream";
 import ChatMessageItem from "./ChatMessageItem";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatMessageListProps {
   comments: StreamComment[];
@@ -11,39 +10,35 @@ interface ChatMessageListProps {
 }
 
 const ChatMessageList = ({ comments, formatTimestamp, renderBadge }: ChatMessageListProps) => {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   
+  // Auto-scroll to the bottom when new messages arrive
   useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
-      }
+    if (chatContainerRef.current) {
+      const { scrollHeight, clientHeight } = chatContainerRef.current;
+      chatContainerRef.current.scrollTop = scrollHeight - clientHeight;
     }
   }, [comments]);
   
   return (
-    <div className="flex-1 overflow-hidden" ref={scrollAreaRef}>
-      <ScrollArea className="h-full">
-        <div className="p-3 space-y-3">
-          {comments.length === 0 ? (
-            <div className="text-center text-muted-foreground py-6">
-              <p>No messages yet</p>
-            </div>
-          ) : (
-            comments.map(comment => (
-              <ChatMessageItem 
-                key={comment.id} 
-                comment={comment} 
-                formatTimestamp={formatTimestamp}
-                badge={renderBadge ? renderBadge(comment.userId) : undefined}
-              />
-            ))
-          )}
-          <div className="h-2" /> {/* Bottom padding for scrolling */}
+    <div 
+      ref={chatContainerRef}
+      className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-gray-300"
+    >
+      {comments.length === 0 ? (
+        <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+          No messages yet
         </div>
-      </ScrollArea>
+      ) : (
+        comments.map((comment) => (
+          <ChatMessageItem 
+            key={comment.id} 
+            message={comment} 
+            formatTimestamp={formatTimestamp}
+            renderBadge={renderBadge}
+          />
+        ))
+      )}
     </div>
   );
 };

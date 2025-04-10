@@ -1,130 +1,60 @@
 
-import { useEffect, useRef } from "react";
+// Sound effect utility for the application
 
-const NEW_MESSAGE_SOUND = "/assets/new-message.mp3";
-const INCOMING_CALL_SOUND = "/assets/incoming-call.mp3";
+// Cache sounds for better performance
+const soundCache: Record<string, HTMLAudioElement> = {};
 
-// Track active sound elements
-const activeSounds: HTMLAudioElement[] = [];
-
-// Preload sounds when the app first loads
-export const preloadSounds = () => {
-  try {
-    // Create and preload audio elements but don't play them
-    const newMessageAudio = new Audio(NEW_MESSAGE_SOUND);
-    const incomingCallAudio = new Audio(INCOMING_CALL_SOUND);
-    
-    // Just load them but don't play them
-    newMessageAudio.load();
-    incomingCallAudio.load();
-  } catch (error) {
-    console.warn("Could not preload sounds:", error);
-    // Don't throw errors, just continue with the app
-  }
-};
-
+/**
+ * Play a new message notification sound
+ */
 export const playNewMessageSound = () => {
-  try {
-    const audio = new Audio(NEW_MESSAGE_SOUND);
-    audio.play().catch(error => {
-      console.warn("Error playing new message sound:", error);
-      // Don't throw errors, just continue with the app
-    });
-    activeSounds.push(audio);
-  } catch (error) {
-    console.warn("Error creating audio element for new message sound:", error);
-    // Don't throw errors, just continue with the app
-  }
+  playSound('/assets/new-message.mp3');
 };
 
-export const playIncomingCallSound = (loop = true) => {
+/**
+ * Play an incoming call notification sound
+ */
+export const playIncomingCallSound = () => {
+  playSound('/assets/incoming-call.mp3', true);
+};
+
+/**
+ * Generic sound player with caching
+ */
+const playSound = (soundPath: string, loop: boolean = false) => {
   try {
-    const audio = new Audio(INCOMING_CALL_SOUND);
-    if (loop) {
-      audio.loop = true;
+    // Try to get from cache first
+    let sound = soundCache[soundPath];
+    
+    // Create and cache if doesn't exist
+    if (!sound) {
+      sound = new Audio(soundPath);
+      soundCache[soundPath] = sound;
     }
-    audio.play().catch(error => {
-      console.warn("Error playing incoming call sound:", error);
-      // Don't throw errors, just continue with the app
+    
+    // Configure sound
+    sound.loop = loop;
+    sound.currentTime = 0;
+    
+    // Play the sound
+    sound.play().catch(err => {
+      console.warn('Failed to play sound:', err);
     });
-    activeSounds.push(audio);
-    return audio;
+    
+    return sound;
   } catch (error) {
-    console.warn("Error creating audio element for incoming call sound:", error);
-    // Don't throw errors, just continue with the app
+    console.error('Error playing sound:', error);
     return null;
   }
 };
 
 /**
- * Stop all currently playing sounds
+ * Stop a currently playing sound
  */
-export const stopAllSounds = (): void => {
-  try {
-    // Stop all active sounds
-    for (const audio of activeSounds) {
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }
-    // Clear the active sounds array
-    activeSounds.length = 0;
-  } catch (error) {
-    console.warn("Error stopping sounds:", error);
-    // Don't throw errors, just continue with the app
+export const stopSound = (soundPath: string) => {
+  const sound = soundCache[soundPath];
+  if (sound) {
+    sound.pause();
+    sound.currentTime = 0;
   }
-};
-
-export const useAudioPlayer = (src: string, autoPlay = false, loop = false) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  
-  useEffect(() => {
-    try {
-      if (!audioRef.current) {
-        audioRef.current = new Audio(src);
-        audioRef.current.loop = loop;
-        
-        if (autoPlay) {
-          audioRef.current.play().catch(error => {
-            console.warn("Error auto-playing audio:", error);
-          });
-        }
-      }
-      
-      return () => {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current = null;
-        }
-      };
-    } catch (error) {
-      console.warn("Error setting up audio player:", error);
-      return () => {};
-    }
-  }, [src, autoPlay, loop]);
-  
-  const play = () => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.play().catch(error => {
-          console.warn("Error playing audio:", error);
-        });
-      }
-    } catch (error) {
-      console.warn("Error playing audio:", error);
-    }
-  };
-  
-  const pause = () => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    } catch (error) {
-      console.warn("Error pausing audio:", error);
-    }
-  };
-  
-  return { play, pause };
 };
