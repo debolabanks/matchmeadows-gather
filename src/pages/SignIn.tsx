@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,13 +18,17 @@ const SignIn = () => {
   const { signIn, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the returnTo path from location state, or default to /discover
+  const returnTo = location.state?.returnTo || "/discover";
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/discover");
+      navigate(returnTo);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, returnTo]);
 
   // Check for auth error messages from session storage
   useEffect(() => {
@@ -63,7 +67,7 @@ const SignIn = () => {
         });
       }
       
-      navigate("/discover");
+      navigate(returnTo);
     } catch (error) {
       console.error("Sign in error:", error);
       
