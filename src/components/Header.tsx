@@ -56,26 +56,28 @@ const Header = () => {
           <span className="font-bold text-xl text-love-700">MatchMeadows</span>
         </Link>
         
-        <nav className="hidden md:flex items-center gap-6">
-          <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
-            Discover
-          </Link>
-          <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
-            Matches
-          </Link>
-          <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
-            Messages
-          </Link>
-          <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
-            Creators
-          </Link>
-          <Link to="/games" className="text-foreground hover:text-love-500 transition-colors">
-            Games
-          </Link>
-          <Link to="/subscription" className="text-foreground hover:text-love-500 transition-colors">
-            Premium
-          </Link>
-        </nav>
+        {isAuthenticated && (
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
+              Discover
+            </Link>
+            <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
+              Matches
+            </Link>
+            <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
+              Messages
+            </Link>
+            <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
+              Creators
+            </Link>
+            <Link to="/games" className="text-foreground hover:text-love-500 transition-colors">
+              Games
+            </Link>
+            <Link to="/subscription" className="text-foreground hover:text-love-500 transition-colors">
+              Premium
+            </Link>
+          </nav>
+        )}
         
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
