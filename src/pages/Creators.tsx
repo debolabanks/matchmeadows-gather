@@ -11,13 +11,15 @@ import CreatorSearch from "@/components/creators/CreatorSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 
-// Import the creators data - assuming this is the correct export name based on the error
-import { mockCreators } from "@/components/creators/mockCreatorsData";
+// Import the creators data with the correct function name
+import { getMockCreators } from "@/components/creators/mockCreatorsData";
 
 const Creators = () => {
-  const [creators, setCreators] = useState<Creator[]>(mockCreators || []);
+  const [creators, setCreators] = useState<Creator[]>(getMockCreators());
   const [showFilters, setShowFilters] = useState(false);
   const [sortOption, setSortOption] = useState("popular");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
@@ -50,6 +52,20 @@ const Creators = () => {
     }
     
     setCreators(sortedCreators);
+  };
+  
+  // Handle filtering creators
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter);
+    const allCreators = getMockCreators();
+    
+    if (filter === "all") {
+      setCreators(allCreators);
+    } else if (filter === "online") {
+      setCreators(allCreators.filter(creator => creator.isOnline));
+    } else if (filter === "upcoming") {
+      setCreators(allCreators.filter(creator => creator.nextSession));
+    }
   };
   
   const handleGoLive = () => {
@@ -104,10 +120,12 @@ const Creators = () => {
         </div>
       </div>
       
-      {showFilters && <CreatorFilters />}
+      {showFilters && <CreatorFilters setFilter={handleFilterChange} />}
       
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        <CreatorSearch className="flex-1" />
+        <div className="flex-1">
+          <CreatorSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        </div>
         
         <Select value={sortOption} onValueChange={handleSortChange}>
           <SelectTrigger className="w-[180px]">
