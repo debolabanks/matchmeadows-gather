@@ -58,3 +58,13 @@ export const stopSound = (soundPath: string) => {
     sound.currentTime = 0;
   }
 };
+
+/**
+ * Stop all currently playing sounds
+ */
+export const stopAllSounds = () => {
+  Object.values(soundCache).forEach(sound => {
+    sound.pause();
+    sound.currentTime = 0;
+  });
+};

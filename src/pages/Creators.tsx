@@ -8,12 +8,14 @@ import { PlusCircle, Search, SlidersHorizontal } from "lucide-react";
 import CreatorCard, { Creator } from "@/components/creators/CreatorCard";
 import CreatorFilters from "@/components/creators/CreatorFilters";
 import CreatorSearch from "@/components/creators/CreatorSearch";
-import { mockCreators } from "@/components/creators/mockCreatorsData";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 
+// Import the creators data - assuming this is the correct export name based on the error
+import { mockCreators } from "@/components/creators/mockCreatorsData";
+
 const Creators = () => {
-  const [creators, setCreators] = useState<Creator[]>(mockCreators);
+  const [creators, setCreators] = useState<Creator[]>(mockCreators || []);
   const [showFilters, setShowFilters] = useState(false);
   const [sortOption, setSortOption] = useState("popular");
   const { user, isAuthenticated } = useAuth();
@@ -102,7 +104,7 @@ const Creators = () => {
         </div>
       </div>
       
-      {showFilters && <CreatorFilters className="mb-6" />}
+      {showFilters && <CreatorFilters />}
       
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <CreatorSearch className="flex-1" />
