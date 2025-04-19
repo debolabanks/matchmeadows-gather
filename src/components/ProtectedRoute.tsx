@@ -13,7 +13,7 @@ const ProtectedRoute = ({
   children, 
   redirectPath = "/sign-in" 
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -25,8 +25,8 @@ const ProtectedRoute = ({
     );
   }
 
-  if (!isAuthenticated) {
-    // Preserve the attempted URL to redirect back after login
+  if (!isAuthenticated || !user) {
+    console.log("User not authenticated, redirecting to:", redirectPath);
     return <Navigate to={redirectPath} state={{ returnTo: location.pathname }} replace />;
   }
 

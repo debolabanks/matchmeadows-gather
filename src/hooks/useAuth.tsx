@@ -9,12 +9,16 @@ export const useAuth = () => {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   
-  // Add fallbacks for critical properties that might be undefined
+  // Add stronger type checks and fallbacks for critical properties
   return {
     ...context,
     user: context.user || null,
-    isAuthenticated: !!context.user,
+    isAuthenticated: Boolean(context.user),
     isLoading: context.isLoading === undefined ? false : context.isLoading,
-    profile: context.user?.profile || {}
+    profile: context.user?.profile || {},
+    signIn: context.signIn || (async () => undefined),
+    signUp: context.signUp || (async () => {}),
+    signOut: context.signOut || (async () => {}),
+    getSwipesRemaining: context.getSwipesRemaining || (() => 0)
   };
 };
