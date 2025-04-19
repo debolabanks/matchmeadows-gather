@@ -4,6 +4,7 @@ import { User } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
 import { validateSession, logoutUser } from "@/utils/authUtils";
+import { Database } from "@/integrations/supabase/types";
 
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -23,49 +24,56 @@ export const useAuthState = () => {
           try {
             console.log("AuthProvider - User authenticated, fetching profile");
             
-            // Get profile data from our profiles table
-            let { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
+            // Handle profile data or fallback to user metadata
+            let profile: any = null;
             
-            if (profileError) {
-              console.error("AuthProvider - Error fetching profile:", profileError);
+            try {
+              // Try to fetch profile data if available
+              const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
               
-              // If profile not found, create a new one
-              if (profileError.code === 'PGRST116') {
-                console.log("AuthProvider - Profile not found, creating new profile");
-                const { data: newProfile, error: createError } = await supabase
-                  .from('profiles')
-                  .insert({
-                    id: session.user.id,
-                    full_name: session.user.user_metadata?.full_name || "",
-                    avatar_url: session.user.user_metadata?.avatar_url || ""
-                  })
-                  .select()
-                  .single();
+              if (!profileError && profileData) {
+                profile = profileData;
+              } else if (profileError && profileError.code === 'PGRST116') {
+                // If profile not found, create a basic one with metadata
+                const userData = {
+                  id: session.user.id,
+                  full_name: session.user.user_metadata?.full_name || "",
+                  avatar_url: session.user.user_metadata?.avatar_url || ""
+                };
                 
-                if (createError) {
-                  console.error("AuthProvider - Error creating profile:", createError);
-                } else {
-                  console.log("AuthProvider - New profile created:", !!newProfile);
-                  profileData = newProfile;
+                try {
+                  const { data: newProfile } = await supabase
+                    .from('profiles')
+                    .insert(userData)
+                    .select()
+                    .single();
+                  
+                  if (newProfile) {
+                    profile = newProfile;
+                  }
+                } catch (insertError) {
+                  console.error("Error creating profile:", insertError);
+                  // Continue with user metadata even if profile creation fails
                 }
               }
-            } else {
-              console.log("AuthProvider - Profile data fetched:", !!profileData);
+            } catch (dbError) {
+              console.error("Database operation failed:", dbError);
+              // Continue with user metadata
             }
             
-            // Convert to our app's User format
+            // Convert to our app's User format using available data
             const appUser: User = {
               id: session.user.id,
-              name: profileData?.full_name || session.user.user_metadata?.full_name || "",
+              name: profile?.full_name || session.user.user_metadata?.full_name || "",
               email: session.user.email || "",
               provider: "email",
-              profile: profileData ? {
-                bio: profileData.bio,
-                location: profileData.location,
+              profile: profile ? {
+                bio: profile.bio || undefined,
+                location: profile.location || undefined,
                 // Map other profile fields as needed
               } : undefined
             };

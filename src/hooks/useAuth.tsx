@@ -14,7 +14,7 @@ export const useAuth = () => {
     ...context,
     user: context.user || null,
     isAuthenticated: !!context.user,
-    isLoading: context.isLoading === undefined ? false : context.isLoading
+    isLoading: context.isLoading === undefined ? false : context.isLoading,
+    profile: context.user?.profile || {}
   };
 };
-
