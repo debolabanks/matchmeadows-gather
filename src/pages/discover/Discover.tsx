@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -105,19 +106,7 @@ const Discover = () => {
     setFilteredProfiles(filtered);
     setCurrentProfiles(filtered);
 
-    if (filtered.length === 0) {
-      toast({
-        title: "No matches found",
-        description: "Try adjusting your preferences to see more profiles",
-        variant: "default"
-      });
-    } else {
-      toast({
-        title: "Preferences updated",
-        description: `Found ${filtered.length} potential matches`,
-        variant: "default"
-      });
-    }
+    // Remove toast notifications from here - we'll only show them when preferences are changed
   }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed, boostedProfiles]);
   
   useEffect(() => {
@@ -202,6 +191,31 @@ const Discover = () => {
     if (hasChanged) {
       console.log("Updating preferences:", newPreferences);
       setPreferences(prev => ({ ...prev, ...newPreferences }));
+      
+      // Add toast notification here, only when preferences have changed
+      toast({
+        title: "Preferences updated",
+        description: "Finding new matches based on your preferences",
+        variant: "default"
+      });
+      
+      // We'll show the results toast after filtering in a setTimeout to allow the filter to complete
+      setTimeout(() => {
+        const filteredCount = filteredProfiles.length;
+        if (filteredCount === 0) {
+          toast({
+            title: "No matches found",
+            description: "Try adjusting your preferences to see more profiles",
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Matches found",
+            description: `Found ${filteredCount} potential matches`,
+            variant: "default"
+          });
+        }
+      }, 500);
     }
   };
   
