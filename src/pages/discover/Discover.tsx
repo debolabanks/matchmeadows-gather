@@ -195,8 +195,14 @@ const Discover = () => {
   };
   
   const handlePreferencesChange = (newPreferences: Partial<MatchCriteria>) => {
-    console.log("Updating preferences:", newPreferences);
-    setPreferences(prev => ({ ...prev, ...newPreferences }));
+    const hasChanged = Object.keys(newPreferences).some(
+      key => preferences[key as keyof MatchCriteria] !== newPreferences[key as keyof MatchCriteria]
+    );
+
+    if (hasChanged) {
+      console.log("Updating preferences:", newPreferences);
+      setPreferences(prev => ({ ...prev, ...newPreferences }));
+    }
   };
   
   useEffect(() => {
