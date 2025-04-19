@@ -8,7 +8,7 @@ const MobileNav = () => {
   const { isAuthenticated, user } = useAuth();
   
   const isActive = (path: string) => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path);
   };
 
   // Only show auth-required navigation items when authenticated
@@ -17,7 +17,7 @@ const MobileNav = () => {
       <div className="flex items-center justify-around py-3">
         <Link 
           to="/" 
-          className={`flex flex-col items-center ${isActive('/') ? 'text-love-500' : 'text-muted-foreground'}`}
+          className={`flex flex-col items-center ${isActive('/') && location.pathname === '/' ? 'text-love-500' : 'text-muted-foreground'}`}
         >
           <Home className="h-6 w-6" />
           <span className="text-xs mt-1">Home</span>

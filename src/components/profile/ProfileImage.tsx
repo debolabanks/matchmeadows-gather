@@ -11,7 +11,7 @@ interface ProfileImageProps {
   distance: string;
   location: string;
   preferredLanguage?: string;
-  profileId?: string;  // Added profileId prop
+  profileId?: string;
 }
 
 const ProfileImage = ({
@@ -24,6 +24,9 @@ const ProfileImage = ({
   preferredLanguage,
   profileId,
 }: ProfileImageProps) => {
+  // Use a fixed value for demo purposes
+  const isLive = profileId && (profileId.charCodeAt(0) % 3 === 0); // More deterministic way to show live badge
+
   return (
     <div className="relative h-72 w-full mb-4">
       <img
@@ -44,7 +47,7 @@ const ProfileImage = ({
           )}
           
           {/* Live streaming indicator with link */}
-          {profileId && Math.random() > 0.7 && (  // Just for demo purposes - 30% chance to show live
+          {profileId && isLive && (
             <Link
               to={`/stream/${profileId}`}
               onClick={(e) => e.stopPropagation()}

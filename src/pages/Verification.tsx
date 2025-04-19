@@ -15,8 +15,8 @@ import NotificationsPermission from "@/components/NotificationsPermission";
 const Verification = () => {
   const [step, setStep] = useState(1);
   const [totalSteps] = useState(3);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(true); // Default to true for demo
+  const [phoneVerified, setPhoneVerified] = useState(true); // Default to true for demo
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -85,7 +85,7 @@ const Verification = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-screen">
+    <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 flex flex-col items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex justify-between items-center mb-2">
