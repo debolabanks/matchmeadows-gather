@@ -82,6 +82,8 @@ const Discover = () => {
   });
   
   useEffect(() => {
+    console.log("Preferences updated:", preferences);
+    
     let filtered = filterProfilesByPreferences(
       boostedProfiles,
       preferences,
@@ -102,7 +104,21 @@ const Discover = () => {
     
     setFilteredProfiles(filtered);
     setCurrentProfiles(filtered);
-  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed]);
+
+    if (filtered.length === 0) {
+      toast({
+        title: "No matches found",
+        description: "Try adjusting your preferences to see more profiles",
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Preferences updated",
+        description: `Found ${filtered.length} potential matches`,
+        variant: "default"
+      });
+    }
+  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed, boostedProfiles]);
   
   useEffect(() => {
     if (user && user.swipes?.resetAt && !isSubscribed) {
@@ -179,6 +195,7 @@ const Discover = () => {
   };
   
   const handlePreferencesChange = (newPreferences: Partial<MatchCriteria>) => {
+    console.log("Updating preferences:", newPreferences);
     setPreferences(prev => ({ ...prev, ...newPreferences }));
   };
   
