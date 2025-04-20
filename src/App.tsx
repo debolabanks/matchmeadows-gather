@@ -30,6 +30,11 @@ import BroadcastPage from "@/pages/BroadcastPage";
 import Discover from "@/pages/discover";
 import StreamsDiscovery from "@/pages/discover/streams";
 
+// Import game components
+import TicTacToe from "@/games/TicTacToe";
+import RockPaperScissors from "@/games/RockPaperScissors";
+import WordGuess from "@/games/WordGuess";
+
 const queryClient = new QueryClient()
 
 function App() {
@@ -66,6 +71,12 @@ function App() {
                       <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
                       <Route path="/subscription" element={<Subscription />} />
                       <Route path="/games" element={<Games />} />
+                      
+                      {/* Game routes */}
+                      <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
+                      <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
+                      <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />
+                      
                       <Route path="/creators" element={<Creators />} />
                       <Route path="/creators/:creatorId" element={<CreatorChannel />} />
                       <Route path="/stream/:streamId" element={<LiveStreamPage />} />

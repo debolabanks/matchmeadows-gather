@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -27,6 +29,7 @@ const Messages = () => {
   const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,7 +41,13 @@ const Messages = () => {
     }
   }, [messages]);
 
+  // Ensure initialContactId is used correctly
   useEffect(() => {
+    console.log("Initial contact id from location state:", initialContactId);
+  }, [initialContactId]);
+
+  useEffect(() => {
+    setIsLoading(true);
     const mockContacts: ChatContact[] = [
       {
         id: "1",
@@ -94,17 +103,33 @@ const Messages = () => {
     ];
 
     setContacts(mockContacts);
+    setIsLoading(false);
     
+    // If initialContactId is provided, select that contact
     if (initialContactId) {
+      console.log("Looking for contact with id:", initialContactId);
       const contact = mockContacts.find(c => c.id === initialContactId);
+      if (contact) {
+        console.log("Found contact:", contact.name);
+        setSelectedContact(contact);
+      }
+    }
+  }, []);
+
+  // Separate useEffect for initialContactId to ensure it runs after contacts are loaded
+  useEffect(() => {
+    if (initialContactId && contacts.length > 0) {
+      const contact = contacts.find(c => c.id === initialContactId);
       if (contact) {
         setSelectedContact(contact);
       }
     }
-  }, [initialContactId]);
+  }, [initialContactId, contacts]);
 
   useEffect(() => {
     if (selectedContact) {
+      console.log("Loading messages for contact:", selectedContact.name);
+      
       const mockMessages: ChatMessage[] = [
         {
           id: "1",
@@ -224,7 +249,11 @@ const Messages = () => {
           : contact
       ));
       
-      playNewMessageSound();
+      try {
+        playNewMessageSound();
+      } catch (error) {
+        console.warn("Failed to play sound:", error);
+      }
     }
   };
 
@@ -257,6 +286,30 @@ const Messages = () => {
   const handleReturnToDiscover = () => {
     navigate("/discover");
   };
+  
+  const handleContactSelect = (contact: ChatContact) => {
+    console.log("Selected contact:", contact.name);
+    setSelectedContact(contact);
+    // Update URL without navigation
+    window.history.pushState(
+      { contactId: contact.id }, 
+      "", 
+      `${window.location.pathname}?contact=${contact.id}`
+    );
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container py-6 max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">Messages</h1>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          <span className="ml-2">Loading messages...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-6 max-w-6xl mx-auto">
@@ -278,7 +331,7 @@ const Messages = () => {
                 <div 
                   key={contact.id}
                   className={`p-3 flex items-center gap-3 cursor-pointer hover:bg-accent/50 ${selectedContact?.id === contact.id ? 'bg-accent' : ''}`}
-                  onClick={() => setSelectedContact(contact)}
+                  onClick={() => handleContactSelect(contact)}
                 >
                   <div className="relative">
                     <Avatar className="h-12 w-12">

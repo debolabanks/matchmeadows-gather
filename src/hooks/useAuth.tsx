@@ -9,6 +9,13 @@ export const useAuth = () => {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   
+  // For debugging
+  console.log("useAuth hook - context state:", { 
+    hasUser: !!context.user,
+    isLoading: context.isLoading,
+    authenticated: Boolean(context.user)
+  });
+  
   // Add stronger type checks and fallbacks for critical properties
   return {
     ...context,
@@ -19,6 +26,7 @@ export const useAuth = () => {
     signIn: context.signIn || (async () => undefined),
     signUp: context.signUp || (async () => {}),
     signOut: context.signOut || (async () => {}),
-    getSwipesRemaining: context.getSwipesRemaining || (() => 0)
+    getSwipesRemaining: context.getSwipesRemaining || (() => 0),
+    useSwipe: context.useSwipe || (async () => ({ success: false, remaining: 0 }))
   };
 };
