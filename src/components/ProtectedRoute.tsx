@@ -1,8 +1,10 @@
 
 import { ReactNode, useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { validateSession } from "@/utils/authUtils";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -15,6 +17,29 @@ const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const validateAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (mounted && (!session || !validateSession(session))) {
+        console.warn("Invalid session in protected route, redirecting to:", redirectPath);
+        navigate(redirectPath, { 
+          state: { returnTo: location.pathname },
+          replace: true 
+        });
+      }
+    };
+
+    validateAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [location.pathname, redirectPath, navigate]);
 
   // Log authentication state for debugging
   useEffect(() => {
@@ -30,7 +55,7 @@ const ProtectedRoute = ({
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-love-500" />
-        <span className="ml-2 text-lg">Loading authentication...</span>
+        <span className="ml-2 text-lg">Verifying authentication...</span>
       </div>
     );
   }
@@ -40,7 +65,6 @@ const ProtectedRoute = ({
     return <Navigate to={redirectPath} state={{ returnTo: location.pathname }} replace />;
   }
 
-  // User is authenticated, render children
   return <>{children}</>;
 };
 
