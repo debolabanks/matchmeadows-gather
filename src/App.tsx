@@ -25,6 +25,7 @@ import MobileNav from "@/components/MobileNav";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LiveStreamPage from "@/pages/LiveStreamPage";
 import BroadcastPage from "@/pages/BroadcastPage";
+import { CallProvider } from "@/contexts/CallContext";
 
 // Import discover pages correctly
 import Discover from "@/pages/discover";
@@ -51,48 +52,50 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="theme">
       <AuthProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col">
-              <div className="pt-16 md:ml-16">
-                <Header />
-                <div className="flex h-full flex-1">
-                  <MobileNav />
-                  <div className="flex-1">
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/discover" element={<Discover />} />
-                      <Route path="/sign-in" element={<SignIn />} />
-                      <Route path="/sign-up" element={<SignUp />} />
-                      <Route path="/matches" element={<ProtectedRoute>{<Matches />}</ProtectedRoute>} />
-                      <Route path="/messages" element={<ProtectedRoute>{<Messages />}</ProtectedRoute>} />
-                      <Route path="/profile" element={<ProtectedRoute>{<Profile />}</ProtectedRoute>} />
-                      <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
-                      <Route path="/subscription" element={<Subscription />} />
-                      <Route path="/games" element={<Games />} />
-                      
-                      {/* Game routes */}
-                      <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
-                      <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
-                      <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />
-                      
-                      <Route path="/creators" element={<Creators />} />
-                      <Route path="/creators/:creatorId" element={<CreatorChannel />} />
-                      <Route path="/stream/:streamId" element={<LiveStreamPage />} />
-                      <Route path="/broadcast" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
-                      <Route path="/broadcast/:creatorId" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
-                      <Route path="/discover/streams" element={<StreamsDiscovery />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                    <Footer />
+        <CallProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <div className="min-h-screen flex flex-col">
+                <div className="pt-16 md:ml-16">
+                  <Header />
+                  <div className="flex h-full flex-1">
+                    <MobileNav />
+                    <div className="flex-1">
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/discover" element={<Discover />} />
+                        <Route path="/sign-in" element={<SignIn />} />
+                        <Route path="/sign-up" element={<SignUp />} />
+                        <Route path="/matches" element={<ProtectedRoute>{<Matches />}</ProtectedRoute>} />
+                        <Route path="/messages" element={<ProtectedRoute>{<Messages />}</ProtectedRoute>} />
+                        <Route path="/profile" element={<ProtectedRoute>{<Profile />}</ProtectedRoute>} />
+                        <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
+                        <Route path="/subscription" element={<Subscription />} />
+                        <Route path="/games" element={<Games />} />
+                        
+                        {/* Game routes */}
+                        <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
+                        <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
+                        <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />
+                        
+                        <Route path="/creators" element={<Creators />} />
+                        <Route path="/creators/:creatorId" element={<CreatorChannel />} />
+                        <Route path="/stream/:streamId" element={<LiveStreamPage />} />
+                        <Route path="/broadcast" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
+                        <Route path="/broadcast/:creatorId" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
+                        <Route path="/discover/streams" element={<StreamsDiscovery />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                      <Footer />
+                    </div>
                   </div>
                 </div>
+                <Toaster />
               </div>
-              <Toaster />
-            </div>
-          </BrowserRouter>
-        </QueryClientProvider>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </CallProvider>
       </AuthProvider>
     </ThemeProvider>
   );
