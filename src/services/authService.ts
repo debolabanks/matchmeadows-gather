@@ -23,18 +23,54 @@ export const signInWithEmailAndPassword = async (email: string, password: string
     throw new Error("No user returned from Supabase");
   }
   
+  console.log("Successful auth from Supabase:", data);
+  
   // Get user profile data - handle with try/catch to avoid type errors
   let profileData = null;
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', data.user.id)
-      .single();
+      .maybeSingle();
     
-    profileData = profile;
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+    } else {
+      console.log("Profile data retrieved:", profile);
+      profileData = profile;
+    }
   } catch (err) {
-    console.error("Error fetching profile:", err);
+    console.error("Exception fetching profile:", err);
+  }
+  
+  // If profile is null, let's try to create it
+  if (!profileData) {
+    try {
+      console.log("No profile found, attempting to create one for user:", data.user.id);
+      
+      // Create a minimal profile
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert([
+          { 
+            id: data.user.id,
+            full_name: data.user.user_metadata?.full_name || '',
+            username: data.user.email?.split('@')[0] || ''
+          }
+        ])
+        .select('*')
+        .maybeSingle();
+      
+      if (insertError) {
+        console.error("Failed to create profile:", insertError);
+      } else {
+        console.log("Created new profile:", newProfile);
+        profileData = newProfile;
+      }
+    } catch (createErr) {
+      console.error("Exception creating profile:", createErr);
+    }
   }
   
   // Check if the user is the test premium user

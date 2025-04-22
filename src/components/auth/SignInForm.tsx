@@ -78,6 +78,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
 
     try {
       console.log("Attempting to sign in with:", { email });
+      
       // First, check explicitly for test user
       if (email.toLowerCase() === "test@example.com" && password === "password") {
         // Demo user for testing
@@ -99,31 +100,43 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
         return;
       }
 
+      // Direct Supabase authentication for troubleshooting
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (!data || !data.user) {
+        throw new Error("Authentication failed - no user data returned");
+      }
+      
+      console.log("Supabase auth successful:", data);
+      
+      // Now use our signIn function which will handle profile data
       const user = await signIn(email, password);
       console.log("Successfully signed in user:", user);
 
       // After sign in, explicitly fetch profile data
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      if (data.session?.user) {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('id', data.session.user.id)
           .maybeSingle();
         console.log("Post-login profile check:", profileData, profileError);
       }
 
-      if (user) {
-        toast({
-          title: "Welcome back!",
-          description: `${user.profile?.subscriptionStatus === "active" ? "Premium user, " : ""}Successfully signed in`
-        });
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in"
-        });
-      }
+      toast({
+        title: "Welcome back!",
+        description: user?.profile?.subscriptionStatus === "active" 
+          ? "Premium user, successfully signed in" 
+          : "Successfully signed in"
+      });
+      
       navigate(returnTo);
       if (onSuccess) onSuccess();
     } catch (error) {
