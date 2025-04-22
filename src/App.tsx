@@ -26,6 +26,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import LiveStreamPage from "@/pages/LiveStreamPage";
 import BroadcastPage from "@/pages/BroadcastPage";
 import { CallProvider } from "@/contexts/CallContext";
+import TermsOfUse from "@/pages/TermsOfUse";
 
 // Import discover pages correctly
 import Discover from "@/pages/discover";
@@ -73,6 +74,7 @@ function App() {
                         <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
                         <Route path="/subscription" element={<Subscription />} />
                         <Route path="/games" element={<Games />} />
+                        <Route path="/terms" element={<TermsOfUse />} />
                         
                         {/* Game routes */}
                         <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />

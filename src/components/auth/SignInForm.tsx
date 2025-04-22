@@ -42,28 +42,6 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
       setErrorMessage(sessionErrorMsg);
       sessionStorage.removeItem("auth_error_message");
     }
-    // Check if we have a session already
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error checking session:", error);
-        return;
-      }
-      if (data.session) {
-        console.log("Existing session found:", data.session);
-        try {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.session.user.id)
-            .maybeSingle();
-          console.log("Profile data check:", profileData, profileError);
-        } catch (e) {
-          console.error("Error checking profile:", e);
-        }
-      }
-    };
-    checkSession();
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -100,35 +78,9 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
         return;
       }
 
-      // Direct Supabase authentication for troubleshooting
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      if (!data || !data.user) {
-        throw new Error("Authentication failed - no user data returned");
-      }
-      
-      console.log("Supabase auth successful:", data);
-      
-      // Now use our signIn function which will handle profile data
+      // Use our signIn function to authenticate the user
       const user = await signIn(email, password);
       console.log("Successfully signed in user:", user);
-
-      // After sign in, explicitly fetch profile data
-      if (data.session?.user) {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .maybeSingle();
-        console.log("Post-login profile check:", profileData, profileError);
-      }
 
       toast({
         title: "Welcome back!",

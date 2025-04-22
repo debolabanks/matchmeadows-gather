@@ -20,7 +20,6 @@ export const useAuth = () => {
           console.warn("Invalid or expired session detected");
           if (mounted) {
             localStorage.removeItem("matchmeadows_user");
-            navigate("/sign-in");
           }
           return false;
         }
@@ -35,6 +34,25 @@ export const useAuth = () => {
             
           if (profileError) {
             console.error("Error fetching profile:", profileError);
+          } else if (!profile) {
+            console.log("No profile found, creating one...");
+            
+            // Create a minimal profile
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert([
+                { 
+                  id: session.user.id,
+                  full_name: session.user.user_metadata?.full_name || '',
+                  username: session.user.email?.split('@')[0] || ''
+                }
+              ]);
+              
+            if (insertError) {
+              console.error("Failed to create profile:", insertError);
+            } else {
+              console.log("Profile created successfully");
+            }
           } else {
             console.log("Profile data fetched:", profile);
           }
@@ -60,7 +78,6 @@ export const useAuth = () => {
         if (!session || !validateSession(session)) {
           if (mounted) {
             localStorage.removeItem("matchmeadows_user");
-            navigate("/sign-in");
           }
           return;
         }
@@ -76,6 +93,25 @@ export const useAuth = () => {
               
             if (profileError) {
               console.error("Error fetching profile after sign in:", profileError);
+            } else if (!profile) {
+              console.log("No profile found after sign in, creating one...");
+              
+              // Create a minimal profile
+              const { error: insertError } = await supabase
+                .from('profiles')
+                .insert([
+                  { 
+                    id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || '',
+                    username: session.user.email?.split('@')[0] || ''
+                  }
+                ]);
+                
+              if (insertError) {
+                console.error("Failed to create profile after sign in:", insertError);
+              } else {
+                console.log("Profile created successfully after sign in");
+              }
             } else {
               console.log("Profile data after sign in:", profile);
             }

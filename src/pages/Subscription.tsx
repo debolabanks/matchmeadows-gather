@@ -97,10 +97,10 @@ const Subscription = () => {
           </p>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
-            <TabsTrigger value="subscription">Subscription</TabsTrigger>
-            <TabsTrigger value="boost">Profile Boost</TabsTrigger>
+            <TabsTrigger value="subscription" className="whitespace-nowrap px-1">Subscription</TabsTrigger>
+            <TabsTrigger value="boost" className="whitespace-nowrap px-1">Profile Boost</TabsTrigger>
           </TabsList>
           
           <TabsContent value="subscription" className="animate-in fade-in">
@@ -177,6 +177,6 @@ const Subscription = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Subscription;
