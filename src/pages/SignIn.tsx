@@ -50,7 +50,20 @@ const SignIn = () => {
       }
       
       if (data.session) {
-        console.log("Existing session found");
+        console.log("Existing session found:", data.session);
+        
+        // Verify if we can access the profile data
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.session.user.id)
+            .maybeSingle();
+            
+          console.log("Profile data check:", profileData, profileError);
+        } catch (e) {
+          console.error("Error checking profile:", e);
+        }
       }
     };
     
@@ -95,6 +108,18 @@ const SignIn = () => {
       
       const user = await signIn(email, password);
       console.log("Successfully signed in user:", user);
+      
+      // After sign in, explicitly fetch profile data to confirm database access
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+          
+        console.log("Post-login profile check:", profileData, profileError);
+      }
       
       if (user) {
         toast({

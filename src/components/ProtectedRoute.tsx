@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
@@ -18,19 +18,62 @@ const ProtectedRoute = ({
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [verifyingSession, setVerifyingSession] = useState(true);
+  const [sessionValid, setSessionValid] = useState<boolean | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     const validateAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        setVerifyingSession(true);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error fetching session:", error);
+          if (mounted) {
+            setSessionValid(false);
+            setVerifyingSession(false);
+          }
+          return;
+        }
 
-      if (mounted && (!session || !validateSession(session))) {
-        console.warn("Invalid session in protected route, redirecting to:", redirectPath);
-        navigate(redirectPath, { 
-          state: { returnTo: location.pathname },
-          replace: true 
-        });
+        if (!session || !validateSession(session)) {
+          console.warn("Invalid session in protected route, redirecting to:", redirectPath);
+          if (mounted) {
+            setSessionValid(false);
+            setVerifyingSession(false);
+          }
+          return;
+        }
+        
+        // Session is valid, check if we can access profile data
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+            
+          if (profileError) {
+            console.error("Error fetching profile in protected route:", profileError);
+          } else {
+            console.log("Profile data in protected route:", profileData);
+          }
+        } catch (e) {
+          console.error("Error checking profile in protected route:", e);
+        }
+        
+        if (mounted) {
+          setSessionValid(true);
+          setVerifyingSession(false);
+        }
+      } catch (e) {
+        console.error("Error validating auth:", e);
+        if (mounted) {
+          setSessionValid(false);
+          setVerifyingSession(false);
+        }
       }
     };
 
@@ -46,12 +89,14 @@ const ProtectedRoute = ({
     console.log("ProtectedRoute - auth state:", { 
       isAuthenticated, 
       isLoading, 
+      verifyingSession,
+      sessionValid,
       hasUser: !!user,
       path: location.pathname
     });
-  }, [isAuthenticated, isLoading, user, location]);
+  }, [isAuthenticated, isLoading, user, location, verifyingSession, sessionValid]);
 
-  if (isLoading) {
+  if (isLoading || verifyingSession) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-love-500" />
@@ -60,7 +105,7 @@ const ProtectedRoute = ({
     );
   }
 
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated || !user || sessionValid === false) {
     console.log("User not authenticated, redirecting from", location.pathname, "to:", redirectPath);
     return <Navigate to={redirectPath} state={{ returnTo: location.pathname }} replace />;
   }
