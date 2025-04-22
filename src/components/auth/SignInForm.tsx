@@ -20,7 +20,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { signIn, isAuthenticated } = useAuth();
+  const { signIn, isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,10 +30,11 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
+      console.log("User is authenticated, redirecting to:", returnTo);
       navigate(returnTo);
     }
-  }, [isAuthenticated, navigate, returnTo]);
+  }, [isAuthenticated, user, navigate, returnTo]);
 
   // Check for auth error messages from session storage
   useEffect(() => {
@@ -73,6 +74,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
           title: "Welcome back!",
           description: "Successfully signed in with test account"
         });
+        // For the test user, navigate immediately
         navigate(returnTo);
         if (onSuccess) onSuccess();
         return;
@@ -89,7 +91,8 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
           : "Successfully signed in"
       });
       
-      navigate(returnTo);
+      // For normal users, don't navigate here - let the useEffect handle it
+      // The navigation will happen in the useEffect when isAuthenticated becomes true
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Sign in error:", error);

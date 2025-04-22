@@ -14,6 +14,7 @@ export const useAuth = () => {
 
     const checkAuthState = async () => {
       try {
+        console.log("Checking auth state...");
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session || !validateSession(session)) {
@@ -24,6 +25,7 @@ export const useAuth = () => {
           return false;
         }
         
+        console.log("Valid session found, user authenticated");
         // Session is valid, let's ensure we have the profile data
         try {
           const { data: profile, error: profileError } = await supabase
@@ -83,7 +85,8 @@ export const useAuth = () => {
         }
         
         // On successful auth event, fetch profile
-        if (event === 'SIGNED_IN' && session.user) {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session.user) {
+          console.log("User authenticated event detected:", event);
           try {
             const { data: profile, error: profileError } = await supabase
               .from('profiles')
