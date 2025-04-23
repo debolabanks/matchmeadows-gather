@@ -75,7 +75,7 @@ const Profile = () => {
     showActivity: user?.profile?.privacySettings?.showActivity ?? true,
     showDistance: user?.profile?.privacySettings?.showDistance ?? true,
     showOnlineStatus: user?.profile?.privacySettings?.showOnlineStatus ?? true,
-    profileVisibility: user?.profile?.privacySettings?.profileVisibility ?? "public"
+    profileVisibility: (user?.profile?.privacySettings?.profileVisibility as "public" | "matches-only" | "private") ?? "public"
   });
   
   const calculateCompletionPercentage = () => {

@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useRef } from "react";
 import { Stream, StreamReaction } from "@/types/stream";
 import { User } from "@/types/user";
 import VideoPlayer from "@/components/stream/video/VideoPlayer";
