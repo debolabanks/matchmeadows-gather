@@ -2,6 +2,7 @@
 export interface ChatMessage {
   id: string;
   senderId: string;
+  receiverId: string; // Adding the receiverId property
   text: string;
   timestamp: string;
   read: boolean;

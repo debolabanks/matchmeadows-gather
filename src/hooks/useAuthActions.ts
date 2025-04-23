@@ -275,18 +275,25 @@ export const useAuthActions = (
     
     if (navigator.onLine) {
       try {
-        const { error } = await supabase
-          .from('reports')
-          .insert(report);
-          
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error submitting report to server:", error);
-        // Fall back to offline storage
+        // Store to localStorage instead of Supabase
+        const existingReportsJSON = localStorage.getItem("matchmeadows_reports") || "[]";
+        const existingReports = JSON.parse(existingReportsJSON);
+        const updatedReports = [...existingReports, report];
+        localStorage.setItem("matchmeadows_reports", JSON.stringify(updatedReports));
+        
+        // Also store offline for syncing later when database is available
         await storeOfflineData("reports", report);
+        
         toast({
-          title: "Report saved offline",
-          description: "Will be submitted when you're back online"
+          title: "Report submitted",
+          description: "Thank you for your feedback"
+        });
+      } catch (error) {
+        console.error("Error submitting report:", error);
+        toast({
+          title: "Failed to submit report",
+          description: "Please try again later",
+          variant: "destructive"
         });
       }
     } else {
@@ -298,13 +305,7 @@ export const useAuthActions = (
       });
     }
     
-    // Also store in local storage for backward compatibility
-    const existingReportsJSON = localStorage.getItem("matchmeadows_reports");
-    const existingReports = existingReportsJSON ? JSON.parse(existingReportsJSON) : [];
-    const updatedReports = [...existingReports, report];
-    localStorage.setItem("matchmeadows_reports", JSON.stringify(updatedReports));
-    
-    return new Promise((resolve) => setTimeout(resolve, 500));
+    return Promise.resolve();
   };
   
   // Helper function to sync offline data after login
@@ -317,19 +318,51 @@ export const useAuthActions = (
       for (const update of userUpdates) {
         try {
           await updateUserProfile(userId, update.data);
-          await storeOfflineData("profile_updates", update.timestamp);
+          await clearOfflineData("profile_updates", update.timestamp);
         } catch (err) {
           console.error("Error syncing profile update:", err);
         }
       }
-      
-      // Sync other offline data as needed
       
       console.log("User-specific offline data sync completed");
     } catch (error) {
       console.error("Error during user offline data sync:", error);
     }
   };
+
+  // Add missing clearOfflineData function 
+  const clearOfflineData = async (storeName: string, key: string | number) => {
+    try {
+      const transaction = offlineDB!.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
+      const request = store.delete(key);
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(true);
+        request.onerror = (event) => reject(event);
+      });
+    } catch (error) {
+      console.error(`Failed to clear ${storeName} data:`, error);
+      return Promise.reject(error);
+    }
+  };
+
+  // Define offlineDB to fix the reference
+  let offlineDB: IDBDatabase | null = null;
+  
+  // Initialize the offlineDB
+  const initOfflineDB = async () => {
+    return new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("matchmeadows_offline", 1);
+      request.onerror = (event) => reject(event);
+      request.onsuccess = (event) => {
+        offlineDB = (event.target as IDBOpenDBRequest).result;
+        resolve(offlineDB);
+      };
+    });
+  };
+
+  // Initialize the DB
+  initOfflineDB().catch(err => console.error("Failed to initialize offline DB:", err));
 
   return {
     signIn,

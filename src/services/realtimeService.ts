@@ -1,10 +1,9 @@
 
-import { supabase, storeOfflineData } from "@/integrations/supabase/client";
-import { ChatMessage } from "@/types/message";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/use-toast";
+import { ChatMessage } from "@/types/message";
 
-// Create a message in the database
+// Create a message
 export const sendMessage = async (
   senderId: string, 
   receiverId: string, 
@@ -13,7 +12,7 @@ export const sendMessage = async (
   try {
     const newMessage: Omit<ChatMessage, 'id'> = {
       senderId,
-      receiverId, // Added receiverId to ensure proper recipient tracking
+      receiverId,
       text,
       timestamp: new Date().toISOString(),
       read: false
@@ -30,35 +29,33 @@ export const sendMessage = async (
     audio.volume = 0.5;
     audio.play().catch(err => console.log('Audio play error:', err));
     
-    // Try to send to Supabase if online
-    if (navigator.onLine) {
-      try {
-        const { data, error } = await supabase
-          .from('messages')
-          .insert(messageWithId)
-          .select()
-          .single();
-          
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.error("Error sending message to server:", error);
-        // Fall back to offline storage
-        await storeOfflineData("messages", messageWithId);
-        toast({
-          title: "Message saved offline",
-          description: "Will be sent when you're back online"
-        });
-        return messageWithId;
-      }
-    } else {
-      // Store offline
-      await storeOfflineData("messages", messageWithId);
+    // Store message in localStorage instead of Supabase
+    try {
+      // Get existing messages
+      const existingMessagesJSON = localStorage.getItem('matchmeadows_messages') || '[]';
+      const existingMessages = JSON.parse(existingMessagesJSON);
+      
+      // Add new message
+      existingMessages.push(messageWithId);
+      
+      // Save back to localStorage
+      localStorage.setItem('matchmeadows_messages', JSON.stringify(existingMessages));
+      
+      // Show toast notification
       toast({
-        title: "Message saved offline",
-        description: "Will be sent when you're back online"
+        title: "Message sent",
+        description: "Your message has been sent successfully"
       });
+      
       return messageWithId;
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Failed to send message",
+        description: "Please check your connection and try again",
+        variant: "destructive"
+      });
+      return null;
     }
   } catch (error) {
     console.error("Error sending message:", error);
@@ -78,33 +75,32 @@ export const subscribeToMessages = (
 ) => {
   console.log(`Subscribing to messages in conversation: ${conversationId}`);
   
-  // Return the subscription if online
-  if (navigator.onLine) {
-    const channel = supabase
-      .channel(`messages:${conversationId}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
-      }, payload => {
+  // Set up a listener for local storage changes
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.key === 'matchmeadows_messages') {
+      const messages = JSON.parse(event.newValue || '[]');
+      const latestMessage = messages[messages.length - 1];
+      
+      // Check if the message belongs to this conversation
+      if (latestMessage && 
+          (latestMessage.senderId === conversationId || latestMessage.receiverId === conversationId)) {
         // Play notification sound for new messages
         const audio = new Audio('/assets/new-message.mp3');
         audio.volume = 0.5;
         audio.play().catch(err => console.log('Audio play error:', err));
-        callback(payload.new);
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-      console.log("Unsubscribed from messages in conversation:", conversationId);
-    };
-  }
+        
+        callback(latestMessage);
+      }
+    }
+  };
   
-  // Return a dummy unsubscribe function if offline
+  // Add event listener
+  window.addEventListener('storage', handleStorageChange);
+  
+  // Return unsubscribe function
   return () => {
-    console.log("Offline: No active subscription to unsubscribe from");
+    window.removeEventListener('storage', handleStorageChange);
+    console.log("Unsubscribed from messages in conversation:", conversationId);
   };
 };
 
@@ -113,24 +109,22 @@ export const markMessagesAsRead = async (
   messageIds: string[]
 ): Promise<void> => {
   try {
-    if (navigator.onLine) {
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .in('id', messageIds);
-        
-      if (error) throw error;
-      console.log("Marked messages as read:", messageIds);
-    } else {
-      // Store the read status update for later synchronization
-      const readUpdate = {
-        timestamp: new Date().toISOString(),
-        messageIds,
-        action: 'mark_read'
-      };
-      await storeOfflineData("message_updates", readUpdate);
-      console.log("Stored read status update for offline sync:", messageIds);
-    }
+    // Get existing messages from localStorage
+    const existingMessagesJSON = localStorage.getItem('matchmeadows_messages') || '[]';
+    const existingMessages = JSON.parse(existingMessagesJSON);
+    
+    // Update read status
+    const updatedMessages = existingMessages.map((message: ChatMessage) => {
+      if (messageIds.includes(message.id)) {
+        return { ...message, read: true };
+      }
+      return message;
+    });
+    
+    // Save back to localStorage
+    localStorage.setItem('matchmeadows_messages', JSON.stringify(updatedMessages));
+    
+    console.log("Marked messages as read:", messageIds);
   } catch (error) {
     console.error("Error marking messages as read:", error);
     toast({

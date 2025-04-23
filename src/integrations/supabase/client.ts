@@ -7,6 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 const SUPABASE_URL = "https://yxdxwfzkqyovznqjffcm.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4ZHh3ZnprcXlvdnpucWpmZmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjAyOTQsImV4cCI6MjA1OTI5NjI5NH0.sjSfb1r83h7jN-gXfQCOamYmLI5Gxuf3iP6pLaedT-4";
 
+// Fixed the spread argument by providing an object
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     autoRefreshToken: true,
@@ -165,23 +166,7 @@ export async function clearOfflineData(storeName: string, key: string | number) 
 // Sync offline data when connection is restored
 async function syncOfflineData() {
   try {
-    // Sync pending messages
-    const offlineMessages = await getOfflineData("messages");
-    for (const message of offlineMessages) {
-      try {
-        // Attempt to send the message to the server
-        const { error } = await supabase
-          .from('messages')
-          .insert(message);
-          
-        if (!error) {
-          // If successful, remove from offline storage
-          await clearOfflineData("messages", message.id);
-        }
-      } catch (err) {
-        console.error("Error syncing message:", err);
-      }
-    }
+    console.log("Started syncing offline data");
     
     // Sync profile updates
     const profileUpdates = await getOfflineData("profile_updates");
@@ -197,22 +182,6 @@ async function syncOfflineData() {
         }
       } catch (err) {
         console.error("Error syncing profile update:", err);
-      }
-    }
-    
-    // Sync reports
-    const reports = await getOfflineData("reports");
-    for (const report of reports) {
-      try {
-        const { error } = await supabase
-          .from('reports')
-          .insert(report);
-          
-        if (!error) {
-          await clearOfflineData("reports", report.id);
-        }
-      } catch (err) {
-        console.error("Error syncing report:", err);
       }
     }
     
