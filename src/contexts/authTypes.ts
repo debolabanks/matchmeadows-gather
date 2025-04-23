@@ -1,5 +1,5 @@
 
-import { User } from "@/types/user";
+import { User, UserProfile } from "@/types/user";
 
 export interface AuthContextType {
   user: User | null;
@@ -10,7 +10,7 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword?: (email: string) => Promise<void>;
   confirmPasswordReset?: (token: string, password: string) => Promise<void>;
-  updateProfile?: (userData: Partial<User["profile"]>) => Promise<void>;
+  updateProfile?: (userData: Partial<UserProfile>) => Promise<void>;
   requestVerification?: () => Promise<void>;
   useSwipe: () => Promise<{ success: boolean; remaining?: number }>;
   getSwipesRemaining: () => number;
@@ -18,3 +18,6 @@ export interface AuthContextType {
   devModeEnabled?: boolean;
   toggleDevMode?: () => void;
 }
+
+// Re-export the User and UserProfile types to fix import errors
+export type { User, UserProfile };

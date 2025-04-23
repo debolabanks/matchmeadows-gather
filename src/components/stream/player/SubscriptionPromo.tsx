@@ -1,5 +1,5 @@
-
-import { User } from "@/contexts/authTypes";
+import React from "react";
+import { User } from "@/types/user";
 import { Stream } from "@/types/stream";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";

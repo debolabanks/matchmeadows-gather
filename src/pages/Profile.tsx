@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
-import { UserProfile } from "@/contexts/authTypes";
+import { UserProfile } from "@/types/user";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { LocationPrivacy } from "@/components/LocationPrivacy";

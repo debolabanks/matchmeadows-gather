@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { StreamComment, StreamChatMessage } from "@/types/stream";
-import { User } from "@/contexts/authTypes";
+import { User } from "@/types/user";
 import ChatMessageList from "./chat/ChatMessageList";
 import ChatInput from "./chat/ChatInput";
 import { formatTimestamp } from "./chat/utils/timeUtils";

@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { User, UserProfile } from "@/contexts/authTypes";
+import { User, UserProfile } from "@/types/user";
 
 export const signInWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
   const { data, error } = await supabase.auth.signInWithPassword({
