@@ -1,180 +1,284 @@
 
 import { useState, useRef, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
-import { Room } from "twilio-video";
 import { startBroadcast } from "@/services/twilio";
-import { useAuth } from "@/hooks/useAuth";
+import { Room } from "twilio-video";
+import webRTCService from "@/services/webrtc/webRTCService";
+import { useToast } from "@/components/ui/use-toast";
 
 export const useBroadcast = (creatorId: string, creatorName: string) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [tags, setTags] = useState("");
-  const [isSubscriberOnly, setIsSubscriberOnly] = useState(false);
-  const [isLive, setIsLive] = useState(false);
-  const [isMicEnabled, setIsMicEnabled] = useState(true);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [viewerCount, setViewerCount] = useState(0);
-  const [broadcastDuration, setDuration] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [isSubscriberOnly, setIsSubscriberOnly] = useState<boolean>(false);
   
-  const { user } = useAuth();
-  const intervalRef = useRef<number | null>(null);
+  const [isLive, setIsLive] = useState<boolean>(false);
+  const [isMicEnabled, setIsMicEnabled] = useState<boolean>(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [viewerCount, setViewerCount] = useState<number>(0);
+  const [broadcastDuration, setBroadcastDuration] = useState<number>(0);
+  
   const twilioRoomRef = useRef<Room | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const webRTCStartedRef = useRef<boolean>(false);
   
-  // Clean up on unmount
+  const { toast } = useToast();
+  
+  // Update broadcast duration while live
   useEffect(() => {
-    return () => {
-      if (twilioRoomRef.current) {
-        twilioRoomRef.current.disconnect();
-      }
-      
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-  
-  const startBroadcastHandler = async () => {
-    if (user?.profile?.subscriptionStatus !== "active") {
-      toast({
-        title: "Premium Feature",
-        description: "Only premium members can host a live session. Please upgrade your subscription.",
-        variant: "destructive",
-      });
-      return;
+    if (isLive && !timerRef.current) {
+      timerRef.current = window.setInterval(() => {
+        setBroadcastDuration(prev => prev + 1);
+      }, 1000);
     }
     
-    if (!title.trim()) {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isLive]);
+  
+  // Start the broadcast
+  const startBroadcastHandler = async () => {
+    if (title.trim() === "") {
       toast({
         title: "Title required",
         description: "Please enter a title for your broadcast",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
     
-    setIsLoading(true);
-    
     try {
-      // Create a room name based on creator id and timestamp
-      const roomName = `${creatorId}-${Date.now()}`;
+      setIsLoading(true);
       
-      // Connect to Twilio room
-      const room = await startBroadcast(roomName);
-      twilioRoomRef.current = room;
+      // Create a unique room ID
+      const roomId = `broadcast-${creatorId}-${Date.now()}`;
       
-      // Successfully connected to the room
-      setIsLive(true);
-      setViewerCount(0);
-      setDuration(0);
-      
-      // Start duration timer
-      intervalRef.current = window.setInterval(() => {
-        setDuration(prev => prev + 1);
-      }, 1000);
-      
-      toast({
-        title: "Broadcast started!",
-        description: "You are now live. Share your stream with others.",
-      });
-      
-      // Generate a stream ID (in a real app, this would come from the backend)
-      const streamId = `${creatorId}-${Date.now()}`;
-      
-      // Create a new Stream object (in a real app, this would be saved to the database)
-      const newStream = {
-        id: streamId,
-        creatorId,
-        creatorName,
-        title,
-        description,
-        category,
-        tags: tags.split(",").map(tag => tag.trim()),
-        isSubscriberOnly,
-        status: "live",
-        viewerCount: 0,
-        startTime: new Date().toISOString(),
-      };
-      
-      console.log("New stream created:", newStream);
-      
-      // Simulate random viewers joining
-      const viewerInterval = setInterval(() => {
-        setViewerCount(prev => {
-          const randomChange = Math.floor(Math.random() * 3);
-          return prev + randomChange;
+      // Try to use WebRTC first for better performance
+      try {
+        // Initialize WebRTC with user ID
+        webRTCService.initialize(creatorId);
+        
+        // Start local media stream with current mic/video states
+        await webRTCService.startLocalStream({ 
+          audio: isMicEnabled, 
+          video: isVideoEnabled 
         });
-      }, 10000);
-      
-      // Save the interval for cleanup
-      const oldInterval = intervalRef.current;
-      intervalRef.current = viewerInterval as unknown as number;
-      
-      return () => {
-        clearInterval(oldInterval);
-        clearInterval(viewerInterval);
-      };
+        
+        // Expose stream to ref for external component usage
+        localStreamRef.current = webRTCService.localStream;
+        webRTCStartedRef.current = true;
+        
+        // Continue with Twilio as a fallback mechanism for broadcast viewers
+        const room = await startBroadcast(roomId, {
+          audio: isMicEnabled,
+          video: isVideoEnabled,
+          quality: 'high',
+          screenShare: false
+        });
+        
+        twilioRoomRef.current = room;
+        
+        // Simulate viewer count change
+        simulateViewerCount();
+        
+        // Signal that we're successfully broadcasting
+        setIsLive(true);
+        
+        toast({
+          title: "Broadcast started",
+          description: "You are now live!"
+        });
+      } catch (webrtcError) {
+        console.error("WebRTC failed, using only Twilio:", webrtcError);
+        
+        // Fall back to Twilio-only approach
+        const room = await startBroadcast(roomId, {
+          audio: isMicEnabled,
+          video: isVideoEnabled,
+          quality: 'high',
+          screenShare: false
+        });
+        
+        twilioRoomRef.current = room;
+        
+        // Also store the local stream from Twilio for UI purposes
+        if (room.localParticipant.tracks) {
+          const videoTracks = Array.from(room.localParticipant.videoTracks.values());
+          const audioTracks = Array.from(room.localParticipant.audioTracks.values());
+          
+          const tracks = [
+            ...videoTracks.map(pub => pub.track),
+            ...audioTracks.map(pub => pub.track)
+          ];
+          
+          if (tracks.length > 0) {
+            const mediaStream = new MediaStream();
+            tracks.forEach(track => {
+              // @ts-ignore - MediaStreamTrack exists but TypeScript doesn't recognize it
+              if (track && track.mediaStreamTrack) {
+                // @ts-ignore
+                mediaStream.addTrack(track.mediaStreamTrack);
+              }
+            });
+            localStreamRef.current = mediaStream;
+          }
+        }
+        
+        // Simulate viewer count change
+        simulateViewerCount();
+        
+        // Signal that we're successfully broadcasting
+        setIsLive(true);
+        
+        toast({
+          title: "Broadcast started",
+          description: "You are now live!"
+        });
+      }
     } catch (error) {
-      console.error("Error starting broadcast:", error);
+      console.error('Failed to start broadcast:', error);
       toast({
-        title: "Broadcast error",
+        title: "Failed to start",
         description: "Could not start the broadcast. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
   
-  const stopBroadcastHandler = () => {
-    if (twilioRoomRef.current) {
-      twilioRoomRef.current.disconnect();
-      twilioRoomRef.current = null;
+  // Stop the broadcast
+  const stopBroadcastHandler = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Clean up WebRTC if it was started
+      if (webRTCStartedRef.current) {
+        webRTCService.stopLocalStream();
+        webRTCService.hangup();
+        webRTCStartedRef.current = false;
+      }
+      
+      // Clean up Twilio room if it exists
+      if (twilioRoomRef.current) {
+        twilioRoomRef.current.disconnect();
+        twilioRoomRef.current = null;
+      }
+      
+      // Clean up media streams
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop());
+        localStreamRef.current = null;
+      }
+      
+      // Reset state
+      setIsLive(false);
+      setViewerCount(0);
+      
+      // Clear the duration timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      
+      toast({
+        title: "Broadcast ended",
+        description: "Your broadcast has ended successfully"
+      });
+      
+    } catch (error) {
+      console.error('Failed to stop broadcast:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem ending your broadcast",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    
-    setIsLive(false);
-    setDuration(0);
-    setViewerCount(0);
-    
-    toast({
-      title: "Broadcast ended",
-      description: "Your broadcast has ended successfully.",
-    });
   };
   
+  // Toggle microphone
   const toggleMic = () => {
-    setIsMicEnabled(!isMicEnabled);
+    setIsMicEnabled(prev => !prev);
     
-    if (twilioRoomRef.current) {
-      const audioTracks = Array.from(twilioRoomRef.current.localParticipant.audioTracks.values());
-      audioTracks.forEach(publication => {
+    // If WebRTC is active, toggle mic tracks
+    if (webRTCStartedRef.current) {
+      if (localStreamRef.current) {
+        const audioTracks = localStreamRef.current.getAudioTracks();
+        audioTracks.forEach(track => {
+          track.enabled = !isMicEnabled;
+        });
+      }
+    }
+    
+    // If Twilio room exists, toggle those tracks too
+    if (twilioRoomRef.current && twilioRoomRef.current.localParticipant) {
+      twilioRoomRef.current.localParticipant.audioTracks.forEach(publication => {
         if (publication.track) {
-          isMicEnabled ? publication.track.disable() : publication.track.enable();
+          publication.track.enable(!isMicEnabled);
         }
       });
     }
   };
   
+  // Toggle video
   const toggleVideo = () => {
-    setIsVideoEnabled(!isVideoEnabled);
+    setIsVideoEnabled(prev => !prev);
     
-    if (twilioRoomRef.current) {
-      const videoTracks = Array.from(twilioRoomRef.current.localParticipant.videoTracks.values());
-      videoTracks.forEach(publication => {
+    // If WebRTC is active, toggle video tracks
+    if (webRTCStartedRef.current) {
+      if (localStreamRef.current) {
+        const videoTracks = localStreamRef.current.getVideoTracks();
+        videoTracks.forEach(track => {
+          track.enabled = !isVideoEnabled;
+        });
+      }
+    }
+    
+    // If Twilio room exists, toggle those tracks too
+    if (twilioRoomRef.current && twilioRoomRef.current.localParticipant) {
+      twilioRoomRef.current.localParticipant.videoTracks.forEach(publication => {
         if (publication.track) {
-          isVideoEnabled ? publication.track.disable() : publication.track.enable();
+          publication.track.enable(!isVideoEnabled);
         }
       });
     }
   };
+  
+  // Simulate changing viewer count
+  const simulateViewerCount = () => {
+    let count = Math.floor(Math.random() * 5) + 1;
+    setViewerCount(count);
+    
+    const interval = setInterval(() => {
+      // Random change between -2 and +3 viewers
+      const change = Math.floor(Math.random() * 6) - 2;
+      count = Math.max(1, count + change); // Ensure at least 1 viewer
+      setViewerCount(count);
+    }, 15000); // Update every 15 seconds
+    
+    // Clean up interval when component unmounts or stream ends
+    return () => clearInterval(interval);
+  };
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (isLive) {
+        stopBroadcastHandler();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   
   return {
+    // Stream metadata
     title,
     setTitle,
     description,
@@ -185,15 +289,22 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
     setTags,
     isSubscriberOnly,
     setIsSubscriberOnly,
+    
+    // Stream state
     isLive,
     isMicEnabled,
     isVideoEnabled,
+    isLoading,
     viewerCount,
     broadcastDuration,
-    isLoading,
+    localStream: localStreamRef.current,
+    
+    // Stream actions
     startBroadcastHandler,
     stopBroadcastHandler,
     toggleMic,
     toggleVideo
   };
 };
+
+export default useBroadcast;

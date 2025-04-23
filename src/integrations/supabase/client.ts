@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { toast } from "@/components/ui/use-toast";
@@ -14,8 +15,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true
   },
   global: {
-    fetch: (...args: Parameters<typeof fetch>) => {
-      return fetch(...args).catch(err => {
+    fetch: (url: RequestInfo | URL, init?: RequestInit) => {
+      return fetch(url, init).catch(err => {
         console.error("Network error during Supabase request:", err);
         if (!navigator.onLine) {
           toast({
