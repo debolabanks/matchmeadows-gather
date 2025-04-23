@@ -1,11 +1,12 @@
 
-import { User } from "@/contexts/authTypes";
+import { User } from "@/types/user";
 import { Stream, StreamComment } from "@/types/stream";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import StreamChat from "@/components/stream/StreamChat";
 import StreamInfoTab from "@/components/stream/info/StreamInfoTab";
 import SubscriptionPromo from "./SubscriptionPromo";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StreamPlayerSidebarProps {
   stream: Stream;
@@ -28,8 +29,16 @@ const StreamPlayerSidebar = ({
   onActiveTabChange,
   onSendComment
 }: StreamPlayerSidebarProps) => {
+  const isMobile = useIsMobile();
+  
+  const sidebarClasses = isMobile 
+    ? `${isFullscreen ? 'fixed inset-0 z-50 pt-16' : 'max-h-96'} w-full`
+    : `flex flex-col w-full md:w-80 ${isFullscreen ? 'absolute right-0 top-0 h-full bg-background border-l' : ''}`;
+
+  if (isFullscreen && !activeTab) return null;
+
   return (
-    <div className={`flex flex-col w-full md:w-80 ${isFullscreen ? 'absolute right-0 top-0 h-full bg-background border-l' : ''}`}>
+    <div className={sidebarClasses}>
       <Tabs value={activeTab} onValueChange={onActiveTabChange} className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="chat">Chat</TabsTrigger>

@@ -10,7 +10,7 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword?: (email: string) => Promise<void>;
   confirmPasswordReset?: (token: string, password: string) => Promise<void>;
-  updateProfile?: (userData: Partial<User>) => Promise<void>;
+  updateProfile?: (userData: Partial<User["profile"]>) => Promise<void>;
   requestVerification?: () => Promise<void>;
   useSwipe: () => Promise<{ success: boolean; remaining?: number }>;
   getSwipesRemaining: () => number;

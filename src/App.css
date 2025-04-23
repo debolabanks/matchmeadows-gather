@@ -1,36 +1,52 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Safe area insets for modern mobile browsers */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+  body {
+    overscroll-behavior-y: none; /* Prevents pull-to-refresh on mobile */
   }
-  to {
-    transform: rotate(360deg);
+  
+  input, textarea, select, button {
+    font-size: 16px; /* Prevents iOS zoom on input focus */
+  }
+  
+  .mobile-full-height {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100); /* Custom vh calculation for mobile browsers */
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Animations */
+@keyframes pulse-heart {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.animate-pulse-heart {
+  animation: pulse-heart 2s ease-in-out infinite;
 }
 
 .card {

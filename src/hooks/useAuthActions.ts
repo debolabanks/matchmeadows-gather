@@ -1,5 +1,5 @@
 
-import { User, UserProfile, Report } from "@/contexts/authTypes";
+import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
 import { 
@@ -18,10 +18,12 @@ export const useAuthActions = (
 ) => {
   const { initializeSwipes, useSwipe: useSwipeHook, getSwipesRemaining: getRemainingSwipes } = useSwipes();
 
-  const signIn = async (email: string, password: string): Promise<User | undefined> => {
+  const signIn = async (email: string, password: string): Promise<User | null> => {
     setIsLoading(true);
     try {
       const authUser = await signInWithEmailAndPassword(email, password);
+      
+      if (!authUser) return null;
       
       const userWithSwipes = initializeSwipes(authUser);
       
@@ -33,10 +35,17 @@ export const useAuthActions = (
     }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, userData?: object) => {
     setIsLoading(true);
     try {
+      // Extract name from userData if it's provided
+      const name = userData && typeof userData === 'object' && 'name' in userData 
+        ? String(userData.name) 
+        : '';
+      
       const authUser = await signUpWithEmailAndPassword(email, password, name);
+      
+      if (!authUser) return;
       
       const userWithSwipes = initializeSwipes(authUser);
       
@@ -62,16 +71,16 @@ export const useAuthActions = (
     }
   };
 
-  const confirmPasswordReset = async (email: string, newPassword: string) => {
+  const confirmPasswordReset = async (token: string, password: string) => {
     setIsLoading(true);
     try {
-      await confirmPasswordResetService(email, newPassword);
+      await confirmPasswordResetService(token, password);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateProfile = async (profileData: Partial<UserProfile>) => {
+  const updateProfile = async (profileData: Partial<User["profile"]>) => {
     if (!user) return;
     
     setIsLoading(true);
@@ -107,7 +116,7 @@ export const useAuthActions = (
     }
   };
 
-  const useSwipe = async (): Promise<{ success: boolean }> => {
+  const useSwipe = async (): Promise<{ success: boolean; remaining?: number }> => {
     const { success, updatedUser } = useSwipeHook(user);
     
     if (updatedUser) {
@@ -115,17 +124,23 @@ export const useAuthActions = (
       localStorage.setItem("matchmeadows_user", JSON.stringify(updatedUser));
     }
     
-    return { success };
+    return { success, remaining: updatedUser?.swipes?.count };
   };
 
   const getSwipesRemaining = (): number => {
     return getRemainingSwipes(user);
   };
 
-  const submitReport = async (report: Omit<Report, "id" | "status" | "createdAt">): Promise<void> => {
+  const submitReport = async (content: string, type: string): Promise<void> => {
     if (!user) throw new Error("User must be logged in to submit a report");
     
-    const newReport: Report = {
+    const report = {
+      userId: user.id,
+      content,
+      type
+    };
+    
+    const newReport = {
       ...report,
       id: `report-${Date.now()}`,
       status: "pending",
@@ -133,7 +148,7 @@ export const useAuthActions = (
     };
     
     const existingReportsJSON = localStorage.getItem("matchmeadows_reports");
-    const existingReports: Report[] = existingReportsJSON ? JSON.parse(existingReportsJSON) : [];
+    const existingReports = existingReportsJSON ? JSON.parse(existingReportsJSON) : [];
     
     const updatedReports = [...existingReports, newReport];
     

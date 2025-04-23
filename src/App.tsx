@@ -37,13 +37,31 @@ import TicTacToe from "@/games/TicTacToe";
 import RockPaperScissors from "@/games/RockPaperScissors";
 import WordGuess from "@/games/WordGuess";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 function App() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // Add viewport meta tag for better mobile responsiveness
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    document.head.appendChild(meta);
+    
+    // Add iOS PWA meta tags
+    const statusBarMeta = document.createElement('meta');
+    statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+    statusBarMeta.content = 'black-translucent';
+    document.head.appendChild(statusBarMeta);
+
+    // Clean up on unmount
+    return () => {
+      document.head.removeChild(meta);
+      document.head.removeChild(statusBarMeta);
+    };
   }, []);
 
   if (!isMounted) {
@@ -60,8 +78,7 @@ function App() {
                 <div className="pt-16 md:ml-16">
                   <Header />
                   <div className="flex h-full flex-1">
-                    <MobileNav />
-                    <div className="flex-1">
+                    <div className="flex-1 pb-16">
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/about" element={<About />} />
@@ -89,9 +106,10 @@ function App() {
                         <Route path="/discover/streams" element={<StreamsDiscovery />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
-                      <Footer />
                     </div>
                   </div>
+                  <MobileNav />
+                  <Footer />
                 </div>
                 <Toaster />
               </div>

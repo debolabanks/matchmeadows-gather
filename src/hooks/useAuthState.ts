@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { User } from "@/contexts/authTypes";
+import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
 import { validateSession, logoutUser } from "@/utils/authUtils";
@@ -84,6 +84,16 @@ export const useAuthState = () => {
         }
       }
     );
+
+    // Check for existing session on initial load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && validateSession(session) && mounted) {
+        console.log("Found existing session");
+      } else if (mounted) {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
 
     // Cleanup subscription on unmount
     return () => {
