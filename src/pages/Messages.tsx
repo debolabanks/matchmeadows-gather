@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +38,6 @@ const Messages = () => {
     }
   }, [messages]);
 
-  // Load contacts and initial data
   useEffect(() => {
     setIsLoading(true);
     const mockContacts: ChatContact[] = [
@@ -92,7 +90,6 @@ const Messages = () => {
     setContacts(mockContacts);
     setIsLoading(false);
     
-    // If initialContactId is provided, select that contact
     if (initialContactId) {
       const contact = mockContacts.find(c => c.id === initialContactId);
       if (contact) {
@@ -101,14 +98,13 @@ const Messages = () => {
     }
   }, [initialContactId]);
 
-  // Load messages when a contact is selected
   useEffect(() => {
     if (selectedContact) {
-      // Load initial messages
       const mockMessages: ChatMessage[] = [
         {
           id: "1",
           senderId: selectedContact.id,
+          receiverId: "currentUser",
           text: "Hey there! How's your day going?",
           timestamp: new Date(Date.now() - 3600000).toISOString(),
           read: true,
@@ -116,6 +112,7 @@ const Messages = () => {
         {
           id: "2",
           senderId: "currentUser",
+          receiverId: selectedContact.id,
           text: "It's good! Just busy with work. How about you?",
           timestamp: new Date(Date.now() - 3500000).toISOString(),
           read: true,
@@ -123,6 +120,7 @@ const Messages = () => {
         {
           id: "3",
           senderId: selectedContact.id,
+          receiverId: "currentUser",
           text: "I'm doing well! Just finished my workout.",
           timestamp: new Date(Date.now() - 3400000).toISOString(),
           read: true,
@@ -130,6 +128,7 @@ const Messages = () => {
         {
           id: "4",
           senderId: "currentUser",
+          receiverId: selectedContact.id,
           text: "That's great! I've been meaning to get back to the gym.",
           timestamp: new Date(Date.now() - 3300000).toISOString(),
           read: true,
@@ -137,6 +136,7 @@ const Messages = () => {
         {
           id: "5",
           senderId: selectedContact.id,
+          receiverId: "currentUser",
           text: selectedContact.lastMessage?.isFromContact ? selectedContact.lastMessage.text : "Let me know when you're free!",
           timestamp: new Date(Date.now() - (selectedContact.lastMessage?.isFromContact ? 300000 : 3200000)).toISOString(),
           read: selectedContact.lastMessage?.isFromContact ? false : true,
@@ -147,6 +147,7 @@ const Messages = () => {
         mockMessages.push({
           id: "6",
           senderId: "currentUser",
+          receiverId: selectedContact.id,
           text: selectedContact.lastMessage?.text || "I'll let you know!",
           timestamp: new Date(Date.now() - 300000).toISOString(),
           read: true,
@@ -155,13 +156,11 @@ const Messages = () => {
 
       setMessages(mockMessages);
       
-      // Subscribe to new messages
       const unsubscribe = subscribeToMessages(selectedContact.id, (newMessage) => {
         setMessages(prev => [...prev, newMessage]);
         playNewMessageSound();
       });
       
-      // Mark unread messages as read
       const unreadMessages = mockMessages
         .filter(m => !m.read && m.senderId === selectedContact.id)
         .map(m => m.id);
@@ -191,13 +190,11 @@ const Messages = () => {
         return;
       }
       
-      // Send message through the service
       const newMessage = await sendMessage("currentUser", selectedContact.id, messageText);
       
       if (newMessage) {
         setMessages(prev => [...prev, newMessage]);
         
-        // Update contact's last message
         setContacts(contacts.map(contact => 
           contact.id === selectedContact.id
             ? {
@@ -243,7 +240,6 @@ const Messages = () => {
   
   const handleContactSelect = (contact: ChatContact) => {
     setSelectedContact(contact);
-    // Update URL without navigation
     window.history.pushState(
       { contactId: contact.id }, 
       "", 
@@ -251,7 +247,6 @@ const Messages = () => {
     );
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="container py-6 max-w-6xl mx-auto">
