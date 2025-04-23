@@ -1,11 +1,11 @@
 
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import ProfileCard from "@/components/ProfileCard";
 import { MatchCriteria } from "@/utils/matchingAlgorithm";
 import { ProfileCardProps } from "@/components/ProfileCard";
-import AdBanner from "@/components/AdBanner";
 
 interface ProfileDisplayProps {
   currentProfiles: Omit<ProfileCardProps, 'onLike' | 'onDislike'>[];
@@ -33,17 +33,32 @@ const ProfileDisplay = ({
             </span>
           </div>
           
-          {!isPremium && (
-            <div className="mb-4">
-              <AdBanner variant="small" position="top" adSlot="profile-display-top" />
-            </div>
-          )}
-          
-          <ProfileCard
-            {...currentProfiles[0]}
-            onLike={handleLike}
-            onDislike={handleDislike}
-          />
+          <AnimatePresence>
+            <motion.div
+              key={currentProfiles[0].id}
+              initial={{ scale: 0.8, opacity: 0, rotateZ: -5 }}
+              animate={{ scale: 1, opacity: 1, rotateZ: 0 }}
+              exit={{ scale: 0.8, opacity: 0, rotateZ: 5 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="relative"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.7}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.x > 100) {
+                  handleLike(currentProfiles[0].id);
+                } else if (offset.x < -100) {
+                  handleDislike(currentProfiles[0].id);
+                }
+              }}
+            >
+              <ProfileCard
+                {...currentProfiles[0]}
+                onLike={handleLike}
+                onDislike={handleDislike}
+              />
+            </motion.div>
+          </AnimatePresence>
         </>
       ) : (
         <div className="profile-card flex items-center justify-center p-8">
@@ -61,19 +76,6 @@ const ProfileDisplay = ({
               </svg>
             </div>
           </div>
-        </div>
-      )}
-      
-      {!isPremium && (
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground mb-2">
-            Upgrade to Premium for unlimited swipes and an ad-free experience!
-          </p>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/subscription">
-              View Subscription Plans
-            </Link>
-          </Button>
         </div>
       )}
     </div>
