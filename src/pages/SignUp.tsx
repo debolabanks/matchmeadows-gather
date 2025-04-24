@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,68 +17,78 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
   const { signUp, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/discover");
     }
   }, [isAuthenticated, navigate]);
 
+  // Check for auth error messages from session storage
   useEffect(() => {
     const sessionErrorMsg = sessionStorage.getItem("auth_error_message");
     if (sessionErrorMsg) {
       setErrorMessage(sessionErrorMsg);
+      // Clear the message after retrieving it
       sessionStorage.removeItem("auth_error_message");
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     
-    setIsSubmitting(true);
-    setError("");
+    if (!name || !email || !password) {
+      setErrorMessage("Please fill in all fields");
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match");
+      return;
+    }
+    
+    // Basic password validation
+    if (password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters long");
+      return;
+    }
+    
+    setLoading(true);
     
     try {
-      if (!name || !email || !password) {
-        setError("All fields are required");
-        return;
-      }
-      
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
-      
-      if (password.length < 8) {
-        setError("Password must be at least 8 characters");
-        return;
-      }
-      
-      await signUp(email, password, { name });
-      
-      if (!isAuthenticated) {
-        toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account before signing in.",
-        });
-        navigate("/sign-in");
-      } else {
-        navigate("/verification");
-      }
+      await signUp(email, password, name);
+      toast({
+        title: "Account created!",
+        description: "Welcome to MatchMeadows!"
+      });
+      navigate("/discover");
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error("Sign up error:", error);
+      
       if (error instanceof Error) {
-        setError(error.message);
+        if (error.message.includes("already registered")) {
+          setErrorMessage("This email is already registered. Please sign in instead.");
+        } else if (error.message.includes("password")) {
+          setErrorMessage("Password is too weak. Please use at least 6 characters with numbers and special characters.");
+        } else {
+          setErrorMessage(error.message);
+        }
       } else {
-        setError("An error occurred during sign up");
+        setErrorMessage("An unexpected error occurred. Please try again.");
       }
+      
+      toast({
+        title: "Sign up failed",
+        description: "An error occurred during registration",
+        variant: "destructive"
+      });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -96,7 +107,7 @@ const SignUp = () => {
           </CardDescription>
         </CardHeader>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSignUp}>
           <CardContent className="space-y-4">
             {errorMessage && (
               <Alert variant="destructive" className="text-sm">
@@ -149,7 +160,7 @@ const SignUp = () => {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-3">
-            <Button type="submit" className="w-full" disabled={loading || isSubmitting}>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
             <div className="text-center text-sm">

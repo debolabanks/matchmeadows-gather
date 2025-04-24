@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
-import { UserProfile } from "@/types/user";
+import { UserProfile } from "@/contexts/authTypes";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { LocationPrivacy } from "@/components/LocationPrivacy";
@@ -75,7 +75,7 @@ const Profile = () => {
     showActivity: user?.profile?.privacySettings?.showActivity ?? true,
     showDistance: user?.profile?.privacySettings?.showDistance ?? true,
     showOnlineStatus: user?.profile?.privacySettings?.showOnlineStatus ?? true,
-    profileVisibility: (user?.profile?.privacySettings?.profileVisibility as "public" | "matches-only" | "private") ?? "public"
+    profileVisibility: user?.profile?.privacySettings?.profileVisibility ?? "public"
   });
   
   const calculateCompletionPercentage = () => {

@@ -9,14 +9,12 @@ import MatchTabs from "@/components/matches/MatchTabs";
 import { useMatchRecommendations } from "@/components/matches/MatchRecommendations";
 import { defaultUserProfile } from "@/components/matches/defaultUserProfile";
 import { sampleMatches } from "@/components/matches/sampleMatches";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const Matches = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
   const [matches, setMatches] = useState<Match[]>(sampleMatches); // Initialize with sample data directly
   const [isLoading, setIsLoading] = useState(false);
-  const isMobile = useIsMobile();
   
   // Use the current user's profile or default to sample profile
   const userProfile = user?.profile || defaultUserProfile;
@@ -49,9 +47,9 @@ const Matches = () => {
   }, [recommendations]);
 
   return (
-    <div className={`container mx-auto px-4 py-8 ${isMobile ? 'pt-16 pb-20' : 'pt-20 md:pt-24 pb-24'}`}>
+    <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
       <MatchesHeader title="Your Matches" />
-      {!isMobile && <CrossAppAlert />}
+      <CrossAppAlert />
       
       <MatchTabs 
         activeTab={activeTab}

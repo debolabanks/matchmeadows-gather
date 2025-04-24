@@ -1,29 +1,28 @@
 
-import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import useGameState from "./tic-tac-toe/useGameState";
-import GameBoard from "./tic-tac-toe/GameBoard";
-import GameHeader from "./tic-tac-toe/GameHeader";
-import ScoreBoard from "./tic-tac-toe/ScoreBoard";
-import GameStatus from "./tic-tac-toe/GameStatus";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useWebRTC } from "@/hooks/useWebRTC";
-import GameInvite from "@/components/games/GameInvite";
-import { ArrowLeftRight, Video, VideoOff, Mic, MicOff } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import GameHeader from "./tic-tac-toe/GameHeader";
+import GameBoard from "./tic-tac-toe/GameBoard";
+import GameStatus from "./tic-tac-toe/GameStatus";
+import ScoreBoard from "./tic-tac-toe/ScoreBoard";
+import { checkWinner, checkDraw } from "./tic-tac-toe/gameUtils";
+import useGameState from "./tic-tac-toe/useGameState";
+import { Badge } from "@/components/ui/badge";
 
-interface LocationState {
+interface GameState {
   contactId?: string;
   contactName?: string;
   multiplayer?: boolean;
-  gameSessionId?: string;
 }
 
 const TicTacToe = () => {
   const location = useLocation();
-  const state = location.state as LocationState;
-  
-  const [showVideo, setShowVideo] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const navigate = useNavigate();
+  const [contactInfo, setContactInfo] = useState<GameState>({});
+  const [isMultiplayerMode, setIsMultiplayerMode] = useState(false);
   
   const {
     board,
@@ -31,168 +30,120 @@ const TicTacToe = () => {
     winner,
     isDraw,
     scores,
-    isMultiplayerMode,
-    isConnected,
-    handleSquareClick,
-    handleResetGame
-  } = useGameState(
-    Array(9).fill(null),
-    state?.contactId,
-    state?.gameSessionId
-  );
+    opponentMoveTimeout,
+    makeMove,
+    resetGame,
+    setUseAI
+  } = useGameState();
   
-  const { 
-    localStream,
-    remoteStreams,
-    localVideoRef,
-    startLocalStream,
-    stopLocalStream,
-    registerVideoRef,
-    isConnecting
-  } = useWebRTC({ gameId: state?.gameSessionId });
-
-  // Toggle video feed
-  const handleToggleVideo = async () => {
-    if (showVideo) {
-      stopLocalStream();
-      setShowVideo(false);
-    } else {
-      try {
-        await startLocalStream(!isMuted); // Start with audio based on mute state
-        setShowVideo(true);
-      } catch (error) {
-        console.error("Error toggling video:", error);
+  useEffect(() => {
+    // Get the contact info from location state
+    if (location.state) {
+      const { contactId, contactName, multiplayer } = location.state as GameState;
+      setContactInfo({ contactId, contactName, multiplayer });
+      
+      // If we have contact info and multiplayer flag, enable multiplayer mode
+      if (contactName && multiplayer) {
+        setIsMultiplayerMode(true);
+        // Disable AI opponent when in multiplayer mode with a real user
+        setUseAI(false);
       }
     }
-  };
+  }, [location.state, setUseAI]);
 
-  // Toggle audio
-  const handleToggleMute = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = isMuted;
-      });
-      setIsMuted(!isMuted);
+  const handleBackToGames = () => {
+    // Clear any pending timeouts when navigating away
+    if (opponentMoveTimeout) {
+      clearTimeout(opponentMoveTimeout);
     }
+    
+    navigate("/games", { 
+      state: contactInfo.contactId ? { 
+        contactId: contactInfo.contactId,
+        contactName: contactInfo.contactName 
+      } : undefined
+    });
   };
 
-  // Clean up streams when component unmounts
-  useEffect(() => {
-    return () => {
-      stopLocalStream();
-    };
-  }, [stopLocalStream]);
+  const toggleMultiplayerMode = () => {
+    const newMode = !isMultiplayerMode;
+    setIsMultiplayerMode(newMode);
+    setUseAI(!newMode);
+    resetGame();
+  };
 
   return (
-    <div className="container max-w-3xl mx-auto py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <GameHeader 
-          title="Tic Tac Toe" 
-          subtitle={state?.contactName ? `Playing with ${state.contactName}` : undefined}
-        />
-        
-        <div className="flex items-center gap-2">
-          {isMultiplayerMode && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleToggleVideo}
-                className="h-9 w-9 rounded-full"
-              >
-                {showVideo ? <VideoOff className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleToggleMute}
-                disabled={!showVideo}
-                className="h-9 w-9 rounded-full"
-              >
-                {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </Button>
-            </>
-          )}
-          
-          <GameInvite 
-            currentGameId="tic-tac-toe"
-            currentGameName="Tic Tac Toe"
-          />
-        </div>
+    <div className="container py-6 max-w-lg mx-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleBackToGames}
+          className="h-8 w-8"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <GameHeader contactName={contactInfo.contactName} />
       </div>
-      
-      {/* Video streams container when enabled */}
-      {showVideo && isMultiplayerMode && (
-        <div className="mb-6 grid grid-cols-2 gap-4 h-48">
-          <div className="relative rounded-lg overflow-hidden bg-muted">
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-2 left-2 bg-background/80 px-2 py-1 text-xs rounded">
-              You
-            </div>
-          </div>
+
+      <Card className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleMultiplayerMode}
+            className="flex items-center gap-1"
+          >
+            <Users className="h-4 w-4" />
+            {isMultiplayerMode ? "Multiplayer Mode" : "Single Player Mode"}
+          </Button>
           
-          {Array.from(remoteStreams.entries()).map(([peerId, _]) => (
-            <div key={peerId} className="relative rounded-lg overflow-hidden bg-muted">
-              <video
-                ref={(ref) => registerVideoRef(peerId, ref)}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-2 left-2 bg-background/80 px-2 py-1 text-xs rounded">
-                {state?.contactName || "Opponent"}
-              </div>
-            </div>
-          ))}
-          
-          {isConnecting && (
-            <div className="flex items-center justify-center rounded-lg overflow-hidden bg-muted">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-sm">Connecting...</p>
-              </div>
-            </div>
-          )}
-          
-          {!isConnecting && remoteStreams.size === 0 && (
-            <div className="flex items-center justify-center rounded-lg overflow-hidden bg-muted">
-              <div className="text-center text-muted-foreground">
-                <p>Waiting for opponent to join...</p>
-              </div>
-            </div>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetGame}
+          >
+            New Game
+          </Button>
         </div>
-      )}
-      
-      <div className="bg-card rounded-lg p-6 shadow-sm">
-        <GameStatus
-          winner={winner}
-          isDraw={isDraw}
-          currentPlayer={currentPlayer}
-          contactName={state?.contactName}
-          onResetGame={handleResetGame}
+        
+        {isMultiplayerMode && contactInfo.contactName && (
+          <div className="bg-accent/20 p-2 rounded-md text-center text-sm mb-4">
+            <span className="font-medium">Playing with: </span>
+            {contactInfo.contactName}
+            <Badge variant="secondary" className="ml-2 flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              <span className="text-xs">Multiplayer</span>
+            </Badge>
+          </div>
+        )}
+        
+        <GameStatus 
+          winner={winner} 
+          isDraw={isDraw} 
+          currentPlayer={currentPlayer} 
+          contactName={contactInfo.contactName}
+          onResetGame={resetGame}
           isMultiplayerMode={isMultiplayerMode}
         />
         
-        <ScoreBoard scores={scores} contactName={state?.contactName} />
+        <ScoreBoard
+          playerScore={scores.player}
+          opponentScore={scores.opponent}
+          draws={scores.draws}
+          contactName={contactInfo.contactName}
+        />
         
         <GameBoard
           board={board}
-          onSquareClick={handleSquareClick}
+          onMakeMove={makeMove}
           winner={winner}
           isDraw={isDraw}
           currentPlayer={currentPlayer}
-          contactName={state?.contactName}
+          contactName={contactInfo.contactName || "Opponent"}
           isMultiplayerMode={isMultiplayerMode}
         />
-      </div>
+      </Card>
     </div>
   );
 };

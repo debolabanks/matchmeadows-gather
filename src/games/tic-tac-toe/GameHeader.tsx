@@ -1,17 +1,20 @@
 
 import React from "react";
 
-export interface GameHeaderProps {
-  title?: string;
-  subtitle?: string;
+interface GameHeaderProps {
+  contactName?: string;
 }
 
-const GameHeader: React.FC<GameHeaderProps> = ({ title = "Game", subtitle }) => {
+const GameHeader: React.FC<GameHeaderProps> = ({ contactName }) => {
   return (
-    <div>
-      <h1 className="text-2xl font-bold">{title}</h1>
-      {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
-    </div>
+    <h1 className="text-2xl font-bold">
+      Tic Tac Toe
+      {contactName && (
+        <span className="text-xl font-normal text-muted-foreground ml-2">
+          with {contactName}
+        </span>
+      )}
+    </h1>
   );
 };
 

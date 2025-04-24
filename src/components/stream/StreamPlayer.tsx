@@ -1,6 +1,7 @@
+
 import { useRef } from "react";
 import { Stream } from "@/types/stream";
-import { User } from "@/types/user";
+import { User } from "@/contexts/authTypes";
 import { useStreamPlayer } from "@/components/stream/hooks/useStreamPlayer";
 import StreamPlayerMain from "@/components/stream/player/StreamPlayerMain";
 import StreamPlayerSidebar from "@/components/stream/player/StreamPlayerSidebar";

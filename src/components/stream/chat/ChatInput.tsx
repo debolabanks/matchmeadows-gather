@@ -1,8 +1,9 @@
+
 import React, { useState } from "react";
 import { Send, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User } from "@/types/user";
+import { User } from "@/contexts/authTypes";
 
 interface ChatInputProps {
   onSendComment: (text: string) => void;

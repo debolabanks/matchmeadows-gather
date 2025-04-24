@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ const TermsOfUse = () => {
     try {
       // Update user profile to mark terms as accepted
       await updateProfile({
-        termsAccepted: true
+        termsAccepted: new Date().toISOString()
       });
       
       toast({

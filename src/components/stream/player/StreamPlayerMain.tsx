@@ -1,7 +1,7 @@
 
-import React, { useRef } from "react";
-import { Stream, StreamReaction } from "@/types/stream";
-import { User } from "@/types/user";
+import { useRef } from "react";
+import { Stream } from "@/types/stream";
+import { User } from "@/contexts/authTypes";
 import VideoPlayer from "@/components/stream/video/VideoPlayer";
 import SubscriberOnlyMessage from "@/components/stream/video/SubscriberOnlyMessage";
 import StreamInfo from "@/components/stream/info/StreamInfo";
@@ -15,7 +15,7 @@ interface StreamPlayerMainProps {
   isFullscreen: boolean;
   showChat: boolean;
   isSubscriber: boolean;
-  reactions: StreamReaction[];
+  reactions: any[];
   onTogglePlay: () => void;
   onToggleMute: () => void;
   onToggleFullscreen: (containerRef: React.RefObject<HTMLDivElement>) => void;

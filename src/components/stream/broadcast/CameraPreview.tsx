@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Video, VideoOff, Mic, MicOff, Rabbit, MessageSquare, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Room } from "twilio-video";
 
 interface CameraPreviewProps {
   isLive: boolean;
@@ -18,7 +19,7 @@ interface CameraPreviewProps {
   isMicEnabled: boolean;
   isLoading: boolean;
   viewerCount: number;
-  broadcastDuration: string;  // Changed from number to string
+  broadcastDuration: number;
   title: string;
   toggleMic: () => void;
   toggleVideo: () => void;
@@ -42,6 +43,13 @@ const CameraPreview = ({
   creatorId
 }: CameraPreviewProps) => {
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  
+  // Format duration as mm:ss
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
   
   // Set up local video preview
   useEffect(() => {
@@ -114,7 +122,7 @@ const CameraPreview = ({
           
           {isLive && (
             <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded-md text-xs">
-              {broadcastDuration}
+              {formatDuration(broadcastDuration)}
             </div>
           )}
         </div>
@@ -152,7 +160,7 @@ const CameraPreview = ({
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Duration:</span>
-                <span>{broadcastDuration}</span>
+                <span>{formatDuration(broadcastDuration)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Viewers:</span>

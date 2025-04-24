@@ -9,23 +9,23 @@ type Player = "X" | "O" | null;
 type BoardType = Array<string | null>;
 
 interface GameBoardProps {
-  board: BoardType;
-  onSquareClick: (index: number) => void;
+  board: BoardType;  // Updated to match the type used in useGameState
+  onMakeMove: (index: number) => void;  // Update to match how useGameState.makeMove works
   winner: Player;
-  isDraw?: boolean;
-  currentPlayer?: "X" | "O";
-  contactName?: string;
+  isDraw: boolean;
+  currentPlayer: "X" | "O";
+  contactName: string;
   isMultiplayerMode?: boolean;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
   board,
-  onSquareClick,
+  onMakeMove,
   winner,
-  isDraw = false,
-  currentPlayer = "X",
-  contactName = "Opponent",
-  isMultiplayerMode = false
+  isDraw,
+  currentPlayer,
+  contactName,
+  isMultiplayerMode
 }) => {
   // Animation variants for cells
   const cellVariants = {
@@ -34,14 +34,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
     exit: { scale: 0.8, opacity: 0 }
   };
 
-  // Winner animation variants - fixing the type issue
+  // Winner animation variants
   const winnerVariants = {
     initial: { scale: 1 },
     animate: { 
-      scale: [1, 1.2, 1],
+      scale: [1, 1.2, 1] as number[],
       transition: { 
         repeat: Infinity,
-        repeatType: "mirror" as const, // Fixed: Use "mirror" as const instead of "reverse"
+        repeatType: "reverse" as const, 
         duration: 1
       }
     }
@@ -68,7 +68,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               <Button
                 variant="outline"
                 className="h-24 w-full text-4xl font-bold"
-                onClick={() => onSquareClick(index)}
+                onClick={() => onMakeMove(index)}
                 disabled={!!winner || isDraw || !!cell || (currentPlayer === "O" && !isMultiplayerMode)}
               >
                 {cell && (
@@ -95,22 +95,20 @@ const GameBoard: React.FC<GameBoardProps> = ({
         {renderBoard()}
       </div>
       
-      {currentPlayer && (
-        <div className="text-center mt-4">
-          <motion.div 
-            className="flex justify-center items-center gap-2 p-2 bg-accent/20 rounded-md"
-            animate={{ 
-              y: [0, -3, 0],
-              transition: { repeat: Infinity, repeatType: "mirror" as const, duration: 1.5 }
-            }}
-          >
-            <div className="h-3 w-3 rounded-full bg-primary"></div>
-            <div className="text-sm font-medium">
-              {currentPlayer === "X" ? "Your turn" : `${contactName}'s turn`}
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <div className="text-center mt-4">
+        <motion.div 
+          className="flex justify-center items-center gap-2 p-2 bg-accent/20 rounded-md"
+          animate={{ 
+            y: [0, -3, 0],
+            transition: { repeat: Infinity, repeatType: "reverse", duration: 1.5 }
+          }}
+        >
+          <div className="h-3 w-3 rounded-full bg-primary"></div>
+          <div className="text-sm font-medium">
+            {currentPlayer === "X" ? "Your turn" : `${contactName}'s turn`}
+          </div>
+        </motion.div>
+      </div>
     </>
   );
 };

@@ -1,21 +1,24 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { AlertCircle } from "lucide-react";
+import { Paperclip, AlertCircle } from "lucide-react";
 import { ChatContact, ChatMessage } from "@/types/message";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import MessageCallButtons from "@/components/MessageCallButtons";
+import { playNewMessageSound } from "@/services/soundService";
 import { useLocation, useNavigate } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { sendMessage, subscribeToMessages, markMessagesAsRead } from "@/services/realtimeService";
-import { playNewMessageSound } from "@/services/soundService";
+import { supabase } from "@/integrations/supabase/client";
 
 const Messages = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,6 +41,11 @@ const Messages = () => {
     }
   }, [messages]);
 
+  // Ensure initialContactId is used correctly
+  useEffect(() => {
+    console.log("Initial contact id from location state:", initialContactId);
+  }, [initialContactId]);
+
   useEffect(() => {
     setIsLoading(true);
     const mockContacts: ChatContact[] = [
@@ -54,6 +62,9 @@ const Messages = () => {
           isFromContact: true,
           read: false,
         },
+        videoCallEnabled: true,
+        voiceCallEnabled: true,
+        verificationStatus: "verified",
         isMatched: true,
       },
       {
@@ -68,6 +79,8 @@ const Messages = () => {
           isFromContact: true,
           read: true,
         },
+        videoCallEnabled: true,
+        voiceCallEnabled: true,
         isMatched: true,
       },
       {
@@ -83,6 +96,8 @@ const Messages = () => {
           isFromContact: false,
           read: true,
         },
+        videoCallEnabled: false,
+        voiceCallEnabled: true,
         isMatched: false,
       },
     ];
@@ -90,21 +105,35 @@ const Messages = () => {
     setContacts(mockContacts);
     setIsLoading(false);
     
+    // If initialContactId is provided, select that contact
     if (initialContactId) {
+      console.log("Looking for contact with id:", initialContactId);
       const contact = mockContacts.find(c => c.id === initialContactId);
+      if (contact) {
+        console.log("Found contact:", contact.name);
+        setSelectedContact(contact);
+      }
+    }
+  }, []);
+
+  // Separate useEffect for initialContactId to ensure it runs after contacts are loaded
+  useEffect(() => {
+    if (initialContactId && contacts.length > 0) {
+      const contact = contacts.find(c => c.id === initialContactId);
       if (contact) {
         setSelectedContact(contact);
       }
     }
-  }, [initialContactId]);
+  }, [initialContactId, contacts]);
 
   useEffect(() => {
     if (selectedContact) {
+      console.log("Loading messages for contact:", selectedContact.name);
+      
       const mockMessages: ChatMessage[] = [
         {
           id: "1",
           senderId: selectedContact.id,
-          receiverId: "currentUser",
           text: "Hey there! How's your day going?",
           timestamp: new Date(Date.now() - 3600000).toISOString(),
           read: true,
@@ -112,7 +141,6 @@ const Messages = () => {
         {
           id: "2",
           senderId: "currentUser",
-          receiverId: selectedContact.id,
           text: "It's good! Just busy with work. How about you?",
           timestamp: new Date(Date.now() - 3500000).toISOString(),
           read: true,
@@ -120,7 +148,6 @@ const Messages = () => {
         {
           id: "3",
           senderId: selectedContact.id,
-          receiverId: "currentUser",
           text: "I'm doing well! Just finished my workout.",
           timestamp: new Date(Date.now() - 3400000).toISOString(),
           read: true,
@@ -128,7 +155,6 @@ const Messages = () => {
         {
           id: "4",
           senderId: "currentUser",
-          receiverId: selectedContact.id,
           text: "That's great! I've been meaning to get back to the gym.",
           timestamp: new Date(Date.now() - 3300000).toISOString(),
           read: true,
@@ -136,7 +162,6 @@ const Messages = () => {
         {
           id: "5",
           senderId: selectedContact.id,
-          receiverId: "currentUser",
           text: selectedContact.lastMessage?.isFromContact ? selectedContact.lastMessage.text : "Let me know when you're free!",
           timestamp: new Date(Date.now() - (selectedContact.lastMessage?.isFromContact ? 300000 : 3200000)).toISOString(),
           read: selectedContact.lastMessage?.isFromContact ? false : true,
@@ -147,7 +172,6 @@ const Messages = () => {
         mockMessages.push({
           id: "6",
           senderId: "currentUser",
-          receiverId: selectedContact.id,
           text: selectedContact.lastMessage?.text || "I'll let you know!",
           timestamp: new Date(Date.now() - 300000).toISOString(),
           read: true,
@@ -155,23 +179,6 @@ const Messages = () => {
       }
 
       setMessages(mockMessages);
-      
-      const unsubscribe = subscribeToMessages(selectedContact.id, (newMessage) => {
-        setMessages(prev => [...prev, newMessage]);
-        playNewMessageSound();
-      });
-      
-      const unreadMessages = mockMessages
-        .filter(m => !m.read && m.senderId === selectedContact.id)
-        .map(m => m.id);
-        
-      if (unreadMessages.length > 0) {
-        markMessagesAsRead(unreadMessages);
-      }
-      
-      return () => {
-        unsubscribe();
-      };
     }
   }, [selectedContact]);
 
@@ -179,7 +186,7 @@ const Messages = () => {
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSendMessage = async (messageText: string) => {
+  const handleSendMessage = (messageText: string) => {
     if (messageText.trim() && selectedContact) {
       if (!selectedContact.isMatched) {
         toast({
@@ -190,33 +197,75 @@ const Messages = () => {
         return;
       }
       
-      const newMessage = await sendMessage("currentUser", selectedContact.id, messageText);
-      
-      if (newMessage) {
-        setMessages(prev => [...prev, newMessage]);
-        
-        setContacts(contacts.map(contact => 
-          contact.id === selectedContact.id
-            ? {
-                ...contact,
-                lastMessage: {
-                  text: messageText,
-                  timestamp: new Date().toISOString(),
-                  isFromContact: false,
-                  read: true,
-                }
+      const message: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        senderId: "currentUser",
+        text: messageText,
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+
+      setMessages([...messages, message]);
+
+      setContacts(contacts.map(contact => 
+        contact.id === selectedContact.id
+          ? {
+              ...contact,
+              lastMessage: {
+                text: messageText,
+                timestamp: new Date().toISOString(),
+                isFromContact: false,
+                read: true,
               }
-            : contact
-        ));
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to send message. Please try again.",
-          variant: "destructive",
-        });
+            }
+          : contact
+      ));
+    }
+  };
+
+  const simulateIncomingMessage = () => {
+    if (selectedContact && selectedContact.isMatched) {
+      const incomingMessage: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        senderId: selectedContact.id,
+        text: "Hey, just checking in! How are you doing today?",
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+
+      setMessages(prev => [...prev, incomingMessage]);
+      
+      setContacts(contacts.map(contact => 
+        contact.id === selectedContact.id
+          ? {
+              ...contact,
+              lastMessage: {
+                text: incomingMessage.text,
+                timestamp: incomingMessage.timestamp,
+                isFromContact: true,
+                read: false,
+              }
+            }
+          : contact
+      ));
+      
+      try {
+        playNewMessageSound();
+      } catch (error) {
+        console.warn("Failed to play sound:", error);
       }
     }
   };
+
+  useEffect(() => {
+    if (selectedContact && selectedContact.isMatched) {
+      const timer = setInterval(() => {
+        simulateIncomingMessage();
+      }, 45000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [selectedContact]);
 
   const formatMessageTime = (timestamp: string) => {
     return format(new Date(timestamp), 'h:mm a');
@@ -239,7 +288,9 @@ const Messages = () => {
   };
   
   const handleContactSelect = (contact: ChatContact) => {
+    console.log("Selected contact:", contact.name);
     setSelectedContact(contact);
+    // Update URL without navigation
     window.history.pushState(
       { contactId: contact.id }, 
       "", 
@@ -247,6 +298,7 @@ const Messages = () => {
     );
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="container py-6 max-w-6xl mx-auto">
@@ -342,6 +394,7 @@ const Messages = () => {
                     </p>
                   </div>
                 </div>
+                <MessageCallButtons contact={selectedContact} />
               </div>
               
               {!selectedContact.isMatched && (
