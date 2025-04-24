@@ -13,8 +13,7 @@ import { sampleMatches } from "@/components/matches/sampleMatches";
 const Matches = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
-  const [matches, setMatches] = useState<Match[]>(sampleMatches); // Initialize with sample data directly
-  const [isLoading, setIsLoading] = useState(false);
+  const [matches, setMatches] = useState<Match[]>([]);
   
   // Use the current user's profile or default to sample profile
   const userProfile = user?.profile || defaultUserProfile;
@@ -43,6 +42,8 @@ const Matches = () => {
       });
       
       setMatches(enhancedMatches);
+    } else {
+      setMatches(sampleMatches);
     }
   }, [recommendations]);
 

@@ -17,16 +17,9 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { signUp, isAuthenticated } = useAuth();
+  const { signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/discover");
-    }
-  }, [isAuthenticated, navigate]);
 
   // Check for auth error messages from session storage
   useEffect(() => {
@@ -52,12 +45,6 @@ const SignUp = () => {
       return;
     }
     
-    // Basic password validation
-    if (password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters long");
-      return;
-    }
-    
     setLoading(true);
     
     try {
@@ -73,8 +60,6 @@ const SignUp = () => {
       if (error instanceof Error) {
         if (error.message.includes("already registered")) {
           setErrorMessage("This email is already registered. Please sign in instead.");
-        } else if (error.message.includes("password")) {
-          setErrorMessage("Password is too weak. Please use at least 6 characters with numbers and special characters.");
         } else {
           setErrorMessage(error.message);
         }

@@ -1,41 +1,39 @@
 
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { StreamComment } from "@/types/stream";
 import ChatMessageItem from "./ChatMessageItem";
 
 interface ChatMessageListProps {
   comments: StreamComment[];
   formatTimestamp: (timestamp: string) => string;
-  renderBadge?: (userId: string) => React.ReactNode;
 }
 
-const ChatMessageList = ({ comments, formatTimestamp, renderBadge }: ChatMessageListProps) => {
+const ChatMessageList = ({ comments, formatTimestamp }: ChatMessageListProps) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Auto-scroll to the bottom when new messages arrive
+
+  // Auto-scroll to bottom when new comments arrive
   useEffect(() => {
     if (chatContainerRef.current) {
-      const { scrollHeight, clientHeight } = chatContainerRef.current;
-      chatContainerRef.current.scrollTop = scrollHeight - clientHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [comments]);
-  
+
   return (
-    <div 
+    <div
       ref={chatContainerRef}
-      className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-gray-300"
+      className="flex-1 overflow-y-auto p-3 space-y-3"
     >
       {comments.length === 0 ? (
-        <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-          No messages yet
+        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+          <p>No chat messages yet</p>
+          <p className="text-sm">Be the first to say hello!</p>
         </div>
       ) : (
         comments.map((comment) => (
           <ChatMessageItem 
             key={comment.id} 
-            message={comment} 
-            formatTimestamp={formatTimestamp}
-            renderBadge={renderBadge}
+            comment={comment} 
+            formatTimestamp={formatTimestamp} 
           />
         ))
       )}

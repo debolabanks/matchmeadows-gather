@@ -1,43 +1,35 @@
 
-import React from "react";
 import { StreamComment } from "@/types/stream";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle } from "lucide-react";
 
 interface ChatMessageItemProps {
-  message: StreamComment;
+  comment: StreamComment;
   formatTimestamp: (timestamp: string) => string;
-  renderBadge?: (userId: string) => React.ReactNode;
 }
 
-const ChatMessageItem = ({ 
-  message, 
-  formatTimestamp,
-  renderBadge
-}: ChatMessageItemProps) => {
+const ChatMessageItem = ({ comment, formatTimestamp }: ChatMessageItemProps) => {
   return (
-    <div className="py-2 px-3 hover:bg-muted/50 flex gap-2">
-      <Avatar className="h-6 w-6">
-        <AvatarImage src={message.userImage} alt={message.userName} />
-        <AvatarFallback>{message.userName.substring(0, 2).toUpperCase()}</AvatarFallback>
+    <div 
+      className={`flex gap-2 ${comment.isPinned ? 'bg-muted p-2 rounded-md border-l-4 border-primary' : ''}`}
+    >
+      <Avatar className="h-8 w-8 flex-shrink-0">
+        <AvatarImage src={comment.userImage} />
+        <AvatarFallback>{comment.userName[0]}</AvatarFallback>
       </Avatar>
-      
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1">
-          <p className={`text-sm font-medium truncate ${message.isCreator ? 'text-love-500' : ''}`}>
-            {message.userName}
-            {message.isCreator && <CheckCircle className="h-3 w-3 inline-block ml-1" />}
-          </p>
-          
-          {renderBadge && renderBadge(message.userId)}
-          
-          <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
-            {formatTimestamp(message.timestamp)}
+        <div className="flex gap-1 items-center">
+          <span className={`font-medium text-sm truncate ${comment.isCreator ? 'text-primary' : ''}`}>
+            {comment.userName}
           </span>
+          {comment.isCreator && (
+            <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-primary text-primary">
+              Host
+            </Badge>
+          )}
+          <span className="text-xs text-muted-foreground">{formatTimestamp(comment.timestamp)}</span>
         </div>
-        
-        <p className="text-sm break-words">{message.text}</p>
+        <p className="text-sm break-words">{comment.text}</p>
       </div>
     </div>
   );

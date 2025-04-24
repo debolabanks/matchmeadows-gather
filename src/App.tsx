@@ -1,103 +1,85 @@
 
-import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-
-import Index from "@/pages/Index";
-import About from "@/pages/About";
-import SignIn from "@/pages/SignIn";
-import SignUp from "@/pages/SignUp";
-import Matches from "@/pages/Matches";
-import Messages from "@/pages/Messages";
-import Profile from "@/pages/Profile";
-import Verification from "@/pages/Verification";
-import Subscription from "@/pages/Subscription";
-import Games from "@/pages/Games";
-import Creators from "@/pages/Creators";
-import CreatorChannel from "@/pages/CreatorChannel";
-import NotFound from "@/pages/NotFound";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import MobileNav from "@/components/MobileNav";
-import { AuthProvider } from "@/contexts/AuthContext";
-import LiveStreamPage from "@/pages/LiveStreamPage";
-import BroadcastPage from "@/pages/BroadcastPage";
-import { CallProvider } from "@/contexts/CallContext";
-
-// Import discover pages correctly
-import Discover from "@/pages/discover";
-import StreamsDiscovery from "@/pages/discover/streams";
-
-// Import game components
-import TicTacToe from "@/games/TicTacToe";
-import RockPaperScissors from "@/games/RockPaperScissors";
-import WordGuess from "@/games/WordGuess";
-
-const queryClient = new QueryClient()
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthProvider";
+import { CallProvider } from "./contexts/CallContext";
+import { Toaster } from "./components/ui/toaster";
+import { useEffect } from "react";
+import { preloadSounds } from "./services/soundService";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import Messages from "./pages/Messages";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
+import Index from "./pages/Index";
+import Profile from "./pages/Profile";
+import Discover from "./pages/discover";
+import StreamsDiscovery from "./pages/discover/streams";
+import Matches from "./pages/Matches";
+import About from "./pages/About";
+import TermsOfUse from "./pages/TermsOfUse";
+import Verification from "./pages/Verification";
+import Games from "./pages/Games";
+import Subscription from "./pages/Subscription";
+import Creators from "./pages/Creators";
+import CreatorChannel from "./pages/CreatorChannel";
+import StreamPage from "./pages/StreamPage";
+import Header from "./components/Header";
+import MobileNav from "./components/MobileNav";
+import Footer from "./components/Footer";
+import TicTacToe from "./games/TicTacToe";
+import WordGuess from "./games/WordGuess";
+import RockPaperScissors from "./games/RockPaperScissors";
 
 function App() {
-  const [isMounted, setIsMounted] = useState(false);
-
+  // Preload sounds when the app first loads
   useEffect(() => {
-    setIsMounted(true);
+    preloadSounds();
   }, []);
 
-  if (!isMounted) {
-    return null;
-  }
-
   return (
-    <ThemeProvider defaultTheme="light" storageKey="theme">
+    <Router>
       <AuthProvider>
         <CallProvider>
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <div className="min-h-screen flex flex-col">
-                <div className="pt-16 md:ml-16">
-                  <Header />
-                  <div className="flex h-full flex-1">
-                    <MobileNav />
-                    <div className="flex-1">
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/discover" element={<Discover />} />
-                        <Route path="/sign-in" element={<SignIn />} />
-                        <Route path="/sign-up" element={<SignUp />} />
-                        <Route path="/matches" element={<ProtectedRoute>{<Matches />}</ProtectedRoute>} />
-                        <Route path="/messages" element={<ProtectedRoute>{<Messages />}</ProtectedRoute>} />
-                        <Route path="/profile" element={<ProtectedRoute>{<Profile />}</ProtectedRoute>} />
-                        <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
-                        <Route path="/subscription" element={<Subscription />} />
-                        <Route path="/games" element={<Games />} />
-                        
-                        {/* Game routes */}
-                        <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
-                        <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
-                        <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />
-                        
-                        <Route path="/creators" element={<Creators />} />
-                        <Route path="/creators/:creatorId" element={<CreatorChannel />} />
-                        <Route path="/stream/:streamId" element={<LiveStreamPage />} />
-                        <Route path="/broadcast" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
-                        <Route path="/broadcast/:creatorId" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
-                        <Route path="/discover/streams" element={<StreamsDiscovery />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                      <Footer />
-                    </div>
-                  </div>
-                </div>
-                <Toaster />
-              </div>
-            </BrowserRouter>
-          </QueryClientProvider>
+          <Header />
+          <div className="pt-16 pb-20 md:pb-0 min-h-screen">
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/sign-in" element={<SignIn />} />
+              <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/terms" element={<TermsOfUse />} />
+              
+              {/* Former protected routes - now accessible to all */}
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/discover/streams" element={<StreamsDiscovery />} />
+              <Route path="/matches" element={<Matches />} />
+              <Route path="/verification" element={<Verification />} />
+              <Route path="/games" element={<Games />} />
+              <Route path="/games/tic-tac-toe" element={<TicTacToe />} />
+              <Route path="/games/word-guess" element={<WordGuess />} />
+              <Route path="/games/rock-paper-scissors" element={<RockPaperScissors />} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/creators" element={<Creators />} />
+              <Route path="/creators/:creatorId" element={<CreatorChannel />} />
+              <Route path="/streams/:streamId" element={<StreamPage />} />
+              
+              {/* Catch-all/404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+          <MobileNav />
+          <Footer />
+          <Toaster />
         </CallProvider>
       </AuthProvider>
-    </ThemeProvider>
+    </Router>
   );
 }
 

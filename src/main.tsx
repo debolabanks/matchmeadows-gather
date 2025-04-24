@@ -1,11 +1,12 @@
 
 import { createRoot } from 'react-dom/client'
+import { ThemeProvider } from "@/contexts/ThemeContext"
 import App from './App.tsx'
 import './index.css'
 
-const root = document.getElementById("root");
-if (root) {
-  createRoot(root).render(<App />);
-} else {
-  console.error("Root element not found");
-}
+// Wrap the entire app with ThemeProvider at the root level
+createRoot(document.getElementById("root")!).render(
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>
+);
