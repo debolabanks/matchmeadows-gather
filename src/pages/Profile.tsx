@@ -20,19 +20,6 @@ import { LocationPrivacy } from "@/components/LocationPrivacy";
 import { LanguagePreferences } from "@/components/LanguagePreferences";
 import { PrivacySettings, PrivacySettingsType } from "@/components/PrivacySettings";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Flag, Ban, ShieldAlert } from "lucide-react";
-import ReportDialog from "@/components/ReportDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 const userData = {
   name: "Alex Johnson",
@@ -146,14 +133,6 @@ const Profile = () => {
 
   const handlePrivacySettingsChange = (settings: Partial<PrivacySettingsType>) => {
     setPrivacySettings(prev => ({ ...prev, ...settings }));
-  };
-
-  const handleBlockUser = (userId: string, userName: string) => {
-    toast({
-      title: "User Blocked",
-      description: `You have blocked ${userName}. They will no longer be able to contact you.`,
-    });
-    // In a real implementation, this would call an API to block the user
   };
 
   return (
@@ -485,42 +464,6 @@ const Profile = () => {
                     </p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                  <div>
-                    <h3 className="font-medium">Blocked Users</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Manage users you've blocked
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                  <div>
-                    <h3 className="font-medium">Safety & Support</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Get help with safety concerns
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ReportDialog 
-                      reportType="profile" 
-                      targetId="user123" // This would be the actual user ID in a real app
-                      targetName="User" 
-                    >
-                      <Button variant="outline" size="sm" className="gap-1 h-8">
-                        <Flag className="h-3 w-3" />
-                        Report Issue
-                      </Button>
-                    </ReportDialog>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
                 </div>
                 
                 <Separator />

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -16,32 +15,28 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check for auth error messages from session storage
-  useEffect(() => {
-    const sessionErrorMsg = sessionStorage.getItem("auth_error_message");
-    if (sessionErrorMsg) {
-      setErrorMessage(sessionErrorMsg);
-      // Clear the message after retrieving it
-      sessionStorage.removeItem("auth_error_message");
-    }
-  }, []);
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
     
     if (!name || !email || !password) {
-      setErrorMessage("Please fill in all fields");
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
       return;
     }
     
     if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match");
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -56,17 +51,6 @@ const SignUp = () => {
       navigate("/discover");
     } catch (error) {
       console.error("Sign up error:", error);
-      
-      if (error instanceof Error) {
-        if (error.message.includes("already registered")) {
-          setErrorMessage("This email is already registered. Please sign in instead.");
-        } else {
-          setErrorMessage(error.message);
-        }
-      } else {
-        setErrorMessage("An unexpected error occurred. Please try again.");
-      }
-      
       toast({
         title: "Sign up failed",
         description: "An error occurred during registration",
@@ -94,12 +78,6 @@ const SignUp = () => {
         
         <form onSubmit={handleSignUp}>
           <CardContent className="space-y-4">
-            {errorMessage && (
-              <Alert variant="destructive" className="text-sm">
-                <AlertDescription>{errorMessage}</AlertDescription>
-              </Alert>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input

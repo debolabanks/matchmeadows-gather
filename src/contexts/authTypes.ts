@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -5,10 +6,6 @@ export type User = {
   provider: "email";
   profile?: UserProfile;
   verified?: boolean;
-  swipes?: {
-    count: number;
-    resetAt: string;
-  };
 };
 
 export type UserProfile = {
@@ -27,10 +24,6 @@ export type UserProfile = {
   faceVerificationDate?: string;
   locationPrivacy?: "public" | "friends" | "private";
   language?: "en" | "es" | "fr" | "de" | "zh" | "ja" | "ko" | "pt" | "ru";
-  subscriptionStatus?: "none" | "active" | "expired";
-  subscriptionPlan?: "monthly" | "biannual" | "yearly";
-  subscriptionStartDate?: string;
-  subscriptionEndDate?: string;
   privacySettings?: {
     showActivity?: boolean;
     showDistance?: boolean;
@@ -39,11 +32,6 @@ export type UserProfile = {
     allowVideoCall?: boolean;
     allowVoiceCall?: boolean;
   };
-  // New verification fields
-  phoneNumber?: string;
-  phoneVerified?: boolean;
-  termsAccepted?: string;
-  notificationsEnabled?: boolean;
   // Creator profile related fields
   isCreator?: boolean;
   creatorProfile?: {
@@ -75,16 +63,7 @@ export type UserProfile = {
   };
 };
 
-export interface Report {
-  id?: string;
-  type: "profile" | "message" | "stream";
-  targetId: string;
-  reason: string;
-  status?: "pending" | "reviewed" | "resolved";
-  createdAt?: string;
-}
-
-export interface AuthContextType {
+export type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -95,7 +74,4 @@ export interface AuthContextType {
   confirmPasswordReset: (email: string, newPassword: string) => Promise<void>;
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   requestVerification: () => Promise<void>;
-  useSwipe: () => Promise<boolean>;
-  getSwipesRemaining: () => number;
-  submitReport: (report: Omit<Report, "id" | "status" | "createdAt">) => Promise<void>;
-}
+};

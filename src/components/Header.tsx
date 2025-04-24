@@ -10,30 +10,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const Header = () => {
   const { user, isAuthenticated, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully"
-      });
-      navigate("/");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive"
-      });
-    }
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully"
+    });
+    navigate("/");
   };
 
   return (
@@ -44,27 +33,22 @@ const Header = () => {
           <span className="font-bold text-xl text-love-700">MatchMeadows</span>
         </Link>
         
-        <nav className="hidden md:flex items-center gap-6">
-          {/* Show all navigation links regardless of authentication status */}
-          <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
-            Discover
-          </Link>
-          <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
-            Matches
-          </Link>
-          <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
-            Messages
-          </Link>
-          <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
-            Creators
-          </Link>
-          <Link to="/games" className="text-foreground hover:text-love-500 transition-colors">
-            Games
-          </Link>
-          <Link to="/subscription" className="text-foreground hover:text-love-500 transition-colors">
-            Premium
-          </Link>
-        </nav>
+        {isAuthenticated && (
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
+              Discover
+            </Link>
+            <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
+              Matches
+            </Link>
+            <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
+              Messages
+            </Link>
+            <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
+              Creators
+            </Link>
+          </nav>
+        )}
         
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
@@ -86,16 +70,10 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <div className="px-3 py-2 text-sm font-medium border-b">
-                    {user?.name || 'User'}
+                    {user?.name}
                   </div>
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/verification" className="cursor-pointer">Verification</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/subscription" className="cursor-pointer">Premium</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />

@@ -1,9 +1,7 @@
-
 import { useState, useRef, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Room } from "twilio-video";
 import { startBroadcast } from "@/services/twilio";
-import { useAuth } from "@/hooks/useAuth";
 
 export const useBroadcast = (creatorId: string, creatorName: string) => {
   const [title, setTitle] = useState("");
@@ -18,7 +16,6 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
   const [broadcastDuration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { user } = useAuth();
   const intervalRef = useRef<number | null>(null);
   const twilioRoomRef = useRef<Room | null>(null);
   
@@ -36,15 +33,6 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
   }, []);
   
   const startBroadcastHandler = async () => {
-    if (user?.profile?.subscriptionStatus !== "active") {
-      toast({
-        title: "Premium Feature",
-        description: "Only premium members can host a live session. Please upgrade your subscription.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     if (!title.trim()) {
       toast({
         title: "Title required",

@@ -1,10 +1,10 @@
+
 import { Button } from "@/components/ui/button";
-import { Phone, Video, Gamepad2 } from "lucide-react";
+import { Phone, Video } from "lucide-react";
 import { useCallContext } from "@/contexts/CallContext";
 import { ChatContact } from "@/types/message";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 
 interface MessageCallButtonsProps {
   contact: ChatContact;
@@ -14,7 +14,6 @@ interface MessageCallButtonsProps {
 const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps) => {
   const { startCall } = useCallContext();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [isCallStarting, setIsCallStarting] = useState(false);
 
   const handleVideoCall = async () => {
@@ -37,6 +36,7 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
         variant: "destructive",
       });
     } finally {
+      // Reset the loading state after a short delay
       setTimeout(() => {
         setIsCallStarting(false);
       }, 1500);
@@ -63,39 +63,15 @@ const MessageCallButtons = ({ contact, className = "" }: MessageCallButtonsProps
         variant: "destructive",
       });
     } finally {
+      // Reset the loading state after a short delay
       setTimeout(() => {
         setIsCallStarting(false);
       }, 1500);
     }
   };
 
-  const handleGameStart = () => {
-    toast({
-      title: `Starting game with ${contact.name}`,
-      description: "Loading game interface...",
-      duration: 3000,
-    });
-    
-    navigate(`/games`, { 
-      state: { 
-        contactId: contact.id,
-        contactName: contact.name
-      } 
-    });
-  };
-
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="rounded-full h-9 w-9"
-        onClick={handleGameStart}
-        title="Play Games"
-      >
-        <Gamepad2 className="h-4 w-4" />
-      </Button>
-      
       {contact.videoCallEnabled !== false && (
         <Button
           variant="ghost"

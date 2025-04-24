@@ -1,189 +1,168 @@
-
-import { supabase } from "@/integrations/supabase/client";
 import { User, UserProfile } from "@/contexts/authTypes";
+import { MOCK_USERS, MockUser } from "@/mocks/users";
 
 export const signInWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  if (error) {
-    console.error("Error signing in:", error);
-    
-    // Handle specific error codes
-    if (error.message === "Email not confirmed") {
-      throw new Error("Please check your email to confirm your account before signing in.");
-    }
-    
-    throw new Error(error.message);
+  // Find user in our mock database
+  const foundUser = MOCK_USERS.find(
+    u => u.email === email && u.password === password
+  );
+  
+  if (!foundUser) {
+    throw new Error("Invalid credentials");
   }
   
-  if (!data.user) {
-    throw new Error("No user returned from Supabase");
-  }
-  
-  // Get user profile data
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
-  
-  // Convert Supabase user to our app's User format
-  return {
-    id: data.user.id,
-    name: profileData?.full_name || data.user.user_metadata?.full_name || "",
-    email: data.user.email || "",
-    provider: "email",
-    profile: profileData ? {
-      bio: profileData.bio,
-      location: profileData.location,
-      // Map other profile fields as needed
-    } : undefined
+  // Create a user object without the password
+  const userWithoutPassword: User = {
+    id: foundUser.id,
+    name: foundUser.name,
+    email: foundUser.email,
+    provider: foundUser.provider,
+    profile: foundUser.profile,
+    verified: foundUser.verified
   };
+  
+  return userWithoutPassword;
 };
 
-export const signUpWithEmailAndPassword = async (email: string, password: string, name: string): Promise<User> => {
-  const { data, error } = await supabase.auth.signUp({
+export const signUpWithEmailAndPassword = async (
+  email: string, 
+  password: string, 
+  name: string
+): Promise<User> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Check if email already exists
+  const existingUser = MOCK_USERS.find(u => u.email === email);
+  if (existingUser) {
+    throw new Error("Email already in use");
+  }
+  
+  // Create new user
+  const newUser: MockUser = {
+    id: `${MOCK_USERS.length + 1}`,
+    name,
     email,
     password,
-    options: {
-      data: {
-        full_name: name
-      }
-    }
-  });
-  
-  if (error) {
-    console.error("Error signing up:", error);
-    throw new Error(error.message);
-  }
-  
-  if (!data.user) {
-    throw new Error("No user returned from Supabase");
-  }
-  
-  // Convert Supabase user to our app's User format
-  return {
-    id: data.user.id,
-    name: name,
-    email: data.user.email || "",
     provider: "email",
+    verified: false,
     profile: {
-      // Default profile values for new users
+      verificationStatus: "unverified",
+      locationPrivacy: "public"
     }
   };
+  
+  // Add to mock database
+  MOCK_USERS.push(newUser);
+  
+  // Create a user object without the password
+  const userWithoutPassword: User = {
+    id: newUser.id,
+    name: newUser.name,
+    email: newUser.email,
+    provider: newUser.provider,
+    profile: newUser.profile,
+    verified: newUser.verified
+  };
+  
+  return userWithoutPassword;
 };
 
 export const resetPassword = async (email: string): Promise<void> => {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`
-  });
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  if (error) {
-    console.error("Error resetting password:", error);
-    throw new Error(error.message);
+  // Check if email exists
+  const existingUser = MOCK_USERS.find(u => u.email === email);
+  if (!existingUser) {
+    throw new Error("Email not found");
   }
+  
+  // In a real app, this would send an email with a reset link
+  // For our mock implementation, we'll just consider it successful
+  // The reset code would typically be stored and validated when the user clicks the link
+  
+  console.log(`Password reset initiated for ${email}`);
 };
 
 export const confirmPasswordReset = async (email: string, newPassword: string): Promise<void> => {
-  // Note: In Supabase, password reset confirmation happens on the client side
-  // The user receives a link with a token, and we use that token to update the password
-  const { error } = await supabase.auth.updateUser({
-    password: newPassword
-  });
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  if (error) {
-    console.error("Error confirming password reset:", error);
-    throw new Error(error.message);
+  // Find user
+  const userIndex = MOCK_USERS.findIndex(u => u.email === email);
+  if (userIndex === -1) {
+    throw new Error("Email not found");
   }
+  
+  // Update password in our mock database
+  MOCK_USERS[userIndex].password = newPassword;
+  
+  console.log(`Password reset completed for ${email}`);
 };
 
 export const updateUserProfile = async (userId: string, profileData: Partial<UserProfile>): Promise<User> => {
-  // First update the profile in Supabase
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      bio: profileData.bio,
-      location: profileData.location,
-      updated_at: new Date().toISOString(),
-      // Map other profile fields as needed
-    })
-    .eq('id', userId);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
   
-  if (error) {
-    console.error("Error updating profile:", error);
-    throw new Error(error.message);
+  // Find user
+  const userIndex = MOCK_USERS.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    throw new Error("User not found");
   }
   
-  // Get the updated user data
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !userData.user) {
-    console.error("Error fetching updated user:", userError);
-    throw new Error(userError?.message || "Failed to fetch updated user");
-  }
-  
-  // Get the updated profile
-  const { data: updatedProfile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-  
-  // Return the updated user in our app's User format
-  return {
-    id: userData.user.id,
-    name: updatedProfile?.full_name || userData.user.user_metadata?.full_name || "",
-    email: userData.user.email || "",
-    provider: "email",
-    profile: {
-      ...profileData,
-      // Include other existing profile data that wasn't updated
-    }
+  // Update profile in our mock database
+  MOCK_USERS[userIndex].profile = {
+    ...MOCK_USERS[userIndex].profile || {},
+    ...profileData
   };
+  
+  // Create a user object without the password
+  const userWithoutPassword: User = {
+    id: MOCK_USERS[userIndex].id,
+    name: MOCK_USERS[userIndex].name,
+    email: MOCK_USERS[userIndex].email,
+    provider: MOCK_USERS[userIndex].provider,
+    profile: MOCK_USERS[userIndex].profile,
+    verified: MOCK_USERS[userIndex].verified
+  };
+  
+  return userWithoutPassword;
 };
 
 export const requestVerification = async (userId: string): Promise<User> => {
-  // In a real app, this would handle custom verification logic
-  // For now, we'll just update the profile to indicate verification is pending
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', userId);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  if (error) {
-    console.error("Error requesting verification:", error);
-    throw new Error(error.message);
+  // Find user
+  const userIndex = MOCK_USERS.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    throw new Error("User not found");
   }
   
-  // Get the user data
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !userData.user) {
-    console.error("Error fetching user:", userError);
-    throw new Error(userError?.message || "Failed to fetch user");
+  // Update verification status
+  if (MOCK_USERS[userIndex].profile) {
+    MOCK_USERS[userIndex].profile.verificationStatus = "pending";
+  } else {
+    MOCK_USERS[userIndex].profile = {
+      verificationStatus: "pending"
+    };
   }
   
-  // Get the profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  // In a real app, this would trigger an email or SMS verification process
   
-  // Return the user in our app's User format
-  return {
-    id: userData.user.id,
-    name: profile?.full_name || userData.user.user_metadata?.full_name || "",
-    email: userData.user.email || "",
-    provider: "email",
-    profile: {
-      verificationStatus: "pending",
-      // Include other existing profile data
-    }
+  // Create a user object without the password
+  const userWithoutPassword: User = {
+    id: MOCK_USERS[userIndex].id,
+    name: MOCK_USERS[userIndex].name,
+    email: MOCK_USERS[userIndex].email,
+    provider: MOCK_USERS[userIndex].provider,
+    profile: MOCK_USERS[userIndex].profile,
+    verified: MOCK_USERS[userIndex].verified
   };
+  
+  return userWithoutPassword;
 };

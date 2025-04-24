@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,33 +8,24 @@ import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check for auth error messages from session storage
-  useEffect(() => {
-    const sessionErrorMsg = sessionStorage.getItem("auth_error_message");
-    if (sessionErrorMsg) {
-      setErrorMessage(sessionErrorMsg);
-      // Clear the message after retrieving it
-      sessionStorage.removeItem("auth_error_message");
-    }
-  }, []);
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
     
     if (!email || !password) {
-      setErrorMessage("Please enter both email and password");
+      toast({
+        title: "Error",
+        description: "Please enter both email and password",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -49,23 +40,9 @@ const SignIn = () => {
       navigate("/discover");
     } catch (error) {
       console.error("Sign in error:", error);
-      
-      if (error instanceof Error) {
-        // Check for specific Supabase auth errors
-        if (error.message.includes("Email not confirmed")) {
-          setErrorMessage("Please check your email to confirm your account before signing in.");
-        } else if (error.message.includes("Invalid login credentials")) {
-          setErrorMessage("Invalid email or password. Please try again.");
-        } else {
-          setErrorMessage(error.message);
-        }
-      } else {
-        setErrorMessage("An unexpected error occurred. Please try again.");
-      }
-      
       toast({
         title: "Sign in failed",
-        description: "Unable to sign in with provided credentials",
+        description: "Invalid email or password",
         variant: "destructive"
       });
     } finally {
@@ -89,12 +66,6 @@ const SignIn = () => {
         </CardHeader>
         <form onSubmit={handleSignIn}>
           <CardContent className="space-y-4">
-            {errorMessage && (
-              <Alert variant="destructive" className="text-sm">
-                <AlertDescription>{errorMessage}</AlertDescription>
-              </Alert>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -132,11 +103,6 @@ const SignIn = () => {
               <Link to="/sign-up" className="text-love-600 hover:underline">
                 Sign Up
               </Link>
-            </div>
-            <div className="text-center text-xs text-muted-foreground">
-              <Link to="/terms" className="hover:underline">Terms of Use</Link>
-              {" • "}
-              <Link to="/about" className="hover:underline">About</Link>
             </div>
           </CardFooter>
         </form>

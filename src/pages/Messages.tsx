@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { Paperclip, AlertCircle } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import { ChatContact, ChatMessage } from "@/types/message";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +13,6 @@ import MessageCallButtons from "@/components/MessageCallButtons";
 import { playNewMessageSound } from "@/services/soundService";
 import { useLocation } from "react-router-dom";
 import MessageInput from "@/components/MessageInput";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -44,7 +43,6 @@ const Messages = () => {
         videoCallEnabled: true,
         voiceCallEnabled: true,
         verificationStatus: "verified",
-        isMatched: true,
       },
       {
         id: "2",
@@ -60,7 +58,6 @@ const Messages = () => {
         },
         videoCallEnabled: true,
         voiceCallEnabled: true,
-        isMatched: true,
       },
       {
         id: "3",
@@ -77,7 +74,6 @@ const Messages = () => {
         },
         videoCallEnabled: false,
         voiceCallEnabled: true,
-        isMatched: false,
       },
     ];
 
@@ -152,15 +148,6 @@ const Messages = () => {
 
   const handleSendMessage = (messageText: string) => {
     if (messageText.trim() && selectedContact) {
-      if (!selectedContact.isMatched) {
-        toast({
-          title: "Cannot send message",
-          description: "You can only chat with users you've matched with.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       const message: ChatMessage = {
         id: `msg-${Date.now()}`,
         senderId: "currentUser",
@@ -188,7 +175,7 @@ const Messages = () => {
   };
 
   const simulateIncomingMessage = () => {
-    if (selectedContact && selectedContact.isMatched) {
+    if (selectedContact) {
       const incomingMessage: ChatMessage = {
         id: `msg-${Date.now()}`,
         senderId: selectedContact.id,
@@ -218,7 +205,7 @@ const Messages = () => {
   };
 
   useEffect(() => {
-    if (selectedContact && selectedContact.isMatched) {
+    if (selectedContact) {
       const timer = setInterval(() => {
         simulateIncomingMessage();
       }, 45000);
@@ -276,14 +263,7 @@ const Messages = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-1">
-                        <h3 className="font-medium truncate">{contact.name}</h3>
-                        {!contact.isMatched && (
-                          <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
-                            Not matched
-                          </span>
-                        )}
-                      </div>
+                      <h3 className="font-medium truncate">{contact.name}</h3>
                       {contact.lastMessage && (
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(contact.lastMessage.timestamp), 'h:mm a')}
@@ -329,56 +309,35 @@ const Messages = () => {
                 <MessageCallButtons contact={selectedContact} />
               </div>
               
-              {!selectedContact.isMatched && (
-                <div className="p-3">
-                  <Alert variant="warning" className="bg-amber-50 border-amber-200">
-                    <AlertCircle className="h-4 w-4 text-amber-500" />
-                    <AlertTitle className="text-amber-800">Not Matched</AlertTitle>
-                    <AlertDescription className="text-amber-700">
-                      You can only chat with users you've matched with. Match with {selectedContact.name} to start chatting.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              )}
-              
               <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
-                {selectedContact.isMatched ? (
-                  messages.map(message => (
+                {messages.map(message => (
+                  <div 
+                    key={message.id} 
+                    className={`flex ${message.senderId === "currentUser" ? 'justify-end' : 'justify-start'}`}
+                  >
                     <div 
-                      key={message.id} 
-                      className={`flex ${message.senderId === "currentUser" ? 'justify-end' : 'justify-start'}`}
+                      className={`max-w-[70%] rounded-lg p-3 ${
+                        message.senderId === "currentUser" 
+                          ? 'bg-primary text-primary-foreground rounded-br-none' 
+                          : 'bg-muted rounded-bl-none'
+                      }`}
                     >
+                      <p>{message.text}</p>
                       <div 
-                        className={`max-w-[70%] rounded-lg p-3 ${
+                        className={`text-xs mt-1 ${
                           message.senderId === "currentUser" 
-                            ? 'bg-primary text-primary-foreground rounded-br-none' 
-                            : 'bg-muted rounded-bl-none'
+                            ? 'text-primary-foreground/70' 
+                            : 'text-muted-foreground'
                         }`}
                       >
-                        <p>{message.text}</p>
-                        <div 
-                          className={`text-xs mt-1 ${
-                            message.senderId === "currentUser" 
-                              ? 'text-primary-foreground/70' 
-                              : 'text-muted-foreground'
-                          }`}
-                        >
-                          {formatMessageTime(message.timestamp)}
-                        </div>
+                        {formatMessageTime(message.timestamp)}
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                    <div className="text-center">
-                      <p className="mb-2">You need to match with this user to chat</p>
-                      <Button variant="outline" size="sm" className="mt-2">Return to Discover</Button>
-                    </div>
                   </div>
-                )}
+                ))}
               </div>
               
-              <MessageInput onSendMessage={handleSendMessage} disabled={!selectedContact.isMatched} />
+              <MessageInput onSendMessage={handleSendMessage} />
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-muted-foreground p-4 text-center">

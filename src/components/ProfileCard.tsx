@@ -1,14 +1,10 @@
 
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Heart, X, MessageSquare, Map, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
-import ProfileCardActions from "./ProfileCardActions";
-import ProfileImage from "./profile/ProfileImage";
-import ProfileDetails from "./profile/ProfileDetails";
-import ProfileActions from "./profile/ProfileActions";
+import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 export interface ProfileCardProps {
   id: string;
@@ -25,7 +21,6 @@ export interface ProfileCardProps {
   preferredLanguage?: string;
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
-  isMatched?: boolean;
 }
 
 const ProfileCard = ({
@@ -41,71 +36,109 @@ const ProfileCard = ({
   isVerified,
   preferredLanguage,
   onLike,
-  onDislike,
-  isMatched = false
+  onDislike
 }: ProfileCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
-  const { user } = useAuth();
   
   const toggleDetails = () => {
     setShowDetails(!showDetails);
   };
 
-  const handleBlockUser = () => {
-    setIsBlocked(true);
+  const handleMessageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     toast({
-      title: "User Blocked",
-      description: `You have blocked ${name}. They will no longer be able to contact you.`,
+      title: "Starting conversation",
+      description: `Starting a new conversation with ${name}`
     });
-    // In a real implementation, this would call an API to block the user
-    onDislike(id); // Dislike the user to remove from current stack
+    // In a real app, this would navigate to the messages page
+    // or open a new chat with this user
   };
-
-  if (isBlocked) {
-    return null; // Don't render blocked profiles
-  }
 
   return (
     <div 
-      className="profile-card animate-fade-in rounded-lg overflow-hidden shadow-lg border border-border relative"
+      className="profile-card animate-fade-in rounded-lg overflow-hidden shadow-lg border border-border"
       onClick={toggleDetails}
     >
-      <ProfileCardActions profileId={id} profileName={name} />
+      <div className="relative h-96">
+        <img 
+          src={imageUrl} 
+          alt={`${name}'s profile`} 
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
+          <div className="flex items-center gap-2">
+            <h3 className="text-2xl font-bold">{name}, {age}</h3>
+            {isVerified && (
+              <Shield className="h-5 w-5 text-blue-400" />
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-sm opacity-90 flex items-center">
+              <Map className="h-3 w-3 mr-1" />
+              {distance} away • {location}
+            </p>
+            {preferredLanguage && (
+              <Badge variant="outline" className="text-xs border-blue-400/30 text-blue-400">
+                Speaks {preferredLanguage}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
       
-      <ProfileImage 
-        imageUrl={imageUrl}
-        name={name}
-        age={age}
-        isVerified={isVerified}
-        distance={distance}
-        location={location}
-        preferredLanguage={preferredLanguage}
-      />
+      {showDetails && (
+        <div className="p-4 animate-slide-up">
+          <div className="mb-4">
+            <h4 className="font-semibold text-lg mb-2">About</h4>
+            <p className="text-muted-foreground">{bio}</p>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-2">Interests</h4>
+            <div className="flex flex-wrap gap-2">
+              {interests.map((interest) => (
+                <Badge key={interest} variant="secondary" className="px-3 py-1">
+                  {interest}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       
-      <ProfileDetails 
-        bio={bio}
-        interests={interests}
-        showDetails={showDetails}
-      />
-      
-      <ProfileActions 
-        id={id}
-        name={name}
-        onLike={onLike}
-        onDislike={onDislike}
-        onBlock={handleBlockUser}
-        isMatched={isMatched}
-      />
-      
-      <div className="absolute top-4 right-4">
-        <Link
-          to={`/profile/${id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white/90 transition-colors"
+      <div className="flex justify-center gap-4 p-4 border-t">
+        <Button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onDislike(id);
+          }}
+          variant="outline" 
+          size="icon" 
+          className="swipe-button bg-white hover:bg-red-50 rounded-full h-12 w-12"
         >
-          <User className="h-5 w-5 text-gray-700" />
-        </Link>
+          <X className="h-6 w-6 text-red-500" />
+        </Button>
+        
+        <Button 
+          onClick={handleMessageClick}
+          variant="outline" 
+          size="icon" 
+          className="swipe-button bg-white hover:bg-blue-50 rounded-full h-12 w-12"
+        >
+          <MessageSquare className="h-6 w-6 text-blue-500" />
+        </Button>
+        
+        <Button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onLike(id);
+          }}
+          variant="outline" 
+          size="icon" 
+          className="swipe-button bg-white hover:bg-love-50 rounded-full h-12 w-12"
+        >
+          <Heart className="h-6 w-6 text-love-500" />
+        </Button>
       </div>
     </div>
   );

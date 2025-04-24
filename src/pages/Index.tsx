@@ -1,13 +1,9 @@
+
 import { ArrowRight, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import AdBanner from "@/components/AdBanner";
-import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const { user } = useAuth();
-  const isPremium = user?.profile?.subscriptionStatus === "active";
-
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
@@ -34,12 +30,6 @@ const Index = () => {
             </div>
           </div>
         </section>
-        
-        {!isPremium && (
-          <div className="container mx-auto px-4 py-4">
-            <AdBanner variant="large" adSlot="3456789012" />
-          </div>
-        )}
         
         {/* Features Section */}
         <section className="py-16 md:py-24">
@@ -89,12 +79,6 @@ const Index = () => {
             </div>
           </div>
         </section>
-        
-        {!isPremium && (
-          <div className="container mx-auto px-4 py-4">
-            <AdBanner variant="small" adSlot="6789012345" />
-          </div>
-        )}
         
         {/* CTA Section */}
         <section className="bg-love-500 py-16">

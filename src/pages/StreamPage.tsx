@@ -1,5 +1,5 @@
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Stream } from "@/types/stream";
@@ -88,7 +88,6 @@ const StreamPage = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
-  const navigate = useNavigate();
   
   useEffect(() => {
     // In a real app, this would be an API call
@@ -116,16 +115,12 @@ const StreamPage = () => {
         description: "Please sign in to subscribe to this creator",
         variant: "destructive",
       });
-      navigate("/signin");
       return;
     }
     
-    // Navigate to the subscription page for this creator
-    navigate(`/creators/${stream?.creatorId}?subscribe=true`);
-    
     toast({
       title: "Subscription",
-      description: `You're being redirected to subscribe to ${stream?.creatorName}`,
+      description: "This would open a subscription dialog in a real app",
     });
   };
   

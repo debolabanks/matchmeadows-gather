@@ -8,8 +8,7 @@ import Video, {
 } from 'twilio-video';
 
 /**
- * Create a local audio track - not exported in index.ts to avoid conflicts
- * Use this directly if needed
+ * Create a local audio track
  */
 export const createLocalAudioTrack = async (options = {}): Promise<LocalAudioTrack> => {
   return Video.createLocalAudioTrack({
@@ -19,8 +18,7 @@ export const createLocalAudioTrack = async (options = {}): Promise<LocalAudioTra
 };
 
 /**
- * Create a local video track - not exported in index.ts to avoid conflicts
- * Use this directly if needed
+ * Create a local video track
  */
 export const createLocalVideoTrack = async (options = {}): Promise<LocalVideoTrack> => {
   return Video.createLocalVideoTrack({

@@ -6,7 +6,10 @@ import Video, {
   Room 
 } from 'twilio-video';
 import { createDemoRoom } from './twilioMockRoom';
-import { getRoomAccessDetails } from './twilioTokenService';
+
+// This would normally come from a server endpoint that generates tokens
+// In a production app, never expose your Twilio credentials in frontend code
+const DEMO_TOKEN = "DEMO_MODE_NO_ACTUAL_CONNECTION";
 
 export interface ConnectOptions {
   name: string; // Room name
@@ -19,6 +22,7 @@ export interface ConnectOptions {
 
 /**
  * Connect to a Twilio Video room
+ * In a real implementation, we would fetch a token from the server first
  */
 export const connectToRoom = async ({ 
   name, 
@@ -57,10 +61,10 @@ export const connectToRoom = async ({
       tracks.push(videoTrack);
     }
     
-    // Add screen sharing if requested
+    // Add screen sharing if requested (in a real app)
     if (screenShare && isPresenter) {
       try {
-        // This is just a placeholder - in a real app we would capture the screen
+        // This is just a placeholder for demo - in a real app we would capture the screen
         console.log("Screen sharing would be enabled in a real implementation");
         // const screenTrack = await Video.createLocalVideoTrack({ name: 'screen' });
         // tracks.push(screenTrack);
@@ -69,29 +73,14 @@ export const connectToRoom = async ({
       }
     }
     
-    // Get room access token from our token service
-    const { token, identity } = await getRoomAccessDetails(name, isPresenter ? 'presenter' : 'viewer');
+    // In real implementation, we would use:
+    // return await Video.connect(token, { name, tracks });
     
-    // Check if we're in demo mode (no actual Twilio credentials)
-    if (token.startsWith('demo-token-')) {
-      console.log("Using demo room since no Twilio credentials are present");
-      return createDemoRoom(name, tracks, isPresenter);
-    }
-    
-    // In production with real token, connect to actual Twilio service
-    return await Video.connect(token, { 
-      name, 
-      tracks, 
-      audio, 
-      video 
-    });
+    // For demo, create a simulated room without actually connecting to Twilio
+    return createDemoRoom(name, tracks, isPresenter);
     
   } catch (error) {
     console.error('Error connecting to Twilio room:', error);
     throw error;
   }
 };
-
-// Export these for backward compatibility
-export const createLocalAudioTrack = Video.createLocalAudioTrack;
-export const createLocalVideoTrack = Video.createLocalVideoTrack;
