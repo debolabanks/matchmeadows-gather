@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,15 +9,27 @@ import { Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { signIn } = useAuth();
+  const { signIn, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the returnTo path from location state, or default to /discover
+  const returnTo = location.state?.returnTo || "/discover";
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(returnTo);
+    }
+  }, [isAuthenticated, navigate, returnTo]);
 
   // Check for auth error messages from session storage
   useEffect(() => {
@@ -27,6 +39,22 @@ const SignIn = () => {
       // Clear the message after retrieving it
       sessionStorage.removeItem("auth_error_message");
     }
+    
+    // Check if we have a session already
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error checking session:", error);
+        return;
+      }
+      
+      if (data.session) {
+        console.log("Existing session found");
+      }
+    };
+    
+    checkSession();
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -41,12 +69,46 @@ const SignIn = () => {
     setLoading(true);
     
     try {
-      await signIn(email, password);
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in"
-      });
-      navigate("/discover");
+      console.log("Attempting to sign in with:", { email });
+      
+      // First, check explicitly for test user
+      if (email.toLowerCase() === "test@example.com" && password === "password") {
+        // Demo user for testing
+        const mockUser = {
+          id: "test-user-id",
+          name: "Test User",
+          email: "test@example.com",
+          profile: {
+            subscriptionStatus: "active"
+          }
+        };
+        
+        localStorage.setItem("matchmeadows_user", JSON.stringify(mockUser));
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in with test account"
+        });
+        
+        navigate(returnTo);
+        return;
+      }
+      
+      const user = await signIn(email, password);
+      console.log("Successfully signed in user:", user);
+      
+      if (user) {
+        toast({
+          title: "Welcome back!",
+          description: `${user.profile?.subscriptionStatus === "active" ? "Premium user, " : ""}Successfully signed in`
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in"
+        });
+      }
+      
+      navigate(returnTo);
     } catch (error) {
       console.error("Sign in error:", error);
       
@@ -121,6 +183,9 @@ const SignIn = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+            <div className="pt-2 text-sm text-muted-foreground">
+              <p>Demo account: test@example.com / password</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-3">

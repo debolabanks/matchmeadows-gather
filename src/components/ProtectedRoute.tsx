@@ -1,31 +1,70 @@
 
-import React from "react";
+import { ReactNode, useEffect } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate, useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { validateSession } from "@/utils/authUtils";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  redirectPath?: string;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute = ({ 
+  children, 
+  redirectPath = "/sign-in" 
+}: ProtectedRouteProps) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
-  
-  // Show loading state while checking authentication
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const validateAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (mounted && (!session || !validateSession(session))) {
+        console.warn("Invalid session in protected route, redirecting to:", redirectPath);
+        navigate(redirectPath, { 
+          state: { returnTo: location.pathname },
+          replace: true 
+        });
+      }
+    };
+
+    validateAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [location.pathname, redirectPath, navigate]);
+
+  // Log authentication state for debugging
+  useEffect(() => {
+    console.log("ProtectedRoute - auth state:", { 
+      isAuthenticated, 
+      isLoading, 
+      hasUser: !!user,
+      path: location.pathname
+    });
+  }, [isAuthenticated, isLoading, user, location]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-love-500 rounded-full border-t-transparent"></div>
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-love-500" />
+        <span className="ml-2 text-lg">Verifying authentication...</span>
       </div>
     );
   }
-  
-  // Redirect to sign-in if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/sign-in" state={{ from: location }} replace />;
+
+  if (!isAuthenticated || !user) {
+    console.log("User not authenticated, redirecting from", location.pathname, "to:", redirectPath);
+    return <Navigate to={redirectPath} state={{ returnTo: location.pathname }} replace />;
   }
-  
-  // Render children only for authenticated users
+
   return <>{children}</>;
 };
 

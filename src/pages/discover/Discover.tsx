@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -24,7 +25,7 @@ const Discover = () => {
   const [currentProfiles, setCurrentProfiles] = useState(sampleProfiles);
   const [matches, setMatches] = useState<string[]>([]);
   const [rejected, setRejected] = useState<string[]>([]);
-  const [swipesRemaining, setSwipesRemaining] = useState(10);
+  const [swipesRemaining, setSwipesRemaining] = useState(20);
   const [remainingTime, setRemainingTime] = useState<string>("");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
@@ -38,12 +39,25 @@ const Discover = () => {
   const { toast } = useToast();
   
   useEffect(() => {
+    if (user) {
+      setIsSubscribed(user.profile?.subscriptionStatus === "active");
+      
+      const remaining = getSwipesRemaining();
+      setSwipesRemaining(remaining);
+    }
+  }, [user, getSwipesRemaining]);
+  
+  useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       if (user) {
         try {
           const { isSubscribed, plan } = await checkSubscription();
-          setIsSubscribed(isSubscribed);
-          setSubscriptionPlan(plan);
+          if (!isSubscribed && user.profile?.subscriptionStatus !== "active") {
+            setIsSubscribed(isSubscribed);
+            setSubscriptionPlan(plan);
+          } else if (user.profile?.subscriptionStatus === "active") {
+            setIsSubscribed(true);
+          }
         } catch (error) {
           console.error("Error checking subscription:", error);
         }
@@ -69,6 +83,8 @@ const Discover = () => {
   });
   
   useEffect(() => {
+    console.log("Preferences updated:", preferences);
+    
     let filtered = filterProfilesByPreferences(
       boostedProfiles,
       preferences,
@@ -89,37 +105,36 @@ const Discover = () => {
     
     setFilteredProfiles(filtered);
     setCurrentProfiles(filtered);
-  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed]);
+
+    // Remove toast notifications from here - we'll only show them when preferences are changed
+  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed, boostedProfiles]);
   
   useEffect(() => {
-    if (user) {
-      setSwipesRemaining(getSwipesRemaining());
+    if (user && user.swipes?.resetAt && !isSubscribed) {
+      const resetTime = new Date(user.swipes.resetAt);
       
-      if (user.swipes?.resetAt && !isSubscribed) {
-        const resetTime = new Date(user.swipes.resetAt);
-        const updateTimer = () => {
-          const now = new Date();
-          if (now >= resetTime) {
-            setSwipesRemaining(10);
-            setRemainingTime("");
-          } else {
-            setRemainingTime(formatDistanceToNow(resetTime, { addSuffix: true }));
-          }
-        };
-        
-        updateTimer();
-        const interval = setInterval(updateTimer, 60000);
-        
-        return () => clearInterval(interval);
-      }
+      const updateTimer = () => {
+        const now = new Date();
+        if (now >= resetTime) {
+          setSwipesRemaining(20);
+          setRemainingTime("");
+        } else {
+          setRemainingTime(formatDistanceToNow(resetTime, { addSuffix: true }));
+        }
+      };
+      
+      updateTimer();
+      const interval = setInterval(updateTimer, 60000);
+      
+      return () => clearInterval(interval);
     }
-  }, [user, isSubscribed, getSwipesRemaining]);
+  }, [user, isSubscribed]);
   
   const handleLike = async (id: string) => {
     if (!isSubscribed) {
-      const canSwipe = await useSwipe();
+      const result = await useSwipe();
       
-      if (!canSwipe) {
+      if (!result.success) {
         toast({
           title: "Swipe limit reached",
           description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
@@ -149,9 +164,9 @@ const Discover = () => {
   
   const handleDislike = async (id: string) => {
     if (!isSubscribed) {
-      const canSwipe = await useSwipe();
+      const result = await useSwipe();
       
-      if (!canSwipe) {
+      if (!result.success) {
         toast({
           title: "Swipe limit reached",
           description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
@@ -169,7 +184,39 @@ const Discover = () => {
   };
   
   const handlePreferencesChange = (newPreferences: Partial<MatchCriteria>) => {
-    setPreferences(prev => ({ ...prev, ...newPreferences }));
+    const hasChanged = Object.keys(newPreferences).some(
+      key => preferences[key as keyof MatchCriteria] !== newPreferences[key as keyof MatchCriteria]
+    );
+
+    if (hasChanged) {
+      console.log("Updating preferences:", newPreferences);
+      setPreferences(prev => ({ ...prev, ...newPreferences }));
+      
+      // Add toast notification here, only when preferences have changed
+      toast({
+        title: "Preferences updated",
+        description: "Finding new matches based on your preferences",
+        variant: "default"
+      });
+      
+      // We'll show the results toast after filtering in a setTimeout to allow the filter to complete
+      setTimeout(() => {
+        const filteredCount = filteredProfiles.length;
+        if (filteredCount === 0) {
+          toast({
+            title: "No matches found",
+            description: "Try adjusting your preferences to see more profiles",
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Matches found",
+            description: `Found ${filteredCount} potential matches`,
+            variant: "default"
+          });
+        }
+      }, 500);
+    }
   };
   
   useEffect(() => {

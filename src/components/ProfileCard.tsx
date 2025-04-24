@@ -81,6 +81,7 @@ const ProfileCard = ({
         distance={distance}
         location={location}
         preferredLanguage={preferredLanguage}
+        profileId={id}  // Pass the profile ID for streaming navigation
       />
       
       <ProfileDetails 
