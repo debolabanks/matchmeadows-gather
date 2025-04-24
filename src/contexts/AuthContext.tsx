@@ -1,9 +1,8 @@
 
 import React, { createContext } from "react";
 import { AuthContextType } from "./authTypes";
-import { AuthProvider } from "./AuthProvider";
 
-// Create the Auth Context
+// Create the Auth Context with default values
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
@@ -20,5 +19,5 @@ export const AuthContext = createContext<AuthContextType>({
   submitReport: async () => {},
 });
 
-// Re-export the AuthProvider
-export { AuthProvider };
+// Re-export the AuthProvider from separate file
+export { AuthProvider } from "./AuthProvider";

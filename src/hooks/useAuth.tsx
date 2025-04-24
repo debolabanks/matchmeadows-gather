@@ -9,6 +9,10 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
   const navigate = useNavigate();
   
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  
   useEffect(() => {
     let mounted = true;
 
@@ -20,7 +24,6 @@ export const useAuth = () => {
           console.warn("Invalid or expired session detected");
           if (mounted) {
             localStorage.removeItem("matchmeadows_user");
-            navigate("/sign-in");
           }
           return false;
         }
@@ -60,7 +63,6 @@ export const useAuth = () => {
         if (!session || !validateSession(session)) {
           if (mounted) {
             localStorage.removeItem("matchmeadows_user");
-            navigate("/sign-in");
           }
           return;
         }
@@ -92,10 +94,6 @@ export const useAuth = () => {
     };
   }, [navigate]);
 
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-
   return {
     ...context,
     user: context.user || null,
@@ -104,8 +102,6 @@ export const useAuth = () => {
     profile: context.user?.profile || {},
     signIn: context.signIn || (async () => undefined),
     signUp: context.signUp || (async () => {}),
-    signOut: context.signOut || (async () => {}),
-    getSwipesRemaining: context.getSwipesRemaining || (() => 0),
-    useSwipe: context.useSwipe || (async () => ({ success: false, remaining: 0 }))
+    signOut: context.signOut || (async () => {})
   };
 };

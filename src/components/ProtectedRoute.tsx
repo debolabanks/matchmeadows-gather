@@ -25,6 +25,8 @@ const ProtectedRoute = ({
     let mounted = true;
 
     const validateAuth = async () => {
+      if (!mounted) return;
+      
       try {
         setVerifyingSession(true);
         const { data: { session }, error } = await supabase.auth.getSession();
