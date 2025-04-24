@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 interface CreatorBroadcastProps {
   creatorId: string;
@@ -16,6 +17,9 @@ interface CreatorBroadcastProps {
 const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => {
   const { user } = useAuth();
   const isPremium = user?.profile?.subscriptionStatus === "active";
+  
+  // For handling tags as a string array
+  const [tagsInput, setTagsInput] = useState<string>("");
   
   const {
     title,
@@ -39,6 +43,14 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
     toggleMic,
     toggleVideo
   } = useBroadcast(creatorId, creatorName);
+  
+  // Handle tags input
+  const handleTagsChange = (value: string) => {
+    setTagsInput(value);
+    // Convert comma-separated string to array
+    const tagsArray = value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    setTags(tagsArray);
+  };
   
   if (!isPremium) {
     return (
@@ -68,8 +80,8 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
             setDescription={setDescription}
             category={category}
             setCategory={setCategory}
-            tags={tags}
-            setTags={setTags}
+            tags={tagsInput}
+            setTags={handleTagsChange}
             isSubscriberOnly={isSubscriberOnly}
             setIsSubscriberOnly={setIsSubscriberOnly}
             isLive={isLive}

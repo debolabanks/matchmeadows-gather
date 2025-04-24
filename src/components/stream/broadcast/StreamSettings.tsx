@@ -1,37 +1,28 @@
 
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription,
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
 
 interface StreamSettingsProps {
   title: string;
-  setTitle: (value: string) => void;
+  setTitle: (title: string) => void;
   description: string;
-  setDescription: (value: string) => void;
+  setDescription: (description: string) => void;
   category: string;
-  setCategory: (value: string) => void;
+  setCategory: (category: string) => void;
   tags: string;
-  setTags: (value: string) => void;
+  setTags: (tags: string) => void;
   isSubscriberOnly: boolean;
-  setIsSubscriberOnly: (value: boolean) => void;
+  setIsSubscriberOnly: (isSubscriberOnly: boolean) => void;
   isLive: boolean;
 }
 
-const StreamSettings = ({ 
-  title, 
-  setTitle, 
-  description, 
+const StreamSettings = ({
+  title,
+  setTitle,
+  description,
   setDescription,
   category,
   setCategory,
@@ -42,19 +33,15 @@ const StreamSettings = ({
   isLive
 }: StreamSettingsProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Broadcast Settings</CardTitle>
-        <CardDescription>
-          Configure your live stream settings
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-6 bg-card shadow-sm rounded-lg p-6">
+      <h2 className="text-xl font-semibold">Stream Settings</h2>
+      
+      <div className="grid gap-4">
         <div className="space-y-2">
           <Label htmlFor="title">Stream Title</Label>
           <Input
             id="title"
-            placeholder="Enter an engaging title for your stream..."
+            placeholder="Enter your stream title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isLive}
@@ -65,59 +52,57 @@ const StreamSettings = ({
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
-            placeholder="What will you be sharing in this stream?"
-            rows={4}
+            placeholder="Describe your stream"
+            rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={isLive}
           />
         </div>
         
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select 
-              value={category} 
-              onValueChange={setCategory}
-              disabled={isLive}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gaming">Gaming</SelectItem>
-                <SelectItem value="music">Music</SelectItem>
-                <SelectItem value="cooking">Cooking</SelectItem>
-                <SelectItem value="art">Art</SelectItem>
-                <SelectItem value="fitness">Fitness</SelectItem>
-                <SelectItem value="tech">Technology</SelectItem>
-                <SelectItem value="travel">Travel</SelectItem>
-                <SelectItem value="fashion">Fashion</SelectItem>
-                <SelectItem value="education">Education</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags (comma separated)</Label>
-            <Input
-              id="tags"
-              placeholder="gaming, strategy, tutorial"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              disabled={isLive}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="category">Category</Label>
+          <Select
+            value={category}
+            onValueChange={setCategory}
+            disabled={isLive}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gaming">Gaming</SelectItem>
+              <SelectItem value="irl">IRL</SelectItem>
+              <SelectItem value="music">Music</SelectItem>
+              <SelectItem value="creative">Creative</SelectItem>
+              <SelectItem value="esports">Esports</SelectItem>
+              <SelectItem value="travel">Travel & Outdoors</SelectItem>
+              <SelectItem value="chatting">Just Chatting</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         
-        <Separator />
+        <div className="space-y-2">
+          <Label htmlFor="tags">Tags (comma separated)</Label>
+          <Input
+            id="tags"
+            placeholder="gaming, stream, fun"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            disabled={isLive}
+          />
+          <p className="text-xs text-muted-foreground">
+            Add relevant tags to help viewers find your stream
+          </p>
+        </div>
         
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="subscriber-only">Subscriber Only</Label>
-            <p className="text-sm text-muted-foreground">
-              Limit this stream to your subscribers
+        <div className="flex items-center justify-between space-x-2 py-2">
+          <div>
+            <Label htmlFor="subscriber-only" className="font-medium">
+              Subscriber Only
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Only subscribers can view this stream
             </p>
           </div>
           <Switch
@@ -127,8 +112,8 @@ const StreamSettings = ({
             disabled={isLive}
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

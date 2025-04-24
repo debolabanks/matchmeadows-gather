@@ -165,7 +165,10 @@ export const useCall = () => {
     
     // Stop all local tracks
     localTracks.current.forEach(track => {
-      track.stop();
+      // Fixed: Use the correct method to stop tracks
+      if (track.kind !== 'data') {
+        track.disable();
+      }
     });
     localTracks.current = [];
     

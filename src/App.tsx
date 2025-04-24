@@ -28,6 +28,7 @@ import BroadcastPage from "@/pages/BroadcastPage";
 import { CallProvider } from "@/contexts/CallContext";
 import TermsOfUse from "@/pages/TermsOfUse";
 import { preloadSounds } from "@/services/soundService";
+import SplashScreen from "@/components/SplashScreen";
 
 // Import discover pages correctly
 import Discover from "@/pages/discover";
@@ -42,6 +43,7 @@ const queryClient = new QueryClient();
 
 function App() {
   const [isMounted, setIsMounted] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
@@ -60,16 +62,26 @@ function App() {
     statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
     statusBarMeta.content = 'black-translucent';
     document.head.appendChild(statusBarMeta);
+    
+    // Hide splash screen after 3 seconds
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000);
 
     // Clean up on unmount
     return () => {
       document.head.removeChild(meta);
       document.head.removeChild(statusBarMeta);
+      clearTimeout(timer);
     };
   }, []);
 
   if (!isMounted) {
     return null;
+  }
+
+  if (showSplash) {
+    return <SplashScreen />;
   }
 
   return (

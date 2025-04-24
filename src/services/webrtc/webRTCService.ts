@@ -275,8 +275,20 @@ class WebRTCService {
       if (!peerConnection) return;
 
       // Find the data channel
-      const dataChannels = peerConnection.pc.getDataChannels?.() || [];
-      const dataChannel = dataChannels.find(channel => channel.label === 'game-data');
+      const dataChannels = peerConnection.pc.getSenders()
+        .filter(sender => sender.track && sender.track.kind === 'data')
+        .map(sender => sender.track);
+        
+      const senders = peerConnection.pc.getSenders();
+      
+      // Attempt to find data channel via another method
+      let dataChannel = null;
+      try {
+        dataChannel = peerConnection.pc.createDataChannel('game-data');
+      } catch (e) {
+        // Channel may already exist, try to get it
+        console.log('Data channel may already exist');
+      }
 
       if (dataChannel && dataChannel.readyState === 'open') {
         dataChannel.send(JSON.stringify(data));
@@ -405,6 +417,13 @@ class WebRTCService {
    */
   onConnectionStateChange(callback: (state: RTCPeerConnectionState, peerId: string) => void): void {
     this.onConnectionStateChangeCallbacks.push(callback);
+  }
+  
+  /**
+   * Get local stream (for external use by other components)
+   */
+  getLocalStream(): MediaStream | null {
+    return this.localStream;
   }
 
   /**
