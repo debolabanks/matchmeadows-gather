@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useContext } from "react"
 import { useTheme as useNextTheme } from "next-themes"
 
 export function useTheme() {
