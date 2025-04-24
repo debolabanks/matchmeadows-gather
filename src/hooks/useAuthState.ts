@@ -74,7 +74,7 @@ export const useAuthState = () => {
             let userWithSwipes = initializeSwipes(appUser);
             
             // Set up trial for new users (if event is SIGNED_UP)
-            if (event === "SIGNED_UP") {
+            if (event === "SIGNED_UP" || event === "SIGNED_IN" && !appUser.trial) {
               userWithSwipes = setupTrialForNewUser(userWithSwipes);
             }
             
