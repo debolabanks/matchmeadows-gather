@@ -1,4 +1,3 @@
-
 import { User, UserProfile, Report } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
@@ -16,7 +15,7 @@ export const useAuthActions = (
   setUser: (user: User | null) => void, 
   setIsLoading: (loading: boolean) => void
 ) => {
-  const { initializeSwipes, useSwipe: useSwipeHook, getSwipesRemaining: getRemainingSwipes } = useSwipes();
+  const { initializeSwipes, useSwipe: useSwipeHook, getSwipesRemaining: getRemainingSwipes, setupTrialForNewUser } = useSwipes();
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
@@ -38,9 +37,10 @@ export const useAuthActions = (
       const authUser = await signUpWithEmailAndPassword(email, password, name);
       
       const userWithSwipes = initializeSwipes(authUser);
+      const userWithTrial = setupTrialForNewUser(userWithSwipes);
       
-      setUser(userWithSwipes);
-      localStorage.setItem("matchmeadows_user", JSON.stringify(userWithSwipes));
+      setUser(userWithTrial);
+      localStorage.setItem("matchmeadows_user", JSON.stringify(userWithTrial));
     } finally {
       setIsLoading(false);
     }

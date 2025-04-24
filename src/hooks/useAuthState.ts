@@ -8,7 +8,7 @@ import { validateSession, logoutUser } from "@/utils/authUtils";
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { initializeSwipes, checkAndResetSwipes } = useSwipes();
+  const { initializeSwipes, checkAndResetSwipes, setupTrialForNewUser } = useSwipes();
 
   useEffect(() => {
     console.log("AuthProvider - Initializing authentication state");
@@ -71,7 +71,12 @@ export const useAuthState = () => {
             };
             
             // Initialize swipes for the user
-            const userWithSwipes = initializeSwipes(appUser);
+            let userWithSwipes = initializeSwipes(appUser);
+            
+            // Set up trial for new users (if event is SIGNED_UP)
+            if (event === 'SIGNED_UP') {
+              userWithSwipes = setupTrialForNewUser(userWithSwipes);
+            }
             
             setUser(userWithSwipes);
             localStorage.setItem("matchmeadows_user", JSON.stringify(userWithSwipes));

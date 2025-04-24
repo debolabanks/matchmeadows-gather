@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -16,6 +17,7 @@ import NoProfilesFound from "./components/NoProfilesFound";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { formatDistanceToNow } from "date-fns";
 import { checkSubscription } from "@/services/stripeService";
+import { getTrialStatus } from "@/hooks/useSwipes";
 
 const Discover = () => {
   const { user, useSwipe, getSwipesRemaining } = useAuth();
@@ -36,6 +38,9 @@ const Discover = () => {
     interests: user?.profile?.interests || []
   });
   const { toast } = useToast();
+  
+  // Check if user is in trial period
+  const trialStatus = user ? getTrialStatus(user) : { isActive: false, daysRemaining: 0 };
   
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -95,7 +100,7 @@ const Discover = () => {
     if (user) {
       setSwipesRemaining(getSwipesRemaining());
       
-      if (user.swipes?.resetAt && !isSubscribed) {
+      if (user.swipes?.resetAt && !isSubscribed && !trialStatus.isActive) {
         const resetTime = new Date(user.swipes.resetAt);
         const updateTimer = () => {
           const now = new Date();
@@ -113,10 +118,10 @@ const Discover = () => {
         return () => clearInterval(interval);
       }
     }
-  }, [user, isSubscribed, getSwipesRemaining]);
+  }, [user, isSubscribed, trialStatus.isActive, getSwipesRemaining]);
   
   const handleLike = async (id: string) => {
-    if (!isSubscribed) {
+    if (!isSubscribed && !trialStatus.isActive) {
       const canSwipe = await useSwipe();
       
       if (!canSwipe) {
@@ -148,7 +153,7 @@ const Discover = () => {
   };
   
   const handleDislike = async (id: string) => {
-    if (!isSubscribed) {
+    if (!isSubscribed && !trialStatus.isActive) {
       const canSwipe = await useSwipe();
       
       if (!canSwipe) {
@@ -208,6 +213,7 @@ const Discover = () => {
           swipesRemaining={swipesRemaining}
           remainingTime={remainingTime}
           isPremium={isSubscribed}
+          user={user}
         />
       )}
       
@@ -228,7 +234,7 @@ const Discover = () => {
           handleLike={handleLike}
           handleDislike={handleDislike}
           preferences={preferences}
-          isPremium={isSubscribed}
+          isPremium={isSubscribed || trialStatus.isActive}
         />
       )}
     </div>
