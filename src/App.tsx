@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/contexts/ThemeContext"
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
@@ -30,11 +29,9 @@ import TermsOfUse from "@/pages/TermsOfUse";
 import { preloadSounds } from "@/services/soundService";
 import SplashScreen from "@/components/SplashScreen";
 
-// Import discover pages correctly
 import Discover from "@/pages/discover";
 import StreamsDiscovery from "@/pages/discover/streams";
 
-// Import game components
 import TicTacToe from "@/games/TicTacToe";
 import RockPaperScissors from "@/games/RockPaperScissors";
 import WordGuess from "@/games/WordGuess";
@@ -48,27 +45,22 @@ function App() {
   useEffect(() => {
     setIsMounted(true);
     
-    // Preload sounds for better user experience
     preloadSounds();
     
-    // Add viewport meta tag for better mobile responsiveness
     const meta = document.createElement('meta');
     meta.name = 'viewport';
     meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
     document.head.appendChild(meta);
     
-    // Add iOS PWA meta tags
     const statusBarMeta = document.createElement('meta');
     statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
     statusBarMeta.content = 'black-translucent';
     document.head.appendChild(statusBarMeta);
     
-    // Hide splash screen after 3 seconds
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 3000);
 
-    // Clean up on unmount
     return () => {
       document.head.removeChild(meta);
       document.head.removeChild(statusBarMeta);
@@ -85,7 +77,7 @@ function App() {
   }
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="theme">
+    <ThemeProvider>
       <AuthProvider>
         <CallProvider>
           <QueryClientProvider client={queryClient}>
@@ -109,7 +101,6 @@ function App() {
                         <Route path="/games" element={<Games />} />
                         <Route path="/terms" element={<TermsOfUse />} />
                         
-                        {/* Game routes */}
                         <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
                         <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
                         <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />

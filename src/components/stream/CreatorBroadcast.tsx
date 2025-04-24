@@ -100,7 +100,7 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
             isVideoEnabled={isVideoEnabled}
             isMicEnabled={isMicEnabled}
             isLoading={isLoading}
-            viewerCount={viewerCount || 0} {/* Ensure viewerCount is a number */}
+            viewerCount={Number(viewerCount) || 0} 
             broadcastDuration={broadcastDuration}
             title={title}
             toggleMic={toggleMic}
