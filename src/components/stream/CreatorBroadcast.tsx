@@ -68,8 +68,8 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
             setDescription={setDescription}
             category={category}
             setCategory={setCategory}
-            tags={tags}
-            setTags={setTags}
+            tags={tags.join(',')}
+            setTags={(value) => setTags(value ? value.split(',') : [])}
             isSubscriberOnly={isSubscriberOnly}
             setIsSubscriberOnly={setIsSubscriberOnly}
             isLive={isLive}

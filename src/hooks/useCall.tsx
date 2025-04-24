@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from "react";
 import { CallSession } from "@/types/message";
 import { v4 as uuidv4 } from "uuid";
@@ -165,7 +164,9 @@ export const useCall = () => {
     
     // Stop all local tracks
     localTracks.current.forEach(track => {
-      track.stop();
+      if ('stop' in track) {
+        (track as any).stop();
+      }
     });
     localTracks.current = [];
     

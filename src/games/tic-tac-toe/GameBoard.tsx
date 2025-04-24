@@ -9,23 +9,23 @@ type Player = "X" | "O" | null;
 type BoardType = Array<string | null>;
 
 interface GameBoardProps {
-  board: BoardType;  // Updated to match the type used in useGameState
-  onMakeMove: (index: number) => void;  // Update to match how useGameState.makeMove works
+  board: BoardType;
+  onSquareClick: (index: number) => void;
   winner: Player;
-  isDraw: boolean;
-  currentPlayer: "X" | "O";
-  contactName: string;
+  isDraw?: boolean;
+  currentPlayer?: "X" | "O";
+  contactName?: string;
   isMultiplayerMode?: boolean;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
   board,
-  onMakeMove,
+  onSquareClick,
   winner,
-  isDraw,
-  currentPlayer,
-  contactName,
-  isMultiplayerMode
+  isDraw = false,
+  currentPlayer = "X",
+  contactName = "Opponent",
+  isMultiplayerMode = false
 }) => {
   // Animation variants for cells
   const cellVariants = {
@@ -38,10 +38,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const winnerVariants = {
     initial: { scale: 1 },
     animate: { 
-      scale: [1, 1.2, 1] as number[],
+      scale: [1, 1.2, 1],
       transition: { 
         repeat: Infinity,
-        repeatType: "reverse" as const, 
+        repeatType: "reverse", 
         duration: 1
       }
     }
@@ -68,7 +68,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               <Button
                 variant="outline"
                 className="h-24 w-full text-4xl font-bold"
-                onClick={() => onMakeMove(index)}
+                onClick={() => onSquareClick(index)}
                 disabled={!!winner || isDraw || !!cell || (currentPlayer === "O" && !isMultiplayerMode)}
               >
                 {cell && (
@@ -95,20 +95,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
         {renderBoard()}
       </div>
       
-      <div className="text-center mt-4">
-        <motion.div 
-          className="flex justify-center items-center gap-2 p-2 bg-accent/20 rounded-md"
-          animate={{ 
-            y: [0, -3, 0],
-            transition: { repeat: Infinity, repeatType: "reverse", duration: 1.5 }
-          }}
-        >
-          <div className="h-3 w-3 rounded-full bg-primary"></div>
-          <div className="text-sm font-medium">
-            {currentPlayer === "X" ? "Your turn" : `${contactName}'s turn`}
-          </div>
-        </motion.div>
-      </div>
+      {currentPlayer && (
+        <div className="text-center mt-4">
+          <motion.div 
+            className="flex justify-center items-center gap-2 p-2 bg-accent/20 rounded-md"
+            animate={{ 
+              y: [0, -3, 0],
+              transition: { repeat: Infinity, repeatType: "reverse", duration: 1.5 }
+            }}
+          >
+            <div className="h-3 w-3 rounded-full bg-primary"></div>
+            <div className="text-sm font-medium">
+              {currentPlayer === "X" ? "Your turn" : `${contactName}'s turn`}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </>
   );
 };

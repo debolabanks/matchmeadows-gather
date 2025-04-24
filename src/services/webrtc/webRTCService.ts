@@ -6,6 +6,7 @@ export interface PeerConnection {
   pc: RTCPeerConnection;
   id: string;
   streams: MediaStream[];
+  dataChannel?: RTCDataChannel;
 }
 
 export interface RTCMessage {
@@ -173,6 +174,9 @@ class WebRTCService {
         }
       };
 
+      // Store the data channel in the peer connection object
+      peerConnection.dataChannel = dataChannel;
+
       // Handle incoming data channels
       pc.ondatachannel = (event) => {
         const channel = event.channel;
@@ -272,16 +276,14 @@ class WebRTCService {
   sendGameData(data: any, peerId: string): void {
     try {
       const peerConnection = this.peerConnections.get(peerId);
-      if (!peerConnection) return;
-
-      // Find the data channel
-      const dataChannels = peerConnection.pc.getDataChannels?.() || [];
-      const dataChannel = dataChannels.find(channel => channel.label === 'game-data');
-
-      if (dataChannel && dataChannel.readyState === 'open') {
+      if (!peerConnection || !peerConnection.dataChannel) return;
+      
+      const dataChannel = peerConnection.dataChannel;
+      
+      if (dataChannel.readyState === 'open') {
         dataChannel.send(JSON.stringify(data));
       } else {
-        console.warn('Data channel not ready');
+        console.warn('Data channel not ready, state:', dataChannel.readyState);
       }
     } catch (error) {
       console.error('Error sending game data:', error);
@@ -423,6 +425,11 @@ class WebRTCService {
       supabase.removeChannel(this.roomSubscription);
       this.roomSubscription = null;
     }
+  }
+
+  // Public getter to access localStream safely
+  getLocalStream(): MediaStream | null {
+    return this.localStream;
   }
 }
 

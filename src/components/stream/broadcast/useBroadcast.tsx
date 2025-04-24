@@ -1,54 +1,70 @@
 
-import { useState, useRef, useEffect } from "react";
-import { startBroadcast } from "@/services/twilio";
-import { Room } from "twilio-video";
-import webRTCService from "@/services/webrtc/webRTCService";
-import { useToast } from "@/components/ui/use-toast";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/hooks/use-toast';
+import { startBroadcast } from '@/services/twilio/twilioBroadcast';
+import { Room } from 'twilio-video';
+import webRTCService from '@/services/webrtc/webRTCService';
 
 export const useBroadcast = (creatorId: string, creatorName: string) => {
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
+  // Stream metadata
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [isSubscriberOnly, setIsSubscriberOnly] = useState<boolean>(false);
+  const [isSubscriberOnly, setIsSubscriberOnly] = useState(false);
   
-  const [isLive, setIsLive] = useState<boolean>(false);
-  const [isMicEnabled, setIsMicEnabled] = useState<boolean>(true);
-  const [isVideoEnabled, setIsVideoEnabled] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [viewerCount, setViewerCount] = useState<number>(0);
-  const [broadcastDuration, setBroadcastDuration] = useState<number>(0);
+  // Stream state
+  const [isLive, setIsLive] = useState(false);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [broadcastId, setBroadcastId] = useState<string>('');
   
-  const twilioRoomRef = useRef<Room | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const timerRef = useRef<number | null>(null);
-  const webRTCStartedRef = useRef<boolean>(false);
+  // Media state
+  const [isMicEnabled, setIsMicEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
   
+  const roomRef = useRef<Room | null>(null);
   const { toast } = useToast();
   
-  // Update broadcast duration while live
+  // Calculate broadcast duration
+  const [broadcastDuration, setBroadcastDuration] = useState('00:00:00');
+  
   useEffect(() => {
-    if (isLive && !timerRef.current) {
-      timerRef.current = window.setInterval(() => {
-        setBroadcastDuration(prev => prev + 1);
+    let interval: NodeJS.Timeout;
+    
+    if (isLive && startTime) {
+      interval = setInterval(() => {
+        const now = new Date();
+        const diff = now.getTime() - startTime.getTime();
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        const formattedHours = hours.toString().padStart(2, '0');
+        const formattedMinutes = minutes.toString().padStart(2, '0');
+        const formattedSeconds = seconds.toString().padStart(2, '0');
+        
+        setBroadcastDuration(`${formattedHours}:${formattedMinutes}:${formattedSeconds}`);
       }, 1000);
     }
     
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+      if (interval) {
+        clearInterval(interval);
       }
     };
-  }, [isLive]);
+  }, [isLive, startTime]);
   
   // Start the broadcast
   const startBroadcastHandler = async () => {
-    if (title.trim() === "") {
+    if (!title.trim()) {
       toast({
-        title: "Title required",
-        description: "Please enter a title for your broadcast",
-        variant: "destructive"
+        title: 'Title required',
+        description: 'Please enter a title for your broadcast',
+        variant: 'destructive',
       });
       return;
     }
@@ -56,97 +72,53 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
     try {
       setIsLoading(true);
       
-      // Create a unique room ID
-      const roomId = `broadcast-${creatorId}-${Date.now()}`;
+      // Generate a unique broadcast ID
+      const newBroadcastId = `live-${creatorId}-${uuidv4()}`;
+      setBroadcastId(newBroadcastId);
       
-      // Try to use WebRTC first for better performance
+      // Try to use WebRTC first
       try {
-        // Initialize WebRTC with user ID
-        webRTCService.initialize(creatorId);
+        // Start local stream with WebRTC
+        await webRTCService.startLocalStream({ audio: true, video: true });
         
-        // Start local media stream with current mic/video states
-        await webRTCService.startLocalStream({ 
-          audio: isMicEnabled, 
-          video: isVideoEnabled 
-        });
+        // Create record in broadcasts table
+        // TODO: Store broadcast info in database
         
-        // Expose stream to ref for external component usage
-        localStreamRef.current = webRTCService.localStream;
-        webRTCStartedRef.current = true;
-        
-        // Continue with Twilio as a fallback mechanism for broadcast viewers
-        const room = await startBroadcast(roomId, {
-          audio: isMicEnabled,
-          video: isVideoEnabled,
-          quality: 'high',
-          screenShare: false
-        });
-        
-        twilioRoomRef.current = room;
-        
-        // Simulate viewer count change
-        simulateViewerCount();
-        
-        // Signal that we're successfully broadcasting
         setIsLive(true);
+        setStartTime(new Date());
         
         toast({
-          title: "Broadcast started",
-          description: "You are now live!"
+          title: 'You are live!',
+          description: 'Your stream has started successfully',
         });
+        
       } catch (webrtcError) {
-        console.error("WebRTC failed, using only Twilio:", webrtcError);
+        console.error("Failed to start broadcast with WebRTC:", webrtcError);
         
-        // Fall back to Twilio-only approach
-        const room = await startBroadcast(roomId, {
+        // Fall back to Twilio
+        const room = await startBroadcast(newBroadcastId, {
           audio: isMicEnabled,
           video: isVideoEnabled,
-          quality: 'high',
-          screenShare: false
+          quality: 'standard',
+          screenShare: false,
         });
         
-        twilioRoomRef.current = room;
+        roomRef.current = room;
         
-        // Also store the local stream from Twilio for UI purposes
-        if (room.localParticipant.tracks) {
-          const videoTracks = Array.from(room.localParticipant.videoTracks.values());
-          const audioTracks = Array.from(room.localParticipant.audioTracks.values());
-          
-          const tracks = [
-            ...videoTracks.map(pub => pub.track),
-            ...audioTracks.map(pub => pub.track)
-          ];
-          
-          if (tracks.length > 0) {
-            const mediaStream = new MediaStream();
-            tracks.forEach(track => {
-              // @ts-ignore - MediaStreamTrack exists but TypeScript doesn't recognize it
-              if (track && track.mediaStreamTrack) {
-                // @ts-ignore
-                mediaStream.addTrack(track.mediaStreamTrack);
-              }
-            });
-            localStreamRef.current = mediaStream;
-          }
-        }
-        
-        // Simulate viewer count change
-        simulateViewerCount();
-        
-        // Signal that we're successfully broadcasting
         setIsLive(true);
+        setStartTime(new Date());
         
         toast({
-          title: "Broadcast started",
-          description: "You are now live!"
+          title: 'You are live!',
+          description: 'Your stream has started successfully',
         });
       }
     } catch (error) {
       console.error('Failed to start broadcast:', error);
       toast({
-        title: "Failed to start",
-        description: "Could not start the broadcast. Please try again.",
-        variant: "destructive"
+        title: 'Failed to go live',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -158,46 +130,32 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
     try {
       setIsLoading(true);
       
-      // Clean up WebRTC if it was started
-      if (webRTCStartedRef.current) {
-        webRTCService.stopLocalStream();
-        webRTCService.hangup();
-        webRTCStartedRef.current = false;
+      // Stop WebRTC streams
+      webRTCService.stopLocalStream();
+      
+      // Disconnect Twilio room if it exists
+      if (roomRef.current) {
+        roomRef.current.disconnect();
+        roomRef.current = null;
       }
       
-      // Clean up Twilio room if it exists
-      if (twilioRoomRef.current) {
-        twilioRoomRef.current.disconnect();
-        twilioRoomRef.current = null;
-      }
+      // Update broadcast status in the database
+      // TODO: Update broadcast end time in database
       
-      // Clean up media streams
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => track.stop());
-        localStreamRef.current = null;
-      }
-      
-      // Reset state
       setIsLive(false);
-      setViewerCount(0);
-      
-      // Clear the duration timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      setStartTime(null);
+      setBroadcastId('');
       
       toast({
-        title: "Broadcast ended",
-        description: "Your broadcast has ended successfully"
+        title: 'Stream ended',
+        description: 'Your broadcast has ended successfully',
       });
-      
     } catch (error) {
-      console.error('Failed to stop broadcast:', error);
+      console.error('Error stopping broadcast:', error);
       toast({
-        title: "Error",
-        description: "There was a problem ending your broadcast",
-        variant: "destructive"
+        title: 'Error ending stream',
+        description: 'Please try again',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -205,77 +163,84 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
   };
   
   // Toggle microphone
-  const toggleMic = () => {
-    setIsMicEnabled(prev => !prev);
+  const toggleMic = useCallback(() => {
+    // Get the local stream from WebRTC service
+    const localStream = webRTCService.getLocalStream();
     
-    // If WebRTC is active, toggle mic tracks
-    if (webRTCStartedRef.current) {
-      if (localStreamRef.current) {
-        const audioTracks = localStreamRef.current.getAudioTracks();
-        audioTracks.forEach(track => {
-          track.enabled = !isMicEnabled;
-        });
-      }
-    }
-    
-    // If Twilio room exists, toggle those tracks too
-    if (twilioRoomRef.current && twilioRoomRef.current.localParticipant) {
-      twilioRoomRef.current.localParticipant.audioTracks.forEach(publication => {
-        if (publication.track) {
-          publication.track.enable(!isMicEnabled);
+    if (localStream) {
+      const audioTracks = localStream.getAudioTracks();
+      
+      audioTracks.forEach(track => {
+        track.enabled = !isMicEnabled;
+      });
+      
+      setIsMicEnabled(!isMicEnabled);
+    } else if (roomRef.current) {
+      // Fall back to Twilio if WebRTC stream isn't available
+      roomRef.current.localParticipant.audioTracks.forEach(publication => {
+        if (isMicEnabled) {
+          publication.track.disable();
+        } else {
+          publication.track.enable();
         }
       });
+      
+      setIsMicEnabled(!isMicEnabled);
     }
-  };
+  }, [isMicEnabled]);
   
   // Toggle video
-  const toggleVideo = () => {
-    setIsVideoEnabled(prev => !prev);
+  const toggleVideo = useCallback(() => {
+    // Get the local stream from WebRTC service
+    const localStream = webRTCService.getLocalStream();
     
-    // If WebRTC is active, toggle video tracks
-    if (webRTCStartedRef.current) {
-      if (localStreamRef.current) {
-        const videoTracks = localStreamRef.current.getVideoTracks();
-        videoTracks.forEach(track => {
-          track.enabled = !isVideoEnabled;
-        });
-      }
-    }
-    
-    // If Twilio room exists, toggle those tracks too
-    if (twilioRoomRef.current && twilioRoomRef.current.localParticipant) {
-      twilioRoomRef.current.localParticipant.videoTracks.forEach(publication => {
-        if (publication.track) {
-          publication.track.enable(!isVideoEnabled);
+    if (localStream) {
+      const videoTracks = localStream.getVideoTracks();
+      
+      videoTracks.forEach(track => {
+        track.enabled = !isVideoEnabled;
+      });
+      
+      setIsVideoEnabled(!isVideoEnabled);
+    } else if (roomRef.current) {
+      // Fall back to Twilio if WebRTC stream isn't available
+      roomRef.current.localParticipant.videoTracks.forEach(publication => {
+        if (isVideoEnabled) {
+          publication.track.disable();
+        } else {
+          publication.track.enable();
         }
       });
+      
+      setIsVideoEnabled(!isVideoEnabled);
     }
-  };
-  
-  // Simulate changing viewer count
-  const simulateViewerCount = () => {
-    let count = Math.floor(Math.random() * 5) + 1;
-    setViewerCount(count);
-    
-    const interval = setInterval(() => {
-      // Random change between -2 and +3 viewers
-      const change = Math.floor(Math.random() * 6) - 2;
-      count = Math.max(1, count + change); // Ensure at least 1 viewer
-      setViewerCount(count);
-    }, 15000); // Update every 15 seconds
-    
-    // Clean up interval when component unmounts or stream ends
-    return () => clearInterval(interval);
-  };
+  }, [isVideoEnabled]);
   
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (isLive) {
-        stopBroadcastHandler();
+      if (roomRef.current) {
+        roomRef.current.disconnect();
       }
+      webRTCService.stopLocalStream();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+  
+  // Simulate viewer count for demo purposes
+  useEffect(() => {
+    if (isLive) {
+      const interval = setInterval(() => {
+        setViewerCount(prev => {
+          const change = Math.floor(Math.random() * 3) - 1;
+          return Math.max(1, prev + change);
+        });
+      }, 10000);
+      
+      return () => clearInterval(interval);
+    } else {
+      setViewerCount(0);
+    }
+  }, [isLive]);
   
   return {
     // Stream metadata
@@ -292,14 +257,17 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
     
     // Stream state
     isLive,
+    broadcastId,
+    startTime,
+    broadcastDuration,
+    viewerCount,
+    
+    // Media state
+    isLoading,
     isMicEnabled,
     isVideoEnabled,
-    isLoading,
-    viewerCount,
-    broadcastDuration,
-    localStream: localStreamRef.current,
     
-    // Stream actions
+    // Actions
     startBroadcastHandler,
     stopBroadcastHandler,
     toggleMic,

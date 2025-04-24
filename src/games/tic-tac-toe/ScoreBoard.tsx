@@ -1,77 +1,27 @@
 
 import React from "react";
-import { motion } from "framer-motion";
 
-interface ScoreBoardProps {
-  playerScore: number;
-  opponentScore: number;
-  draws: number;
+export interface ScoreBoardProps {
+  scores: {
+    X: number;
+    O: number;
+  };
   contactName?: string;
 }
 
-const ScoreBoard: React.FC<ScoreBoardProps> = ({
-  playerScore,
-  opponentScore,
-  draws,
-  contactName = "Opponent"
-}) => {
+const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, contactName = "Opponent" }) => {
   return (
-    <div className="mb-4 p-3 bg-accent/20 rounded-md">
-      <h3 className="text-sm font-medium text-center mb-2">Game Score</h3>
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <motion.div 
-          className="p-2 rounded-md bg-primary/10"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="text-xs text-muted-foreground">You</div>
-          <motion.div 
-            className="text-xl font-bold"
-            key={playerScore}
-            initial={{ scale: 1 }}
-            animate={{ scale: [1, 1.5, 1] }}
-            transition={{ duration: 0.5, times: [0, 0.5, 1] }}
-          >
-            {playerScore}
-          </motion.div>
-        </motion.div>
-        
-        <motion.div 
-          className="p-2 rounded-md bg-yellow-500/10"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <div className="text-xs text-muted-foreground">Draws</div>
-          <motion.div 
-            className="text-xl font-bold"
-            key={draws}
-            initial={{ scale: 1 }}
-            animate={{ scale: [1, 1.5, 1] }}
-            transition={{ duration: 0.5, times: [0, 0.5, 1] }}
-          >
-            {draws}
-          </motion.div>
-        </motion.div>
-        
-        <motion.div 
-          className="p-2 rounded-md bg-secondary/10"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <div className="text-xs text-muted-foreground">{contactName}</div>
-          <motion.div 
-            className="text-xl font-bold"
-            key={opponentScore}
-            initial={{ scale: 1 }}
-            animate={{ scale: [1, 1.5, 1] }}
-            transition={{ duration: 0.5, times: [0, 0.5, 1] }}
-          >
-            {opponentScore}
-          </motion.div>
-        </motion.div>
+    <div className="flex justify-center gap-4 mb-6 bg-accent/10 rounded-md p-3">
+      <div className="text-center">
+        <div className="text-sm font-medium mb-1">You</div>
+        <div className="text-2xl font-bold">{scores.X}</div>
+      </div>
+      
+      <div className="w-px bg-border"></div>
+      
+      <div className="text-center">
+        <div className="text-sm font-medium mb-1">{contactName}</div>
+        <div className="text-2xl font-bold">{scores.O}</div>
       </div>
     </div>
   );

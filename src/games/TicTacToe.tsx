@@ -187,6 +187,10 @@ const TicTacToe = () => {
           board={board}
           onSquareClick={handleSquareClick}
           winner={winner}
+          isDraw={isDraw}
+          currentPlayer={currentPlayer}
+          contactName={state?.contactName}
+          isMultiplayerMode={isMultiplayerMode}
         />
       </div>
     </div>
