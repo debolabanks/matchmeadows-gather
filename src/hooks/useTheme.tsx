@@ -2,6 +2,6 @@
 import { useTheme as useNextTheme } from "next-themes";
 
 export function useTheme() {
-  const theme = useNextTheme();
-  return theme;
+  // We need to make sure this hook is only used within a component inside ThemeProvider
+  return useNextTheme();
 }
