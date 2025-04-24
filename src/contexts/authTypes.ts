@@ -1,4 +1,3 @@
-
 export type User = {
   id: string;
   name: string;
@@ -9,11 +8,6 @@ export type User = {
   swipes?: {
     count: number;
     resetAt: string;
-  };
-  trial?: {
-    startDate: string;
-    endDate: string;
-    isActive: boolean;
   };
 };
 

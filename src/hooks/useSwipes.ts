@@ -8,50 +8,6 @@ export const getNextResetTime = (): string => {
   return date.toISOString();
 };
 
-// Helper function to calculate trial status
-export const getTrialStatus = (user: User | null): { 
-  isActive: boolean; 
-  daysRemaining: number;
-} => {
-  if (!user || !user.trial) {
-    return { isActive: false, daysRemaining: 0 };
-  }
-  
-  const now = new Date();
-  const trialEndDate = new Date(user.trial.endDate);
-  
-  // Calculate days remaining in trial
-  const differenceInTime = trialEndDate.getTime() - now.getTime();
-  const daysRemaining = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-  
-  // Trial is active if current date is before the end date
-  const isActive = now < trialEndDate;
-  
-  return { 
-    isActive, 
-    daysRemaining: Math.max(0, daysRemaining)
-  };
-};
-
-// Helper to set up trial for new users
-export const setupTrialForNewUser = (user: User): User => {
-  // If user already has trial information, don't modify it
-  if (user.trial) return user;
-  
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + 7); // 7 days trial
-  
-  return {
-    ...user,
-    trial: {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      isActive: true
-    }
-  };
-};
-
 // Hook for managing user swipes
 export const useSwipes = () => {
   // Function to initialize swipes if not already present
@@ -62,20 +18,6 @@ export const useSwipes = () => {
         resetAt: getNextResetTime()
       };
     }
-    
-    // Initialize trial for new users
-    if (!user.trial) {
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 7); // 7 days trial
-      
-      user.trial = {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        isActive: true
-      };
-    }
-    
     return user;
   };
 
@@ -102,14 +44,6 @@ export const useSwipes = () => {
   const useSwipe = (user: User | null): { success: boolean; updatedUser: User | null } => {
     if (!user) return { success: false, updatedUser: null };
     
-    // Check trial status
-    const { isActive: isTrialActive } = getTrialStatus(user);
-    
-    // During trial period, users get unlimited swipes
-    if (isTrialActive) {
-      return { success: true, updatedUser: user };
-    }
-    
     // Premium users get unlimited swipes
     if (user.profile?.subscriptionStatus === "active") {
       return { success: true, updatedUser: user };
@@ -132,14 +66,6 @@ export const useSwipes = () => {
   // Function to get remaining swipes
   const getSwipesRemaining = (user: User | null): number => {
     if (!user) return 0;
-    
-    // Check if user is in trial period
-    const { isActive: isTrialActive } = getTrialStatus(user);
-    
-    // During trial period, users get unlimited swipes
-    if (isTrialActive) {
-      return Infinity;
-    }
     
     // Premium users get unlimited swipes
     if (user.profile?.subscriptionStatus === "active") {
@@ -165,8 +91,6 @@ export const useSwipes = () => {
     initializeSwipes,
     checkAndResetSwipes,
     useSwipe,
-    getSwipesRemaining,
-    getTrialStatus,
-    setupTrialForNewUser
+    getSwipesRemaining
   };
 };

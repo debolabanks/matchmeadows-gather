@@ -4,19 +4,18 @@ import { User } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useSwipes } from "@/hooks/useSwipes";
 import { validateSession, logoutUser } from "@/utils/authUtils";
-import { AuthChangeEvent } from "@supabase/supabase-js";
 
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { initializeSwipes, checkAndResetSwipes, setupTrialForNewUser } = useSwipes();
+  const { initializeSwipes, checkAndResetSwipes } = useSwipes();
 
   useEffect(() => {
     console.log("AuthProvider - Initializing authentication state");
     
     // Set up the Supabase auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session) => {
+      async (event, session) => {
         console.log("AuthProvider - Auth state changed:", event, !!session);
         
         // Validate session before proceeding
@@ -72,12 +71,7 @@ export const useAuthState = () => {
             };
             
             // Initialize swipes for the user
-            let userWithSwipes = initializeSwipes(appUser);
-            
-            // Set up trial for new users (if event is SIGNED_UP or first SIGNED_IN without trial)
-            if (event === AuthChangeEvent.SIGNED_UP || (event === AuthChangeEvent.SIGNED_IN && !appUser.trial)) {
-              userWithSwipes = setupTrialForNewUser(userWithSwipes);
-            }
+            const userWithSwipes = initializeSwipes(appUser);
             
             setUser(userWithSwipes);
             localStorage.setItem("matchmeadows_user", JSON.stringify(userWithSwipes));

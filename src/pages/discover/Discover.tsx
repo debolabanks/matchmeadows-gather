@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Filter, ChevronUp, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import AdBanner from "@/components/AdBanner";
 import { 
   MatchCriteria, 
   filterProfilesByPreferences, 
@@ -17,7 +18,6 @@ import NoProfilesFound from "./components/NoProfilesFound";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { formatDistanceToNow } from "date-fns";
 import { checkSubscription } from "@/services/stripeService";
-import { getTrialStatus } from "@/hooks/useSwipes";
 
 const Discover = () => {
   const { user, useSwipe, getSwipesRemaining } = useAuth();
@@ -39,9 +39,7 @@ const Discover = () => {
   });
   const { toast } = useToast();
   
-  // Check if user is in trial period
-  const trialStatus = user ? getTrialStatus(user) : { isActive: false, daysRemaining: 0 };
-  
+  // Check subscription status
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       if (user) {
@@ -58,9 +56,12 @@ const Discover = () => {
     fetchSubscriptionStatus();
   }, [user]);
   
+  // Sample boosted profiles (in a real app, this would come from the database)
   const boostedProfiles = sampleProfiles.map(profile => {
+    // Randomly boost some profiles (for demo purposes)
     const isBoosted = Math.random() > 0.8;
     if (isBoosted) {
+      // Boost expiry in the next few hours (for demo purposes)
       const boostExpiry = new Date();
       boostExpiry.setHours(boostExpiry.getHours() + Math.floor(Math.random() * 24) + 1);
       
@@ -100,7 +101,7 @@ const Discover = () => {
     if (user) {
       setSwipesRemaining(getSwipesRemaining());
       
-      if (user.swipes?.resetAt && !isSubscribed && !trialStatus.isActive) {
+      if (user.swipes?.resetAt && !isSubscribed) {
         const resetTime = new Date(user.swipes.resetAt);
         const updateTimer = () => {
           const now = new Date();
@@ -118,10 +119,10 @@ const Discover = () => {
         return () => clearInterval(interval);
       }
     }
-  }, [user, isSubscribed, trialStatus.isActive, getSwipesRemaining]);
+  }, [user, isSubscribed, getSwipesRemaining]);
   
   const handleLike = async (id: string) => {
-    if (!isSubscribed && !trialStatus.isActive) {
+    if (!isSubscribed) {
       const canSwipe = await useSwipe();
       
       if (!canSwipe) {
@@ -153,7 +154,7 @@ const Discover = () => {
   };
   
   const handleDislike = async (id: string) => {
-    if (!isSubscribed && !trialStatus.isActive) {
+    if (!isSubscribed) {
       const canSwipe = await useSwipe();
       
       if (!canSwipe) {
@@ -189,6 +190,8 @@ const Discover = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
+      {!isSubscribed && <AdBanner variant="large" adSlot="1234567890" />}
+      
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Discover</h1>
         
@@ -213,7 +216,6 @@ const Discover = () => {
           swipesRemaining={swipesRemaining}
           remainingTime={remainingTime}
           isPremium={isSubscribed}
-          user={user}
         />
       )}
       
@@ -226,6 +228,8 @@ const Discover = () => {
         </div>
       )}
       
+      {!isSubscribed && <AdBanner position="sidebar" variant="small" adSlot="0987654321" />}
+      
       {filteredProfiles.length === 0 && currentProfiles.length === 0 ? (
         <NoProfilesFound onShowFilters={() => setShowFilters(true)} />
       ) : (
@@ -234,9 +238,11 @@ const Discover = () => {
           handleLike={handleLike}
           handleDislike={handleDislike}
           preferences={preferences}
-          isPremium={isSubscribed || trialStatus.isActive}
+          isPremium={isSubscribed}
         />
       )}
+      
+      {!isSubscribed && <AdBanner variant="small" position="bottom" adSlot="5678901234" />}
     </div>
   );
 };

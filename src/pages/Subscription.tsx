@@ -9,7 +9,6 @@ import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { checkSubscription } from "@/services/stripeService";
-import { getTrialStatus } from "@/hooks/useSwipes";
 
 const Subscription = () => {
   const { user, updateProfile } = useAuth();
@@ -19,9 +18,6 @@ const Subscription = () => {
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("subscription");
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Check if user is in trial period
-  const trialStatus = user ? getTrialStatus(user) : { isActive: false, daysRemaining: 0 };
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -96,10 +92,8 @@ const Subscription = () => {
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold mb-4">Upgrade Your Experience</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            {trialStatus.isActive ? 
-              `You're currently enjoying your free 7-day trial with ${trialStatus.daysRemaining} days remaining. Upgrade now to maintain premium features after your trial ends.` : 
-              "Unlock premium features including Go Live streaming, ad-free browsing, and priority matching. Choose the plan that works best for you."
-            }
+            Unlock premium features including Go Live streaming, ad-free browsing, and priority matching.
+            Choose the plan that works best for you.
           </p>
         </div>
         
@@ -124,19 +118,6 @@ const Subscription = () => {
                   Manage Subscription
                 </Button>
               </Card>
-            ) : trialStatus.isActive ? (
-              <div>
-                <Card className="p-6 text-center mb-6 border-primary/30 bg-primary/5">
-                  <h2 className="text-xl font-semibold mb-2">Your Free Trial is Active</h2>
-                  <p className="mb-4">
-                    You're enjoying unlimited swipes and premium features for {trialStatus.daysRemaining} more day{trialStatus.daysRemaining !== 1 ? 's' : ''}.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    After your trial ends, you'll be limited to 10 swipes per day. Subscribe now to keep your premium benefits.
-                  </p>
-                </Card>
-                <SubscriptionPlans />
-              </div>
             ) : (
               <SubscriptionPlans />
             )}
