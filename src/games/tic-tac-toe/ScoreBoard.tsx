@@ -5,16 +5,21 @@ import { motion } from "framer-motion";
 interface ScoreBoardProps {
   playerScore: number;
   opponentScore: number;
-  draws: number;
+  draws?: number;
+  opponentName?: string;
   contactName?: string;
 }
 
 const ScoreBoard: React.FC<ScoreBoardProps> = ({
   playerScore,
   opponentScore,
-  draws,
+  draws = 0,
+  opponentName,
   contactName = "Opponent"
 }) => {
+  // Use opponentName if provided, otherwise fall back to contactName
+  const displayName = opponentName || contactName;
+  
   return (
     <div className="mb-4 p-3 bg-accent/20 rounded-md">
       <h3 className="text-sm font-medium text-center mb-2">Game Score</h3>
@@ -61,7 +66,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <div className="text-xs text-muted-foreground">{contactName}</div>
+          <div className="text-xs text-muted-foreground">{displayName}</div>
           <motion.div 
             className="text-xl font-bold"
             key={opponentScore}

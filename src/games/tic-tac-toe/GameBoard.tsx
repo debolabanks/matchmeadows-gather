@@ -9,24 +9,35 @@ type Player = "X" | "O" | null;
 type BoardType = Array<string | null>;
 
 interface GameBoardProps {
-  board: BoardType;  // Updated to match the type used in useGameState
-  onMakeMove: (index: number) => void;  // Update to match how useGameState.makeMove works
-  winner: Player;
-  isDraw: boolean;
-  currentPlayer: "X" | "O";
-  contactName: string;
+  board?: BoardType;
+  squares?: BoardType;  // Added to support both naming conventions
+  onClick?: (index: number) => void;
+  onMakeMove?: (index: number) => void;  // Added to support both naming conventions
+  winner?: Player;
+  isDraw?: boolean;
+  currentPlayer?: "X" | "O";
+  contactName?: string;
   isMultiplayerMode?: boolean;
+  winningLine?: number[] | null;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
   board,
+  squares,
+  onClick,
   onMakeMove,
   winner,
-  isDraw,
-  currentPlayer,
-  contactName,
-  isMultiplayerMode
+  isDraw = false,
+  currentPlayer = "X",
+  contactName = "Opponent",
+  isMultiplayerMode = false,
+  winningLine = null
 }) => {
+  // Use squares if provided, otherwise fall back to board
+  const displayBoard = squares || board || Array(9).fill(null);
+  // Use onClick if provided, otherwise fall back to onMakeMove
+  const handleClick = onClick || onMakeMove || (() => {});
+  
   // Animation variants for cells
   const cellVariants = {
     initial: { scale: 0.8, opacity: 0 },
@@ -53,7 +64,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       <div key={`row-${rowIndex}`} className="flex gap-2">
         {Array(3).fill(null).map((_, colIndex) => {
           const index = rowIndex * 3 + colIndex;
-          const cell = board[index];
+          const cell = displayBoard[index];
           
           return (
             <motion.div
@@ -68,7 +79,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               <Button
                 variant="outline"
                 className="h-24 w-full text-4xl font-bold"
-                onClick={() => onMakeMove(index)}
+                onClick={() => handleClick(index)}
                 disabled={!!winner || isDraw || !!cell || (currentPlayer === "O" && !isMultiplayerMode)}
               >
                 {cell && (

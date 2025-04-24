@@ -87,7 +87,7 @@ const TicTacToe = () => {
     <div className="container max-w-3xl mx-auto py-8">
       <div className="mb-8 flex items-center justify-between">
         <GameHeader 
-          gameTitle="Tic Tac Toe" 
+          gameTitle="Tic Tac Toe"
           gameSubtitle={state?.contactName ? `Playing with ${state.contactName}` : undefined}
         />
         
@@ -184,12 +184,18 @@ const TicTacToe = () => {
         <ScoreBoard 
           playerScore={scores.X} 
           opponentScore={scores.O}
+          draws={0} 
           opponentName={state?.contactName}
         />
         
         <GameBoard
           squares={board}
           onClick={handleSquareClick}
+          winner={winner}
+          isDraw={isDraw}
+          currentPlayer={currentPlayer}
+          contactName={state?.contactName || "Opponent"}
+          isMultiplayerMode={isMultiplayerMode}
           winningLine={winner ? [0, 1, 2] : null} // This is just a placeholder, the actual winning line should be calculated
         />
       </div>
