@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/hooks/use-toast';
 import { startBroadcast } from '@/services/twilio/twilioBroadcast';
@@ -242,6 +241,14 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
     }
   }, [isLive]);
   
+  // Update setTags to ensure it always receives an array of strings
+  const updateTags = (tagInput: string) => {
+    const newTags = tagInput 
+      ? tagInput.split(',').map(tag => tag.trim()).filter(tag => tag !== '')
+      : [];
+    setTags(newTags);
+  };
+
   return {
     // Stream metadata
     title,
@@ -251,7 +258,7 @@ export const useBroadcast = (creatorId: string, creatorName: string) => {
     category,
     setCategory,
     tags,
-    setTags,
+    setTags: updateTags,
     isSubscriberOnly,
     setIsSubscriberOnly,
     

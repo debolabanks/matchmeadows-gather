@@ -68,8 +68,8 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
             setDescription={setDescription}
             category={category}
             setCategory={setCategory}
-            tags={tags.join(',')}
-            setTags={(value) => setTags(value ? value.split(',') : [])}
+            tags={tags.join(',')} // Convert array to comma-separated string for display
+            setTags={setTags} // Use the new method that handles string conversion
             isSubscriberOnly={isSubscriberOnly}
             setIsSubscriberOnly={setIsSubscriberOnly}
             isLive={isLive}
