@@ -5,6 +5,30 @@
 const soundCache: Record<string, HTMLAudioElement> = {};
 
 /**
+ * Preload commonly used sounds to improve responsiveness
+ * This ensures sounds are cached and ready to play when needed
+ */
+export const preloadSounds = () => {
+  const commonSounds = [
+    '/assets/new-message.mp3',
+    '/assets/incoming-call.mp3'
+  ];
+  
+  commonSounds.forEach(soundPath => {
+    try {
+      const audio = new Audio(soundPath);
+      soundCache[soundPath] = audio;
+      
+      // Load the audio file but don't play it
+      audio.load();
+      console.log(`Preloaded sound: ${soundPath}`);
+    } catch (error) {
+      console.warn(`Failed to preload sound: ${soundPath}`, error);
+    }
+  });
+};
+
+/**
  * Play a new message notification sound
  */
 export const playNewMessageSound = () => {

@@ -27,6 +27,7 @@ import LiveStreamPage from "@/pages/LiveStreamPage";
 import BroadcastPage from "@/pages/BroadcastPage";
 import { CallProvider } from "@/contexts/CallContext";
 import TermsOfUse from "@/pages/TermsOfUse";
+import { preloadSounds } from "@/services/soundService";
 
 // Import discover pages correctly
 import Discover from "@/pages/discover";
@@ -44,6 +45,9 @@ function App() {
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // Preload sounds for better user experience
+    preloadSounds();
     
     // Add viewport meta tag for better mobile responsiveness
     const meta = document.createElement('meta');
