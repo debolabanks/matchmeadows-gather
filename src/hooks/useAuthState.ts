@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User } from "@/contexts/authTypes";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +75,7 @@ export const useAuthState = () => {
             let userWithSwipes = initializeSwipes(appUser);
             
             // Set up trial for new users (if event is SIGNED_UP or first SIGNED_IN without trial)
-            if (event === 'SIGNED_UP' || (event === 'SIGNED_IN' && !appUser.trial)) {
+            if (event === AuthChangeEvent.SIGNED_UP || (event === AuthChangeEvent.SIGNED_IN && !appUser.trial)) {
               userWithSwipes = setupTrialForNewUser(userWithSwipes);
             }
             
