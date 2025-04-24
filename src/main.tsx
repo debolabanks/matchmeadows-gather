@@ -5,9 +5,14 @@ import './index.css'
 import { ThemeProvider } from './components/theme-provider.tsx'
 import { StrictMode } from 'react'
 
-createRoot(document.getElementById("root")!).render(
+// Create root outside of render call to avoid potential issues
+const rootElement = document.getElementById("root");
+const root = createRoot(rootElement!);
+
+// Render with proper provider structure
+root.render(
   <StrictMode>
-    <ThemeProvider defaultTheme="light" storageKey="theme">
+    <ThemeProvider defaultTheme="light" storageKey="vibe-theme">
       <App />
     </ThemeProvider>
   </StrictMode>
