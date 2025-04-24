@@ -12,7 +12,7 @@ const root = createRoot(rootElement!);
 // Render with proper provider structure
 root.render(
   <StrictMode>
-    <ThemeProvider defaultTheme="light" storageKey="vibe-theme" enableSystem={true} attribute="class">
+    <ThemeProvider defaultTheme="light" storageKey="vibe-theme" attribute="class">
       <App />
     </ThemeProvider>
   </StrictMode>
