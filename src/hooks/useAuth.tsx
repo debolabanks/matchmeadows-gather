@@ -22,9 +22,30 @@ export const useAuth = () => {
             localStorage.removeItem("matchmeadows_user");
             navigate("/sign-in");
           }
+          return false;
         }
+        
+        // Session is valid, let's ensure we have the profile data
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+            
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+          } else {
+            console.log("Profile data fetched:", profile);
+          }
+        } catch (profileFetchError) {
+          console.error("Error in profile fetch:", profileFetchError);
+        }
+        
+        return true;
       } catch (error) {
         console.error("Error checking auth state:", error);
+        return false;
       }
     };
 
@@ -40,6 +61,26 @@ export const useAuth = () => {
           if (mounted) {
             localStorage.removeItem("matchmeadows_user");
             navigate("/sign-in");
+          }
+          return;
+        }
+        
+        // On successful auth event, fetch profile
+        if (event === 'SIGNED_IN' && session.user) {
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+              
+            if (profileError) {
+              console.error("Error fetching profile after sign in:", profileError);
+            } else {
+              console.log("Profile data after sign in:", profile);
+            }
+          } catch (profileFetchError) {
+            console.error("Error in profile fetch after sign in:", profileFetchError);
           }
         }
       }
