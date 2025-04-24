@@ -34,14 +34,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
     exit: { scale: 0.8, opacity: 0 }
   };
 
-  // Winner animation variants
+  // Winner animation variants - fixing the type issue
   const winnerVariants = {
     initial: { scale: 1 },
     animate: { 
       scale: [1, 1.2, 1],
       transition: { 
         repeat: Infinity,
-        repeatType: "reverse", 
+        repeatType: "mirror" as const, // Fixed: Use "mirror" as const instead of "reverse"
         duration: 1
       }
     }
@@ -101,7 +101,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             className="flex justify-center items-center gap-2 p-2 bg-accent/20 rounded-md"
             animate={{ 
               y: [0, -3, 0],
-              transition: { repeat: Infinity, repeatType: "reverse", duration: 1.5 }
+              transition: { repeat: Infinity, repeatType: "mirror" as const, duration: 1.5 }
             }}
           >
             <div className="h-3 w-3 rounded-full bg-primary"></div>
