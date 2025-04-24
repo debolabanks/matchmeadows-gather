@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Header = () => {
   const { user, isAuthenticated, signOut } = useAuth();
@@ -37,17 +36,6 @@ const Header = () => {
     }
   };
 
-  // Get user initials for avatar fallback
-  const getUserInitials = () => {
-    if (!user || !user.name) return "U";
-    
-    const nameParts = user.name.split(" ");
-    if (nameParts.length >= 2) {
-      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
-    }
-    return user.name.substring(0, 2).toUpperCase();
-  };
-
   return (
     <header className="fixed top-0 left-0 right-0 bg-background z-50 border-b">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -56,28 +44,27 @@ const Header = () => {
           <span className="font-bold text-xl text-love-700">MatchMeadows</span>
         </Link>
         
-        {isAuthenticated && (
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
-              Discover
-            </Link>
-            <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
-              Matches
-            </Link>
-            <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
-              Messages
-            </Link>
-            <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
-              Creators
-            </Link>
-            <Link to="/games" className="text-foreground hover:text-love-500 transition-colors">
-              Games
-            </Link>
-            <Link to="/subscription" className="text-foreground hover:text-love-500 transition-colors">
-              Premium
-            </Link>
-          </nav>
-        )}
+        <nav className="hidden md:flex items-center gap-6">
+          {/* Show all navigation links regardless of authentication status */}
+          <Link to="/discover" className="text-foreground hover:text-love-500 transition-colors">
+            Discover
+          </Link>
+          <Link to="/matches" className="text-foreground hover:text-love-500 transition-colors">
+            Matches
+          </Link>
+          <Link to="/messages" className="text-foreground hover:text-love-500 transition-colors">
+            Messages
+          </Link>
+          <Link to="/creators" className="text-foreground hover:text-love-500 transition-colors">
+            Creators
+          </Link>
+          <Link to="/games" className="text-foreground hover:text-love-500 transition-colors">
+            Games
+          </Link>
+          <Link to="/subscription" className="text-foreground hover:text-love-500 transition-colors">
+            Premium
+          </Link>
+        </nav>
         
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
@@ -94,10 +81,7 @@ const Header = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.profile?.photos?.[0]} alt={user?.name || "User"} />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                    </Avatar>
+                    <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

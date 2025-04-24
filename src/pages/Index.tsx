@@ -1,29 +1,12 @@
-
 import { ArrowRight, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import AdBanner from "@/components/AdBanner";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const { user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const isPremium = user?.profile?.subscriptionStatus === "active";
-
-  const handleStartMatching = () => {
-    if (isAuthenticated) {
-      navigate("/discover");
-    } else {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to start matching",
-        variant: "default",
-      });
-      navigate("/sign-in", { state: { returnTo: "/discover" } });
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -41,12 +24,8 @@ const Index = () => {
                 Join MatchMeadows today and discover meaningful connections with like-minded people.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  className="text-base"
-                  onClick={handleStartMatching}
-                >
-                  Start Matching
+                <Button asChild size="lg" className="text-base">
+                  <Link to="/discover">Start Matching</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="text-base">
                   <Link to="/about">Learn More</Link>
@@ -126,15 +105,10 @@ const Index = () => {
             <p className="text-xl text-white opacity-90 mb-8 max-w-2xl mx-auto">
               Join thousands of singles who have found meaningful relationships on MatchMeadows.
             </p>
-            <Button 
-              size="lg" 
-              variant="secondary" 
-              className="text-love-500"
-              onClick={handleStartMatching}
-            >
-              <span className="flex items-center gap-2">
+            <Button asChild size="lg" variant="secondary" className="text-love-500">
+              <Link to="/discover" className="flex items-center gap-2">
                 Get Started <ArrowRight className="h-4 w-4" />
-              </span>
+              </Link>
             </Button>
           </div>
         </section>
