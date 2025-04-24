@@ -1,38 +1,64 @@
 
-import MatchesList, { Match } from "@/components/MatchesList";
-
-// Sample match data
-const sampleMatches: Match[] = [
-  {
-    id: "1",
-    name: "Emma",
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80",
-    lastActive: "2 hours ago",
-    matchDate: "2 days ago",
-    hasUnreadMessage: true
-  },
-  {
-    id: "3",
-    name: "Sophia",
-    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=776&q=80",
-    lastActive: "5 mins ago",
-    matchDate: "1 week ago",
-    hasUnreadMessage: true
-  },
-  {
-    id: "5",
-    name: "Olivia",
-    imageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=776&q=80",
-    lastActive: "1 day ago",
-    matchDate: "3 days ago",
-    hasUnreadMessage: false
-  }
-];
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { enhanceMatchesWithPersonalization } from "@/utils/activity";
+import { Match } from "@/types/match";
+import MatchesHeader from "@/components/matches/MatchesHeader";
+import CrossAppAlert from "@/components/matches/CrossAppAlert";
+import MatchTabs from "@/components/matches/MatchTabs";
+import { useMatchRecommendations } from "@/components/matches/MatchRecommendations";
+import { defaultUserProfile } from "@/components/matches/defaultUserProfile";
+import { sampleMatches } from "@/components/matches/sampleMatches";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Matches = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("all");
+  const [matches, setMatches] = useState<Match[]>(sampleMatches); // Initialize with sample data directly
+  const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
+  
+  // Use the current user's profile or default to sample profile
+  const userProfile = user?.profile || defaultUserProfile;
+  
+  // Get recommendations using our custom hook
+  const { recommendations, aiRecommendations } = useMatchRecommendations({
+    userProfile,
+    existingMatches: sampleMatches
+  });
+  
+  useEffect(() => {
+    // If there are recommendations, enhance the existing matches with AI compatibility data
+    if (recommendations.length > 0) {
+      const enhancedMatches = sampleMatches.map(match => {
+        if (match.aiCompatibility) return match;
+        const recommendation = recommendations.find(r => r.id === match.id);
+        return {
+          ...match,
+          aiCompatibility: recommendation?.aiCompatibility || {
+            score: match.compatibilityPercentage || 50,
+            insights: [],
+            commonInterests: [],
+            compatibilityReasons: []
+          }
+        };
+      });
+      
+      setMatches(enhancedMatches);
+    }
+  }, [recommendations]);
+
   return (
-    <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
-      <MatchesList matches={sampleMatches} />
+    <div className={`container mx-auto px-4 py-8 ${isMobile ? 'pt-16 pb-20' : 'pt-20 md:pt-24 pb-24'}`}>
+      <MatchesHeader title="Your Matches" />
+      {!isMobile && <CrossAppAlert />}
+      
+      <MatchTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        matches={matches}
+        aiRecommendations={aiRecommendations}
+      />
     </div>
   );
 };

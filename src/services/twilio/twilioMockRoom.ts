@@ -109,6 +109,17 @@ export const createDemoRoom = (roomName: string, localTracks: LocalTrack[], isPr
       const fakePresenter = {
         identity: 'creator',
         tracks: new Map(),
+        on: (event: string, handler: Function) => {
+          console.log(`[Fake Presenter] Registered handler for event: ${event}`);
+          return fakePresenter;
+        },
+        off: (event: string, handler?: Function) => {
+          console.log(`[Fake Presenter] Removed handler for event: ${event}`);
+          return fakePresenter;
+        },
+        removeAllListeners: () => {
+          console.log(`[Fake Presenter] Removed all listeners`);
+        }
       } as unknown as RemoteParticipant;
       
       // Add the fake presenter to the participants map

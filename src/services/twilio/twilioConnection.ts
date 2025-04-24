@@ -6,10 +6,8 @@ import Video, {
   Room 
 } from 'twilio-video';
 import { createDemoRoom } from './twilioMockRoom';
-
-// This would normally come from a server endpoint that generates tokens
-// In a production app, never expose your Twilio credentials in frontend code
-const DEMO_TOKEN = "DEMO_MODE_NO_ACTUAL_CONNECTION";
+import { getRoomAccessDetails } from './twilioTokenService';
+import webRTCService from '../webrtc/webRTCService';
 
 export interface ConnectOptions {
   name: string; // Room name
@@ -18,11 +16,11 @@ export interface ConnectOptions {
   isPresenter?: boolean; // Whether this user is broadcasting (presenter) or viewing
   quality?: 'low' | 'standard' | 'high'; // Stream quality
   screenShare?: boolean; // Whether to include screen sharing
+  useWebRTC?: boolean; // Whether to use native WebRTC instead of Twilio
 }
 
 /**
- * Connect to a Twilio Video room
- * In a real implementation, we would fetch a token from the server first
+ * Connect to a video room - either Twilio or WebRTC based
  */
 export const connectToRoom = async ({ 
   name, 
@@ -30,12 +28,34 @@ export const connectToRoom = async ({
   video, 
   isPresenter = false,
   quality = 'standard',
-  screenShare = false
+  screenShare = false,
+  useWebRTC = true // Default to WebRTC for better performance
 }: ConnectOptions): Promise<Room> => {
   try {
-    console.log(`Connecting to room: ${name} as ${isPresenter ? 'presenter' : 'viewer'}`);
+    console.log(`Connecting to room: ${name} as ${isPresenter ? 'presenter' : 'viewer'} using ${useWebRTC ? 'WebRTC' : 'Twilio'}`);
     
-    // Create appropriate tracks based on preferences
+    // If using WebRTC implementation, don't use Twilio
+    if (useWebRTC) {
+      // Start local media stream
+      if (audio || video) {
+        await webRTCService.startLocalStream({ audio, video });
+      }
+      
+      // Start screen sharing if requested
+      if (screenShare && isPresenter) {
+        try {
+          await webRTCService.startScreenSharing();
+        } catch (err) {
+          console.error("Failed to get screen sharing:", err);
+        }
+      }
+      
+      // Return a mock room that works with our WebRTC implementation
+      // This ensures compatibility with existing code
+      return createDemoRoom(name, [], isPresenter);
+    }
+    
+    // Original Twilio implementation
     const tracks: LocalTrack[] = [];
     
     if (audio) {
@@ -61,26 +81,29 @@ export const connectToRoom = async ({
       tracks.push(videoTrack);
     }
     
-    // Add screen sharing if requested (in a real app)
-    if (screenShare && isPresenter) {
-      try {
-        // This is just a placeholder for demo - in a real app we would capture the screen
-        console.log("Screen sharing would be enabled in a real implementation");
-        // const screenTrack = await Video.createLocalVideoTrack({ name: 'screen' });
-        // tracks.push(screenTrack);
-      } catch (err) {
-        console.error("Failed to get screen sharing:", err);
-      }
+    // Get room access token from our token service
+    const { token, identity } = await getRoomAccessDetails(name, isPresenter ? 'presenter' : 'viewer');
+    
+    // Check if we're in demo mode (no actual Twilio credentials)
+    if (token.startsWith('demo-token-')) {
+      console.log("Using demo room since no Twilio credentials are present");
+      return createDemoRoom(name, tracks, isPresenter);
     }
     
-    // In real implementation, we would use:
-    // return await Video.connect(token, { name, tracks });
-    
-    // For demo, create a simulated room without actually connecting to Twilio
-    return createDemoRoom(name, tracks, isPresenter);
+    // In production with real token, connect to actual Twilio service
+    return await Video.connect(token, { 
+      name, 
+      tracks, 
+      audio, 
+      video 
+    });
     
   } catch (error) {
-    console.error('Error connecting to Twilio room:', error);
+    console.error('Error connecting to room:', error);
     throw error;
   }
 };
+
+// Export these for backward compatibility
+export const createLocalAudioTrack = Video.createLocalAudioTrack;
+export const createLocalVideoTrack = Video.createLocalVideoTrack;

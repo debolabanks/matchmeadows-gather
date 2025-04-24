@@ -1,49 +1,70 @@
 
-/**
- * Sound service for playing notification sounds
- */
+// Sound effect utility for the application
 
-// Sound files - using URL paths to ensure they work properly
-const INCOMING_CALL_SOUND = new Audio('/src/assets/incoming-call.mp3');
-const NEW_MESSAGE_SOUND = new Audio('/src/assets/new-message.mp3');
-
-// Configure audio settings
-INCOMING_CALL_SOUND.loop = true;
-NEW_MESSAGE_SOUND.loop = false;
-
-let activeSound: HTMLAudioElement | null = null;
+// Cache sounds for better performance
+const soundCache: Record<string, HTMLAudioElement> = {};
 
 /**
- * Play incoming call sound
+ * Play a new message notification sound
  */
-export const playIncomingCallSound = () => {
-  stopAllSounds();
-  INCOMING_CALL_SOUND.play().catch(err => console.error('Error playing call sound:', err));
-  activeSound = INCOMING_CALL_SOUND;
+export const playNewMessageSound = () => {
+  playSound('/assets/new-message.mp3');
 };
 
 /**
- * Play new message sound
+ * Play an incoming call notification sound
  */
-export const playNewMessageSound = () => {
-  stopAllSounds();
-  NEW_MESSAGE_SOUND.play().catch(err => console.error('Error playing message sound:', err));
-  activeSound = NEW_MESSAGE_SOUND;
+export const playIncomingCallSound = () => {
+  playSound('/assets/incoming-call.mp3', true);
+};
+
+/**
+ * Generic sound player with caching
+ */
+const playSound = (soundPath: string, loop: boolean = false) => {
+  try {
+    // Try to get from cache first
+    let sound = soundCache[soundPath];
+    
+    // Create and cache if doesn't exist
+    if (!sound) {
+      sound = new Audio(soundPath);
+      soundCache[soundPath] = sound;
+    }
+    
+    // Configure sound
+    sound.loop = loop;
+    sound.currentTime = 0;
+    
+    // Play the sound
+    sound.play().catch(err => {
+      console.warn('Failed to play sound:', err);
+    });
+    
+    return sound;
+  } catch (error) {
+    console.error('Error playing sound:', error);
+    return null;
+  }
+};
+
+/**
+ * Stop a currently playing sound
+ */
+export const stopSound = (soundPath: string) => {
+  const sound = soundCache[soundPath];
+  if (sound) {
+    sound.pause();
+    sound.currentTime = 0;
+  }
 };
 
 /**
  * Stop all currently playing sounds
  */
 export const stopAllSounds = () => {
-  if (activeSound) {
-    activeSound.pause();
-    activeSound.currentTime = 0;
-    activeSound = null;
-  }
-  
-  // Ensure both sounds are stopped
-  INCOMING_CALL_SOUND.pause();
-  INCOMING_CALL_SOUND.currentTime = 0;
-  NEW_MESSAGE_SOUND.pause();
-  NEW_MESSAGE_SOUND.currentTime = 0;
+  Object.values(soundCache).forEach(sound => {
+    sound.pause();
+    sound.currentTime = 0;
+  });
 };

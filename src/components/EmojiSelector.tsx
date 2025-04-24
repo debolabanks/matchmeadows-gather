@@ -6,6 +6,7 @@ import { Smile } from "lucide-react";
 
 interface EmojiSelectorProps {
   onEmojiSelect: (emoji: string) => void;
+  disabled?: boolean;
 }
 
 const EMOJI_CATEGORIES = [
@@ -27,13 +28,18 @@ const EMOJI_CATEGORIES = [
   }
 ];
 
-const EmojiSelector = ({ onEmojiSelect }: EmojiSelectorProps) => {
+const EmojiSelector = ({ onEmojiSelect, disabled = false }: EmojiSelectorProps) => {
   const [activeCategory, setActiveCategory] = useState(EMOJI_CATEGORIES[0].name);
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 w-8 p-0 rounded-full"
+          disabled={disabled}
+        >
           <Smile className="h-5 w-5" />
         </Button>
       </PopoverTrigger>

@@ -1,90 +1,124 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+
+import Index from "@/pages/Index";
+import About from "@/pages/About";
+import SignIn from "@/pages/SignIn";
+import SignUp from "@/pages/SignUp";
+import Matches from "@/pages/Matches";
+import Messages from "@/pages/Messages";
+import Profile from "@/pages/Profile";
+import Verification from "@/pages/Verification";
+import Subscription from "@/pages/Subscription";
+import Games from "@/pages/Games";
+import Creators from "@/pages/Creators";
+import CreatorChannel from "@/pages/CreatorChannel";
+import NotFound from "@/pages/NotFound";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import MobileNav from "@/components/MobileNav";
 import { AuthProvider } from "@/contexts/AuthContext";
+import LiveStreamPage from "@/pages/LiveStreamPage";
+import BroadcastPage from "@/pages/BroadcastPage";
 import { CallProvider } from "@/contexts/CallContext";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import MobileNav from "./components/MobileNav";
-import Discover from "./pages/Discover";
-import Matches from "./pages/Matches";
-import Messages from "./pages/Messages";
-import Profile from "./pages/Profile";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import ProtectedRoute from "./components/ProtectedRoute";
-import CreatorChannel from "./pages/CreatorChannel";
-import Creators from "./pages/Creators";
-import About from "./pages/About";
+import TermsOfUse from "@/pages/TermsOfUse";
+
+// Import discover pages correctly
+import Discover from "@/pages/discover";
+import StreamsDiscovery from "@/pages/discover/streams";
+
+// Import game components
+import TicTacToe from "@/games/TicTacToe";
+import RockPaperScissors from "@/games/RockPaperScissors";
+import WordGuess from "@/games/WordGuess";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    
+    // Add viewport meta tag for better mobile responsiveness
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    document.head.appendChild(meta);
+    
+    // Add iOS PWA meta tags
+    const statusBarMeta = document.createElement('meta');
+    statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+    statusBarMeta.content = 'black-translucent';
+    document.head.appendChild(statusBarMeta);
+
+    // Clean up on unmount
+    return () => {
+      document.head.removeChild(meta);
+      document.head.removeChild(statusBarMeta);
+    };
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="theme">
       <AuthProvider>
         <CallProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/sign-in" element={<SignIn />} />
-                  <Route path="/sign-up" element={<SignUp />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/discover" element={
-                    <ProtectedRoute>
-                      <Discover />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/matches" element={
-                    <ProtectedRoute>
-                      <Matches />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/messages" element={
-                    <ProtectedRoute>
-                      <Messages />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/creators" element={
-                    <ProtectedRoute>
-                      <Creators />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/creators/:creatorId" element={
-                    <ProtectedRoute>
-                      <CreatorChannel />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-              <Footer />
-              <MobileNav />
-            </div>
-          </BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <div className="min-h-screen flex flex-col">
+                <div className="pt-16 md:ml-16">
+                  <Header />
+                  <div className="flex h-full flex-1">
+                    <div className="flex-1 pb-16">
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/discover" element={<Discover />} />
+                        <Route path="/sign-in" element={<SignIn />} />
+                        <Route path="/sign-up" element={<SignUp />} />
+                        <Route path="/matches" element={<ProtectedRoute>{<Matches />}</ProtectedRoute>} />
+                        <Route path="/messages" element={<ProtectedRoute>{<Messages />}</ProtectedRoute>} />
+                        <Route path="/profile" element={<ProtectedRoute>{<Profile />}</ProtectedRoute>} />
+                        <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
+                        <Route path="/subscription" element={<Subscription />} />
+                        <Route path="/games" element={<Games />} />
+                        <Route path="/terms" element={<TermsOfUse />} />
+                        
+                        {/* Game routes */}
+                        <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
+                        <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
+                        <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />
+                        
+                        <Route path="/creators" element={<Creators />} />
+                        <Route path="/creators/:creatorId" element={<CreatorChannel />} />
+                        <Route path="/stream/:streamId" element={<LiveStreamPage />} />
+                        <Route path="/broadcast" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
+                        <Route path="/broadcast/:creatorId" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
+                        <Route path="/discover/streams" element={<StreamsDiscovery />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </div>
+                  </div>
+                  <MobileNav />
+                  <Footer />
+                </div>
+                <Toaster />
+              </div>
+            </BrowserRouter>
+          </QueryClientProvider>
         </CallProvider>
       </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </ThemeProvider>
+  );
+}
 
 export default App;

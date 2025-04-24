@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { useVideoCall } from "@/hooks/useVideoCall";
+import { useVideoCall } from "@/hooks/video";
 import { ActiveCallControls, IncomingCallControls } from "@/components/call/CallControls";
 import CallAvatar from "@/components/call/CallAvatar";
 import CallLayout from "@/components/call/CallLayout";
@@ -54,6 +54,11 @@ const VideoCall = ({
     };
   }, [isIncoming, state.callStatus]);
 
+  // Determine when to show the avatar (for voice calls or when video is not yet connected)
+  const showAvatar = callType === "voice" || 
+                     state.callStatus !== "connected" || 
+                     !state.remoteParticipant;
+
   return (
     <CallLayout
       remoteVideoRef={refs.remoteVideoRef}
@@ -64,17 +69,19 @@ const VideoCall = ({
       contactName={contactName}
       isFullscreen={state.isFullscreen}
     >
-      {(callType === "voice" || state.callStatus !== "connected" || !state.remoteParticipant) && (
-        <CallAvatar
-          contactName={contactName}
-          contactImage={contactImage}
-          callStatus={state.callStatus}
-          duration={state.duration}
-          formatDuration={formatDuration}
-        />
+      {showAvatar && (
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <CallAvatar
+            contactName={contactName}
+            contactImage={contactImage}
+            callStatus={state.callStatus}
+            duration={state.duration}
+            formatDuration={formatDuration}
+          />
+        </div>
       )}
       
-      <div className="bg-black p-4 flex justify-center">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/70 flex justify-center z-20">
         {isIncoming && state.callStatus === "connecting" ? (
           <IncomingCallControls 
             acceptCall={actions.acceptCall}

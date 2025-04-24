@@ -2,6 +2,7 @@
 export interface ChatMessage {
   id: string;
   senderId: string;
+  receiverId: string; // Adding the receiverId property
   text: string;
   timestamp: string;
   read: boolean;
@@ -49,6 +50,7 @@ export interface ChatContact {
   videoCallEnabled?: boolean;
   voiceCallEnabled?: boolean;
   verificationStatus?: "unverified" | "verified" | "pending";
+  isMatched?: boolean;
 }
 
 export interface CallSession {

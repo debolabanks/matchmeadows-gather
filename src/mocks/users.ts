@@ -1,5 +1,5 @@
 
-import { UserProfile } from "@/contexts/authTypes";
+import { UserProfile } from "@/types/user";
 
 // Mock user data for demo purposes
 export type MockUser = {

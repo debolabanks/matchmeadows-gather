@@ -1,30 +1,44 @@
 
+import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requiresAuth?: boolean;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children,
+  requiresAuth = true
+}) => {
+  const { isAuthenticated, isLoading, devModeEnabled } = useAuth();
   const location = useLocation();
   
-  // Show nothing while checking authentication
+  // If in dev mode, bypass authentication
+  if (devModeEnabled) {
+    return <>{children}</>;
+  }
+  
+  // Still loading authentication state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-love-500 rounded-full border-t-transparent"></div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
   
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/sign-in" state={{ from: location }} replace />;
+  // Not authenticated
+  if (requiresAuth && !isAuthenticated) {
+    return <Navigate to="/sign-in" state={{ returnTo: location.pathname }} replace />;
   }
   
-  // Render children if authenticated
+  // Already authenticated, but on auth page
+  if (!requiresAuth && isAuthenticated) {
+    return <Navigate to="/discover" replace />;
+  }
+  
   return <>{children}</>;
 };
 

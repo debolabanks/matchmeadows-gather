@@ -16,17 +16,17 @@ const Footer = () => {
             <Link to="/about" className="hover:text-love-500 transition-colors">
               About
             </Link>
-            <Link to="/safety" className="hover:text-love-500 transition-colors">
-              Safety
-            </Link>
-            <Link to="/privacy" className="hover:text-love-500 transition-colors">
-              Privacy
-            </Link>
             <Link to="/terms" className="hover:text-love-500 transition-colors">
               Terms
             </Link>
-            <Link to="/contact" className="hover:text-love-500 transition-colors">
-              Contact
+            <Link to="/games" className="hover:text-love-500 transition-colors">
+              Games
+            </Link>
+            <Link to="/verification" className="hover:text-love-500 transition-colors">
+              Verification
+            </Link>
+            <Link to="/subscription" className="hover:text-love-500 transition-colors">
+              Premium
             </Link>
           </div>
         </div>
