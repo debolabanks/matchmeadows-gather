@@ -7,7 +7,7 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
-// Create the context with a default value
+// Create context with default values
 const ThemeContext = createContext<ThemeContextType>({
   theme: "light",
   setTheme: () => {},
@@ -43,15 +43,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     try {
       const root = document.documentElement;
-      const isDark = theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
       
-      if (isDark) {
+      // Apply theme to document
+      if (theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         root.classList.add("dark");
       } else {
         root.classList.remove("dark");
       }
       
-      // Save theme preference to localStorage
+      // Save theme preference
       localStorage.setItem("theme", theme);
     } catch (error) {
       console.error("Error updating theme:", error);
@@ -76,8 +76,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme, isMounted]);
 
-  // Only provide the context if the component is mounted
-  // This prevents SSR issues with useContext
+  // Create context value
   const contextValue = {
     theme,
     setTheme
@@ -91,16 +90,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTheme() {
-  try {
-    const context = useContext(ThemeContext);
-    if (context === undefined) {
-      // Provide a fallback to prevent errors when the context is not available
-      console.warn("useTheme hook called outside ThemeProvider");
-      return { theme: "light" as Theme, setTheme: () => {} };
-    }
-    return context;
-  } catch (error) {
-    console.error("Error in useTheme hook:", error);
+  // Get context safely
+  const context = useContext(ThemeContext);
+  
+  // Fallback if context is unavailable
+  if (!context) {
+    console.warn("useTheme hook called outside ThemeProvider");
     return { theme: "light" as Theme, setTheme: () => {} };
   }
+  
+  return context;
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext"
@@ -90,6 +89,8 @@ function App() {
     return <SplashScreen />;
   }
 
+  // Make sure we're wrapping everything in the ThemeProvider from our contexts
+  // and not from components (which depends on contexts/ThemeContext)
   return (
     <ThemeProvider>
       <AuthProvider>
