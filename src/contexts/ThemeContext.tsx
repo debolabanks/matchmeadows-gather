@@ -8,6 +8,7 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
+// Create the context with a default value
 const ThemeContext = createContext<ThemeContextType>({
   theme: "light",
   setTheme: () => {},
@@ -16,19 +17,27 @@ const ThemeContext = createContext<ThemeContextType>({
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Start with a default theme
   const [theme, setTheme] = useState<Theme>("light");
+  // Flag to track if component is mounted
+  const [isMounted, setIsMounted] = useState(false);
   
   // Initialize from localStorage only after component mounts
   useEffect(() => {
+    setIsMounted(true);
+    
     // Check for saved theme in localStorage
     const savedTheme = localStorage.getItem("theme") as Theme;
-    if (savedTheme) {
+    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system')) {
       setTheme(savedTheme);
     } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       // Check for system preference
       setTheme("dark");
     }
+  }, []);
+  
+  // Update document class and localStorage when theme changes
+  useEffect(() => {
+    if (!isMounted) return;
     
-    // Update document class when theme changes
     const root = document.documentElement;
     const isDark = theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
     
@@ -40,11 +49,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     // Save theme preference to localStorage
     localStorage.setItem("theme", theme);
-  }, [theme]);
+  }, [theme, isMounted]);
 
   // Listen for system theme changes if using system preference
   useEffect(() => {
-    if (theme !== "system") return;
+    if (!isMounted || theme !== "system") return;
     
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
@@ -54,10 +63,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme]);
+  }, [theme, isMounted]);
+
+  // Only provide the context if the component is mounted
+  // This prevents SSR issues with useContext
+  const contextValue = {
+    theme,
+    setTheme
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
@@ -66,7 +82,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    // Provide a fallback to prevent errors when the context is not available
+    // This could happen during SSR or if used outside of a provider
+    return { theme: "light" as Theme, setTheme: () => {} };
   }
   return context;
 }

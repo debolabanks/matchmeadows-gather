@@ -7,12 +7,14 @@ import { type ThemeProviderProps } from "next-themes/dist/types"
 import { useTheme } from "@/contexts/ThemeContext"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  // Use our custom theme context to get the theme
+  // Make sure we have a valid theme from our custom context
   const { theme } = useTheme()
   
-  // Pass our theme to next-themes provider
+  // Pass the theme to next-themes provider, ensuring it's valid
+  const validTheme = theme === 'light' || theme === 'dark' || theme === 'system' ? theme : 'light'
+  
   return (
-    <NextThemesProvider {...props} forcedTheme={theme}>
+    <NextThemesProvider {...props} forcedTheme={validTheme}>
       {children}
     </NextThemesProvider>
   )

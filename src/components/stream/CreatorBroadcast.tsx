@@ -1,3 +1,4 @@
+
 import { useBroadcast } from "./broadcast/useBroadcast";
 import StreamSettings from "./broadcast/StreamSettings";
 import CameraPreview from "./broadcast/CameraPreview";
@@ -34,7 +35,7 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
     isLive,
     isMicEnabled,
     isVideoEnabled,
-    viewerCount = 0,
+    viewerCount,
     broadcastDuration,
     isLoading,
     startBroadcastHandler,
@@ -99,7 +100,7 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
             isVideoEnabled={isVideoEnabled}
             isMicEnabled={isMicEnabled}
             isLoading={isLoading}
-            viewerCount={viewerCount}
+            viewerCount={typeof viewerCount === 'string' ? parseInt(viewerCount, 10) || 0 : viewerCount || 0}
             broadcastDuration={broadcastDuration}
             title={title}
             toggleMic={toggleMic}
