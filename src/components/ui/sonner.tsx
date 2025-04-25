@@ -8,11 +8,14 @@ import { useTheme } from "next-themes"
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { resolvedTheme } = useTheme()
+  const { theme, resolvedTheme } = useTheme()
   
+  // Use resolvedTheme as primary with theme as fallback
+  const currentTheme = resolvedTheme || theme || "light"
+
   return (
     <Sonner
-      theme={resolvedTheme as ToasterProps["theme"]}
+      theme={currentTheme as ToasterProps["theme"]}
       className="toaster group"
       toastOptions={{
         classNames: {
