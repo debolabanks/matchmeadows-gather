@@ -1,126 +1,67 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import SignInAlert from "./SignInAlert";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
-interface SignInFormProps {
-  onSuccess?: () => void;
-}
-
-const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
+const SignInForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const { signIn, isAuthenticated, user } = useAuth();
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Get the returnTo path from location state, or default to /discover
-  const returnTo = location.state?.returnTo || "/discover";
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log("User is authenticated, redirecting to:", returnTo);
-      navigate(returnTo);
-    }
-  }, [isAuthenticated, user, navigate, returnTo]);
-
-  // Check for auth error messages from session storage
-  useEffect(() => {
-    const sessionErrorMsg = sessionStorage.getItem("auth_error_message");
-    if (sessionErrorMsg) {
-      setErrorMessage(sessionErrorMsg);
-      sessionStorage.removeItem("auth_error_message");
-    }
-  }, []);
-
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setErrorMessage(null);
-
-    if (!email || !password) {
-      setErrorMessage("Please enter both email and password");
-      return;
-    }
-    setLoading(true);
+    setIsLoading(true);
+    setError("");
 
     try {
-      console.log("Attempting to sign in with:", { email });
-      
-      // First, check explicitly for test user
-      if (email.toLowerCase() === "test@example.com" && password === "password") {
-        // Demo user for testing
-        const mockUser = {
-          id: "test-user-id",
-          name: "Test User",
-          email: "test@example.com",
-          profile: {
-            subscriptionStatus: "active"
-          }
-        };
-        localStorage.setItem("matchmeadows_user", JSON.stringify(mockUser));
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in with test account"
-        });
-        // For the test user, navigate immediately
-        navigate(returnTo);
-        if (onSuccess) onSuccess();
+      if (!email || !password) {
+        setError("Please enter both email and password");
+        setIsLoading(false);
         return;
       }
 
-      // Use our signIn function to authenticate the user
       const user = await signIn(email, password);
-      console.log("Successfully signed in user:", user);
-
-      toast({
-        title: "Welcome back!",
-        description: user?.profile?.subscriptionStatus === "active" 
-          ? "Premium user, successfully signed in" 
-          : "Successfully signed in"
-      });
-      
-      // For normal users, don't navigate here - let the useEffect handle it
-      // The navigation will happen in the useEffect when isAuthenticated becomes true
-      if (onSuccess) onSuccess();
-    } catch (error) {
-      console.error("Sign in error:", error);
-      if (error instanceof Error) {
-        if (error.message.includes("Email not confirmed")) {
-          setErrorMessage("Please check your email to confirm your account before signing in.");
-        } else if (error.message.includes("Invalid login credentials")) {
-          setErrorMessage("Invalid email or password. Please try again.");
-        } else {
-          setErrorMessage(error.message);
-        }
+      if (user) {
+        toast({
+          title: "Welcome back!",
+          description: "You've been successfully signed in."
+        });
+        navigate("/discover");
       } else {
-        setErrorMessage("An unexpected error occurred. Please try again.");
+        setError("Invalid credentials. Please try again.");
       }
-      toast({
-        title: "Sign in failed",
-        description: "Unable to sign in with provided credentials",
-        variant: "destructive"
-      });
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An error occurred during sign in");
+      }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSignIn}>
+    <form onSubmit={handleSubmit}>
       <CardContent className="space-y-4">
-        <SignInAlert errorMessage={errorMessage} />
+        {error && (
+          <Alert variant="destructive" className="text-sm">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -130,13 +71,15 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
         </div>
+
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex justify-between items-center">
             <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-sm text-love-600 hover:underline">
-              Forgot Password?
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+              Forgot password?
             </Link>
           </div>
           <Input
@@ -146,26 +89,27 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
           />
         </div>
-        <div className="pt-2 text-sm text-muted-foreground">
-          <p>Demo account: test@example.com / password</p>
-        </div>
       </CardContent>
+
       <CardFooter className="flex flex-col space-y-3">
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Signing in..." : "Sign In"}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign In"
+          )}
         </Button>
         <div className="text-center text-sm">
           Don't have an account?{" "}
-          <Link to="/sign-up" className="text-love-600 hover:underline">
+          <Link to="/sign-up" className="text-primary hover:underline">
             Sign Up
           </Link>
-        </div>
-        <div className="text-center text-xs text-muted-foreground">
-          <Link to="/terms" className="hover:underline">Terms of Use</Link>
-          {" • "}
-          <Link to="/about" className="hover:underline">About</Link>
         </div>
       </CardFooter>
     </form>
