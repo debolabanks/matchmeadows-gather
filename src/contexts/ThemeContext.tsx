@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 
 type Theme = "light" | "dark" | "system";
@@ -23,14 +22,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Initialize from localStorage only after component mounts
   useEffect(() => {
     setIsMounted(true);
-    
-    // Check for saved theme in localStorage
-    const savedTheme = localStorage.getItem("theme") as Theme;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system')) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      // Check for system preference
-      setTheme("dark");
+    try {
+      // Check for saved theme in localStorage
+      const savedTheme = localStorage.getItem("theme") as Theme;
+      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system')) {
+        setTheme(savedTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // Check for system preference
+        setTheme("dark");
+      }
+    } catch (error) {
+      console.error("Error reading theme from localStorage:", error);
+      // Keep default theme if there's an error
     }
   }, []);
   
@@ -38,31 +41,39 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isMounted) return;
     
-    const root = document.documentElement;
-    const isDark = theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
+    try {
+      const root = document.documentElement;
+      const isDark = theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      
+      if (isDark) {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+      
+      // Save theme preference to localStorage
+      localStorage.setItem("theme", theme);
+    } catch (error) {
+      console.error("Error updating theme:", error);
     }
-    
-    // Save theme preference to localStorage
-    localStorage.setItem("theme", theme);
   }, [theme, isMounted]);
 
   // Listen for system theme changes if using system preference
   useEffect(() => {
     if (!isMounted || theme !== "system") return;
     
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const handleChange = () => {
-      document.documentElement.classList.toggle("dark", mediaQuery.matches);
-    };
-    
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    try {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      const handleChange = () => {
+        document.documentElement.classList.toggle("dark", mediaQuery.matches);
+      };
+      
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    } catch (error) {
+      console.error("Error setting up media query listener:", error);
+    }
   }, [theme, isMounted]);
 
   // Only provide the context if the component is mounted
@@ -80,11 +91,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    // Provide a fallback to prevent errors when the context is not available
-    // This could happen during SSR or if used outside of a provider
+  try {
+    const context = useContext(ThemeContext);
+    if (context === undefined) {
+      // Provide a fallback to prevent errors when the context is not available
+      console.warn("useTheme hook called outside ThemeProvider");
+      return { theme: "light" as Theme, setTheme: () => {} };
+    }
+    return context;
+  } catch (error) {
+    console.error("Error in useTheme hook:", error);
     return { theme: "light" as Theme, setTheme: () => {} };
   }
-  return context;
 }

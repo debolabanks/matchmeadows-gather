@@ -68,6 +68,9 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
     );
   }
   
+  // Convert viewerCount to a number (ensuring it's properly typed)
+  const numericViewerCount = typeof viewerCount === 'string' ? parseInt(viewerCount, 10) || 0 : viewerCount || 0;
+  
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-3">
@@ -100,7 +103,7 @@ const CreatorBroadcast = ({ creatorId, creatorName }: CreatorBroadcastProps) => 
             isVideoEnabled={isVideoEnabled}
             isMicEnabled={isMicEnabled}
             isLoading={isLoading}
-            viewerCount={typeof viewerCount === 'string' ? parseInt(viewerCount, 10) || 0 : viewerCount || 0}
+            viewerCount={numericViewerCount}
             broadcastDuration={broadcastDuration}
             title={title}
             toggleMic={toggleMic}

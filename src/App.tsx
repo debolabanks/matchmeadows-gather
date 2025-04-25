@@ -46,27 +46,40 @@ function App() {
   useEffect(() => {
     setIsMounted(true);
     
-    preloadSounds();
+    try {
+      preloadSounds();
+    } catch (error) {
+      console.error("Error preloading sounds:", error);
+    }
     
-    const meta = document.createElement('meta');
-    meta.name = 'viewport';
-    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-    document.head.appendChild(meta);
-    
-    const statusBarMeta = document.createElement('meta');
-    statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
-    statusBarMeta.content = 'black-translucent';
-    document.head.appendChild(statusBarMeta);
-    
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 3000);
-
-    return () => {
-      document.head.removeChild(meta);
-      document.head.removeChild(statusBarMeta);
-      clearTimeout(timer);
-    };
+    try {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+      document.head.appendChild(meta);
+      
+      const statusBarMeta = document.createElement('meta');
+      statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+      statusBarMeta.content = 'black-translucent';
+      document.head.appendChild(statusBarMeta);
+      
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 3000);
+  
+      return () => {
+        try {
+          document.head.removeChild(meta);
+          document.head.removeChild(statusBarMeta);
+          clearTimeout(timer);
+        } catch (error) {
+          console.error("Error cleaning up in App component:", error);
+        }
+      };
+    } catch (error) {
+      console.error("Error in App component setup:", error);
+      setShowSplash(false); // Ensure splash screen is hidden even if there's an error
+    }
   }, []);
 
   if (!isMounted) {
