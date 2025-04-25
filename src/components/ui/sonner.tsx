@@ -1,17 +1,17 @@
 
 "use client"
 
-import { Toaster as Sonner } from "sonner"
 import * as React from "react"
+import { Toaster as Sonner } from "sonner"
 import { useTheme } from "next-themes"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme, resolvedTheme } = useTheme()
+  const { theme = "system" } = useTheme();
   
-  // Use resolvedTheme as primary with theme as fallback, default to light if neither is available
-  const currentTheme = resolvedTheme || theme || "light"
+  // Default to light if theme is not available yet
+  const currentTheme = theme || "light";
 
   return (
     <Sonner

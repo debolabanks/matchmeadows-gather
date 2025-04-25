@@ -92,3 +92,4 @@ export const stopAllSounds = () => {
     sound.currentTime = 0;
   });
 };
+
