@@ -1,12 +1,12 @@
 
 import { Toaster as Sonner } from "sonner"
 import * as React from "react"
-import { useTheme as useNextTheme } from "next-themes"
+import { useTheme } from "next-themes"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme, resolvedTheme } = useNextTheme()
+  const { theme, resolvedTheme } = useTheme()
   
   // Default to light theme if theme is undefined
   const toasterTheme = (resolvedTheme === "dark" || resolvedTheme === "light") 
