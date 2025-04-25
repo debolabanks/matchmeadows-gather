@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./components/theme-provider";
@@ -36,30 +36,31 @@ import TicTacToe from "@/games/TicTacToe";
 import RockPaperScissors from "@/games/RockPaperScissors";
 import WordGuess from "@/games/WordGuess";
 
-// Create a client
+// Create a query client
 const queryClient = new QueryClient();
 
 function App() {
-  const [isMounted, setIsMounted] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [isMounted, setIsMounted] = React.useState(false);
+  const [showSplash, setShowSplash] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     setIsMounted(true);
     
-    try {
-      // Import dynamically to prevent the "does not provide an export named 'preloadSounds'" error
-      const soundUtils = import('@/services/soundService');
-      soundUtils.then(module => {
-        if (typeof module.preloadSounds === 'function') {
-          module.preloadSounds();
+    // Safely try to preload sounds
+    const preloadSounds = async () => {
+      try {
+        const soundModule = await import('@/services/soundService');
+        if (typeof soundModule.preloadSounds === 'function') {
+          soundModule.preloadSounds();
         }
-      }).catch(error => {
-        console.error("Error importing sound service:", error);
-      });
-    } catch (error) {
-      console.error("Error preloading sounds:", error);
-    }
+      } catch (error) {
+        console.error("Error preloading sounds:", error);
+      }
+    };
     
+    preloadSounds();
+    
+    // Set up viewport meta tags
     try {
       const meta = document.createElement('meta');
       meta.name = 'viewport';
@@ -98,58 +99,56 @@ function App() {
     return <SplashScreen />;
   }
 
-  // Ensure consistent React Context provider ordering
+  // Restructured provider hierarchy to fix context issues
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <ThemeProvider defaultTheme="light" attribute="class">
             <CallProvider>
-              <BrowserRouter>
-                <div className="min-h-screen flex flex-col">
-                  <div className="pt-16 md:ml-16">
-                    <Header />
-                    <div className="flex h-full flex-1">
-                      <div className="flex-1 pb-16">
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/about" element={<About />} />
-                          <Route path="/discover" element={<Discover />} />
-                          <Route path="/sign-in" element={<SignIn />} />
-                          <Route path="/sign-up" element={<SignUp />} />
-                          <Route path="/matches" element={<ProtectedRoute>{<Matches />}</ProtectedRoute>} />
-                          <Route path="/messages" element={<ProtectedRoute>{<Messages />}</ProtectedRoute>} />
-                          <Route path="/profile" element={<ProtectedRoute>{<Profile />}</ProtectedRoute>} />
-                          <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
-                          <Route path="/subscription" element={<Subscription />} />
-                          <Route path="/games" element={<Games />} />
-                          <Route path="/terms" element={<TermsOfUse />} />
-                          
-                          <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
-                          <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
-                          <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />
-                          
-                          <Route path="/creators" element={<Creators />} />
-                          <Route path="/creators/:creatorId" element={<CreatorChannel />} />
-                          <Route path="/stream/:streamId" element={<LiveStreamPage />} />
-                          <Route path="/broadcast" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
-                          <Route path="/broadcast/:creatorId" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
-                          <Route path="/discover/streams" element={<StreamsDiscovery />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </div>
+              <div className="min-h-screen flex flex-col">
+                <div className="pt-16 md:ml-16">
+                  <Header />
+                  <div className="flex h-full flex-1">
+                    <div className="flex-1 pb-16">
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/discover" element={<Discover />} />
+                        <Route path="/sign-in" element={<SignIn />} />
+                        <Route path="/sign-up" element={<SignUp />} />
+                        <Route path="/matches" element={<ProtectedRoute>{<Matches />}</ProtectedRoute>} />
+                        <Route path="/messages" element={<ProtectedRoute>{<Messages />}</ProtectedRoute>} />
+                        <Route path="/profile" element={<ProtectedRoute>{<Profile />}</ProtectedRoute>} />
+                        <Route path="/verification" element={<ProtectedRoute>{<Verification />}</ProtectedRoute>} />
+                        <Route path="/subscription" element={<Subscription />} />
+                        <Route path="/games" element={<Games />} />
+                        <Route path="/terms" element={<TermsOfUse />} />
+                        
+                        <Route path="/games/tic-tac-toe" element={<ProtectedRoute>{<TicTacToe />}</ProtectedRoute>} />
+                        <Route path="/games/rock-paper-scissors" element={<ProtectedRoute>{<RockPaperScissors />}</ProtectedRoute>} />
+                        <Route path="/games/word-guess" element={<ProtectedRoute>{<WordGuess />}</ProtectedRoute>} />
+                        
+                        <Route path="/creators" element={<Creators />} />
+                        <Route path="/creators/:creatorId" element={<CreatorChannel />} />
+                        <Route path="/stream/:streamId" element={<LiveStreamPage />} />
+                        <Route path="/broadcast" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
+                        <Route path="/broadcast/:creatorId" element={<ProtectedRoute>{<BroadcastPage />}</ProtectedRoute>} />
+                        <Route path="/discover/streams" element={<StreamsDiscovery />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
                     </div>
-                    <MobileNav />
-                    <Footer />
                   </div>
-                  <Toaster />
+                  <MobileNav />
+                  <Footer />
                 </div>
-              </BrowserRouter>
+                <Toaster />
+              </div>
             </CallProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+          </ThemeProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

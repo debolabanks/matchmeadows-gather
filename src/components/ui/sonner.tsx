@@ -10,7 +10,7 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme, resolvedTheme } = useTheme()
   
-  // Use resolvedTheme as primary with theme as fallback
+  // Use resolvedTheme as primary with theme as fallback, default to light if neither is available
   const currentTheme = resolvedTheme || theme || "light"
 
   return (
