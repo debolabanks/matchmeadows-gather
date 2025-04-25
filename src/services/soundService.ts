@@ -8,44 +8,48 @@ const soundCache: Record<string, HTMLAudioElement> = {};
  * Preload commonly used sounds to improve responsiveness
  * This ensures sounds are cached and ready to play when needed
  */
-export const preloadSounds = () => {
-  const commonSounds = [
-    '/assets/new-message.mp3',
-    '/assets/incoming-call.mp3'
-  ];
-  
-  commonSounds.forEach(soundPath => {
-    try {
-      const audio = new Audio(soundPath);
-      soundCache[soundPath] = audio;
-      
-      // Load the audio file but don't play it
-      audio.load();
-      console.log(`Preloaded sound: ${soundPath}`);
-    } catch (error) {
-      console.warn(`Failed to preload sound: ${soundPath}`, error);
-    }
-  });
+export const preloadSounds = (): void => {
+  try {
+    const commonSounds = [
+      '/assets/new-message.mp3',
+      '/assets/incoming-call.mp3'
+    ];
+    
+    commonSounds.forEach(soundPath => {
+      try {
+        const audio = new Audio(soundPath);
+        soundCache[soundPath] = audio;
+        
+        // Load the audio file but don't play it
+        audio.load();
+        console.log(`Preloaded sound: ${soundPath}`);
+      } catch (error) {
+        console.warn(`Failed to preload sound: ${soundPath}`, error);
+      }
+    });
+  } catch (error) {
+    console.error("Failed to preload sounds:", error);
+  }
 };
 
 /**
  * Play a new message notification sound
  */
-export const playNewMessageSound = () => {
-  playSound('/assets/new-message.mp3');
+export const playNewMessageSound = (): HTMLAudioElement | null => {
+  return playSound('/assets/new-message.mp3');
 };
 
 /**
  * Play an incoming call notification sound
  */
-export const playIncomingCallSound = () => {
-  playSound('/assets/incoming-call.mp3', true);
+export const playIncomingCallSound = (): HTMLAudioElement | null => {
+  return playSound('/assets/incoming-call.mp3', true);
 };
 
 /**
  * Generic sound player with caching
  */
-const playSound = (soundPath: string, loop: boolean = false) => {
+const playSound = (soundPath: string, loop: boolean = false): HTMLAudioElement | null => {
   try {
     // Try to get from cache first
     let sound = soundCache[soundPath];
@@ -75,7 +79,7 @@ const playSound = (soundPath: string, loop: boolean = false) => {
 /**
  * Stop a currently playing sound
  */
-export const stopSound = (soundPath: string) => {
+export const stopSound = (soundPath: string): void => {
   const sound = soundCache[soundPath];
   if (sound) {
     sound.pause();
@@ -86,10 +90,18 @@ export const stopSound = (soundPath: string) => {
 /**
  * Stop all currently playing sounds
  */
-export const stopAllSounds = () => {
+export const stopAllSounds = (): void => {
   Object.values(soundCache).forEach(sound => {
     sound.pause();
     sound.currentTime = 0;
   });
 };
 
+// Export default for easier importing
+export default {
+  preloadSounds,
+  playNewMessageSound,
+  playIncomingCallSound,
+  stopSound,
+  stopAllSounds
+};

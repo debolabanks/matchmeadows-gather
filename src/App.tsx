@@ -10,7 +10,7 @@ import { CallProvider } from "@/contexts/CallContext";
 import SplashScreen from "@/components/SplashScreen";
 import AppRoutes from "@/AppRoutes";
 
-// Create a query client
+// Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -25,14 +25,26 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    // Set mounted state
     setIsMounted(true);
     
-    // Safely try to preload sounds
+    // Add meta tags for mobile
+    const viewportMeta = document.createElement('meta');
+    viewportMeta.name = 'viewport';
+    viewportMeta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    document.head.appendChild(viewportMeta);
+    
+    const statusBarMeta = document.createElement('meta');
+    statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+    statusBarMeta.content = 'black-translucent';
+    document.head.appendChild(statusBarMeta);
+
+    // Preload sounds safely using dynamic import
     const preloadSounds = async () => {
       try {
-        const soundService = await import('@/services/soundService');
-        if (typeof soundService.preloadSounds === 'function') {
-          soundService.preloadSounds();
+        const soundModule = await import('@/services/soundService');
+        if (typeof soundModule.preloadSounds === 'function') {
+          soundModule.preloadSounds();
         }
       } catch (error) {
         console.error("Error preloading sounds:", error);
@@ -41,59 +53,49 @@ function App() {
     
     preloadSounds();
     
-    // Set up viewport meta tags
-    try {
-      const meta = document.createElement('meta');
-      meta.name = 'viewport';
-      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-      document.head.appendChild(meta);
-      
-      const statusBarMeta = document.createElement('meta');
-      statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
-      statusBarMeta.content = 'black-translucent';
-      document.head.appendChild(statusBarMeta);
-      
-      const timer = setTimeout(() => {
-        setShowSplash(false);
-      }, 3000);
-  
-      return () => {
-        try {
-          document.head.removeChild(meta);
-          document.head.removeChild(statusBarMeta);
-          clearTimeout(timer);
-        } catch (error) {
-          console.error("Error cleaning up in App component:", error);
-        }
-      };
-    } catch (error) {
-      console.error("Error in App component setup:", error);
-      setShowSplash(false); // Ensure splash screen is hidden even if there's an error
-    }
+    // Set timer to hide splash screen
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000);
+
+    // Clean up function
+    return () => {
+      clearTimeout(timer);
+      try {
+        document.head.removeChild(viewportMeta);
+        document.head.removeChild(statusBarMeta);
+      } catch (error) {
+        console.error("Error cleaning up meta tags:", error);
+      }
+    };
   }, []);
 
+  // Don't render anything until mounted
   if (!isMounted) {
     return null;
   }
 
+  // Show splash screen if needed
   if (showSplash) {
     return <SplashScreen />;
   }
 
-  // Restructured provider hierarchy to fix context issues
+  // Return the app with providers in the correct order
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <ThemeProvider defaultTheme="light" attribute="class">
-            <CallProvider>
-              <AppRoutes />
-              <Toaster />
-            </CallProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AuthProvider>
+            <ThemeProvider defaultTheme="light" attribute="class">
+              <CallProvider>
+                <AppRoutes />
+                <Toaster />
+              </CallProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 }
 
