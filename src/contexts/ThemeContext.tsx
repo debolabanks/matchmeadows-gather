@@ -20,9 +20,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { theme: nextTheme, setTheme: setNextTheme } = useNextTheme();
   
   // Convert next-themes theme to our Theme type with safety check
-  const safeTheme = (nextTheme as Theme) || "light";
-  const theme = (safeTheme === "light" || safeTheme === "dark" || safeTheme === "system") 
-    ? safeTheme 
+  const theme = (nextTheme as Theme) || "light";
+  const safeTheme = (theme === "light" || theme === "dark" || theme === "system") 
+    ? theme 
     : "light";
   
   // Create a wrapper around next-themes setTheme to ensure type safety
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme: safeTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -41,13 +41,7 @@ export function useTheme() {
   const context = useContext(ThemeContext);
   
   if (context === undefined) {
-    // Provide a meaningful fallback when used outside provider
-    return { 
-      theme: "light" as Theme, 
-      setTheme: (theme: Theme) => {
-        console.warn("useTheme called outside of ThemeProvider, theme change will not take effect");
-      } 
-    };
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   
   return context;
