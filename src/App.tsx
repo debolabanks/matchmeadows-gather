@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider as NextThemesProvider } from "@/components/theme-provider"
@@ -91,14 +90,12 @@ function App() {
     return <SplashScreen />;
   }
 
-  // Key change: First use NextThemesProvider, then our ThemeProvider 
-  // This breaks the circular dependency
   return (
     <NextThemesProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <CallProvider>
-            <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CallProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider>
               <BrowserRouter>
                 <div className="min-h-screen flex flex-col">
                   <div className="pt-16 md:ml-16">
@@ -139,10 +136,10 @@ function App() {
                   <Toaster />
                 </div>
               </BrowserRouter>
-            </QueryClientProvider>
-          </CallProvider>
-        </AuthProvider>
-      </ThemeProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </CallProvider>
+      </AuthProvider>
     </NextThemesProvider>
   );
 }

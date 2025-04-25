@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useContext } from "react";
 import { useTheme as useNextTheme } from "next-themes";
 
 type Theme = "light" | "dark" | "system";
@@ -16,25 +16,22 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Use next-themes for theme management
+  // Use next-themes directly
   const { theme: nextTheme, setTheme: setNextTheme } = useNextTheme();
   
-  // Convert next-themes theme to our Theme type
-  const theme = (nextTheme as Theme) || "light";
+  // Convert next-themes theme to our Theme type with safety check
+  const safeTheme = (nextTheme as Theme) || "light";
+  const theme = (safeTheme === "light" || safeTheme === "dark" || safeTheme === "system") 
+    ? safeTheme 
+    : "light";
   
   // Create a wrapper around next-themes setTheme to ensure type safety
   const setTheme = (newTheme: Theme) => {
     setNextTheme(newTheme);
   };
 
-  // Create context value
-  const contextValue = {
-    theme: theme === "light" || theme === "dark" || theme === "system" ? theme : "light",
-    setTheme
-  };
-
   return (
-    <ThemeContext.Provider value={contextValue}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
