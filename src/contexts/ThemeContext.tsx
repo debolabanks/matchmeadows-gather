@@ -1,4 +1,6 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
+import { useTheme as useNextTheme } from "next-themes";
 
 type Theme = "light" | "dark" | "system";
 
@@ -14,71 +16,20 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Start with a default theme
-  const [theme, setTheme] = useState<Theme>("light");
-  // Flag to track if component is mounted
-  const [isMounted, setIsMounted] = useState(false);
+  // Use next-themes for theme management
+  const { theme: nextTheme, setTheme: setNextTheme } = useNextTheme();
   
-  // Initialize from localStorage only after component mounts
-  useEffect(() => {
-    setIsMounted(true);
-    try {
-      // Check for saved theme in localStorage
-      const savedTheme = localStorage.getItem("theme") as Theme;
-      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system')) {
-        setTheme(savedTheme);
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        // Check for system preference
-        setTheme("dark");
-      }
-    } catch (error) {
-      console.error("Error reading theme from localStorage:", error);
-      // Keep default theme if there's an error
-    }
-  }, []);
+  // Convert next-themes theme to our Theme type
+  const theme = (nextTheme as Theme) || "light";
   
-  // Update document class and localStorage when theme changes
-  useEffect(() => {
-    if (!isMounted) return;
-    
-    try {
-      const root = document.documentElement;
-      
-      // Apply theme to document
-      if (theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-      
-      // Save theme preference
-      localStorage.setItem("theme", theme);
-    } catch (error) {
-      console.error("Error updating theme:", error);
-    }
-  }, [theme, isMounted]);
-
-  // Listen for system theme changes if using system preference
-  useEffect(() => {
-    if (!isMounted || theme !== "system") return;
-    
-    try {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      
-      const handleChange = () => {
-        document.documentElement.classList.toggle("dark", mediaQuery.matches);
-      };
-      
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
-    } catch (error) {
-      console.error("Error setting up media query listener:", error);
-    }
-  }, [theme, isMounted]);
+  // Create a wrapper around next-themes setTheme to ensure type safety
+  const setTheme = (newTheme: Theme) => {
+    setNextTheme(newTheme);
+  };
 
   // Create context value
   const contextValue = {
-    theme,
+    theme: theme === "light" || theme === "dark" || theme === "system" ? theme : "light",
     setTheme
   };
 
@@ -90,13 +41,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTheme() {
-  // Get context safely
   const context = useContext(ThemeContext);
   
-  // Fallback if context is unavailable
-  if (!context) {
-    console.warn("useTheme hook called outside ThemeProvider");
-    return { theme: "light" as Theme, setTheme: () => {} };
+  if (context === undefined) {
+    // Provide a meaningful fallback when used outside provider
+    return { 
+      theme: "light" as Theme, 
+      setTheme: (theme: Theme) => {
+        console.warn("useTheme called outside of ThemeProvider, theme change will not take effect");
+      } 
+    };
   }
   
   return context;
