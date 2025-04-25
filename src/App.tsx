@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 import Index from "@/pages/Index";
 import About from "@/pages/About";
@@ -91,8 +91,8 @@ function App() {
   }
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <AuthProvider>
           <CallProvider>
             <BrowserRouter>
@@ -137,8 +137,8 @@ function App() {
             </BrowserRouter>
           </CallProvider>
         </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
