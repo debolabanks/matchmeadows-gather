@@ -7,7 +7,6 @@ import Video, {
 } from 'twilio-video';
 import { createDemoRoom } from './twilioMockRoom';
 import { getRoomAccessDetails } from './twilioTokenService';
-import webRTCService from '../webrtc/webRTCService';
 
 export interface ConnectOptions {
   name: string; // Room name
@@ -16,11 +15,10 @@ export interface ConnectOptions {
   isPresenter?: boolean; // Whether this user is broadcasting (presenter) or viewing
   quality?: 'low' | 'standard' | 'high'; // Stream quality
   screenShare?: boolean; // Whether to include screen sharing
-  useWebRTC?: boolean; // Whether to use native WebRTC instead of Twilio
 }
 
 /**
- * Connect to a video room - either Twilio or WebRTC based
+ * Connect to a video room - either Twilio based
  */
 export const connectToRoom = async ({ 
   name, 
@@ -28,32 +26,10 @@ export const connectToRoom = async ({
   video, 
   isPresenter = false,
   quality = 'standard',
-  screenShare = false,
-  useWebRTC = true // Default to WebRTC for better performance
+  screenShare = false
 }: ConnectOptions): Promise<Room> => {
   try {
-    console.log(`Connecting to room: ${name} as ${isPresenter ? 'presenter' : 'viewer'} using ${useWebRTC ? 'WebRTC' : 'Twilio'}`);
-    
-    // If using WebRTC implementation, don't use Twilio
-    if (useWebRTC) {
-      // Start local media stream
-      if (audio || video) {
-        await webRTCService.startLocalStream({ audio, video });
-      }
-      
-      // Start screen sharing if requested
-      if (screenShare && isPresenter) {
-        try {
-          await webRTCService.startScreenSharing();
-        } catch (err) {
-          console.error("Failed to get screen sharing:", err);
-        }
-      }
-      
-      // Return a mock room that works with our WebRTC implementation
-      // This ensures compatibility with existing code
-      return createDemoRoom(name, [], isPresenter);
-    }
+    console.log(`Connecting to room: ${name} as ${isPresenter ? 'presenter' : 'viewer'}`);
     
     // Original Twilio implementation
     const tracks: LocalTrack[] = [];

@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
-import webRTCService from '@/services/webrtc/webRTCService';
 
 // Placeholder for actual stream service that would be implemented with a real backend
 const streamService = {
@@ -37,6 +36,7 @@ export function useBroadcast(creatorId: string, creatorName: string) {
   const startTimeRef = useRef<Date | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [broadcastDuration, setBroadcastDuration] = useState('00:00:00');
+  const localStreamRef = useRef<MediaStream | null>(null);
   
   // Update duration timer when broadcasting
   useEffect(() => {
@@ -71,40 +71,36 @@ export function useBroadcast(creatorId: string, creatorName: string) {
   
   // Handle microphone toggle
   const toggleMic = () => {
-    const localStream = webRTCService.getLocalStream();
-    
-    if (localStream) {
-      const audioTracks = localStream.getAudioTracks();
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
       audioTracks.forEach(track => {
         track.enabled = !isMicEnabled;
       });
+      
+      setIsMicEnabled(!isMicEnabled);
+      
+      toast({
+        title: isMicEnabled ? 'Microphone disabled' : 'Microphone enabled',
+        variant: isMicEnabled ? 'default' : 'default',
+      });
     }
-    
-    setIsMicEnabled(!isMicEnabled);
-    
-    toast({
-      title: isMicEnabled ? 'Microphone disabled' : 'Microphone enabled',
-      variant: isMicEnabled ? 'default' : 'default',
-    });
   };
   
   // Handle video toggle
   const toggleVideo = () => {
-    const localStream = webRTCService.getLocalStream();
-    
-    if (localStream) {
-      const videoTracks = localStream.getVideoTracks();
+    if (localStreamRef.current) {
+      const videoTracks = localStreamRef.current.getVideoTracks();
       videoTracks.forEach(track => {
         track.enabled = !isVideoEnabled;
       });
+      
+      setIsVideoEnabled(!isVideoEnabled);
+      
+      toast({
+        title: isVideoEnabled ? 'Camera disabled' : 'Camera enabled',
+        variant: isVideoEnabled ? 'default' : 'default',
+      });
     }
-    
-    setIsVideoEnabled(!isVideoEnabled);
-    
-    toast({
-      title: isVideoEnabled ? 'Camera disabled' : 'Camera enabled',
-      variant: isVideoEnabled ? 'default' : 'default',
-    });
   };
   
   // Start broadcasting
@@ -122,7 +118,7 @@ export function useBroadcast(creatorId: string, creatorName: string) {
       setError(null);
       
       // Initialize camera and microphone
-      await webRTCService.startLocalStream({ 
+      const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: true, 
         video: {
           width: { ideal: 1280 },
@@ -131,6 +127,8 @@ export function useBroadcast(creatorId: string, creatorName: string) {
           facingMode: 'user'
         } 
       });
+      
+      localStreamRef.current = stream;
       
       // Create stream in the backend
       const { streamId: newStreamId } = await streamService.startStream({
@@ -183,8 +181,11 @@ export function useBroadcast(creatorId: string, creatorName: string) {
         await streamService.stopStream(streamId);
       }
       
-      // Clean up WebRTC resources
-      webRTCService.stopLocalStream();
+      // Clean up media resources
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop());
+        localStreamRef.current = null;
+      }
       
       setIsLive(false);
       setStreamId(null);

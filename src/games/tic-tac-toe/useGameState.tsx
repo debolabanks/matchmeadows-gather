@@ -14,39 +14,19 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
   
   // Initialize WebRTC for multiplayer
   const { 
-    gameData, 
-    sendGameData, 
     isConnected, 
-    callPeer 
+    startLocalStream
   } = useWebRTC({ gameId: gameSessionId });
 
   // Automatically initiate connection when in multiplayer mode
   useEffect(() => {
     if (contactId && gameSessionId && !isConnected) {
-      callPeer(contactId);
+      // Attempt to start local stream for video
+      startLocalStream().catch(err => {
+        console.error("Could not start local stream:", err);
+      });
     }
-  }, [contactId, gameSessionId, isConnected, callPeer]);
-
-  // Process game data received from peer
-  useEffect(() => {
-    if (gameData.length > 0) {
-      const latestData = gameData[gameData.length - 1];
-      
-      if (latestData.data.type === 'move') {
-        const { index, player } = latestData.data;
-        
-        // Validate and apply opponent's move
-        if (player !== currentPlayer && board[index] === null) {
-          const newBoard = [...board];
-          newBoard[index] = player;
-          setBoard(newBoard);
-          setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
-        }
-      } else if (latestData.data.type === 'reset') {
-        handleResetGame();
-      }
-    }
-  }, [gameData]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [contactId, gameSessionId, isConnected, startLocalStream]);
 
   // Check for winner or draw
   useEffect(() => {
@@ -100,29 +80,13 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
     newBoard[index] = currentPlayer;
     setBoard(newBoard);
     setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
-    
-    // In multiplayer mode, send the move to peer
-    if (isMultiplayerMode && contactId) {
-      sendGameData({
-        type: 'move',
-        index,
-        player: currentPlayer
-      }, contactId);
-    }
-  }, [board, currentPlayer, winner, isDraw, isMultiplayerMode, contactId, sendGameData, toast]);
+  }, [board, currentPlayer, winner, isDraw, isMultiplayerMode, contactId, toast]);
 
   const handleResetGame = useCallback(() => {
     setBoard(Array(9).fill(null));
     setWinner(null);
     setIsDraw(false);
-    
-    // In multiplayer mode, send reset command to peer
-    if (isMultiplayerMode && contactId) {
-      sendGameData({
-        type: 'reset'
-      }, contactId);
-    }
-  }, [isMultiplayerMode, contactId, sendGameData]);
+  }, []);
 
   return {
     board,

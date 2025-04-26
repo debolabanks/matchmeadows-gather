@@ -13,9 +13,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Gamepad2, Users2, X } from "lucide-react";
+import { Gamepad2, Users2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import webRTCService from "@/services/webrtc/webRTCService";
 
 interface GameInviteProps {
   currentGameId?: string;
@@ -61,9 +60,6 @@ const GameInvite = ({ currentGameId, currentGameName }: GameInviteProps) => {
       
       // Create a unique game session ID
       const gameSessionId = `game-${currentGameId}-${Date.now()}`;
-      
-      // Initialize WebRTC connection and send invitation
-      await webRTCService.call(match.id, gameSessionId);
       
       toast({
         title: "Invitation sent",
@@ -119,7 +115,7 @@ const GameInvite = ({ currentGameId, currentGameName }: GameInviteProps) => {
             {currentGameName && <span className="text-muted-foreground text-sm font-normal">({currentGameName})</span>}
           </SheetTitle>
           <SheetDescription>
-            Invite your matches to play this game together in real-time using WebRTC.
+            Invite your matches to play this game together in real-time.
           </SheetDescription>
         </SheetHeader>
         
