@@ -1,7 +1,6 @@
-
 import { useState, useCallback, useEffect } from "react";
-import { useWebRTC } from "@/hooks/useWebRTC";
 import { useToast } from "@/hooks/use-toast";
+import { connectToRoom } from "@/services/twilio";
 
 export const useGameState = (initialBoard = Array(9).fill(null), contactId?: string, gameSessionId?: string) => {
   const [board, setBoard] = useState<(string | null)[]>(initialBoard);
@@ -11,22 +10,37 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
   const [scores, setScores] = useState({ X: 0, O: 0 });
   const [isMultiplayerMode, setIsMultiplayerMode] = useState(Boolean(contactId));
   const { toast } = useToast();
-  
-  // Initialize WebRTC for multiplayer
-  const { 
-    isConnected, 
-    startLocalStream
-  } = useWebRTC({ gameId: gameSessionId });
 
-  // Automatically initiate connection when in multiplayer mode
+  // Initialize connection when in multiplayer mode
   useEffect(() => {
-    if (contactId && gameSessionId && !isConnected) {
-      // Attempt to start local stream for video
-      startLocalStream().catch(err => {
-        console.error("Could not start local stream:", err);
-      });
-    }
-  }, [contactId, gameSessionId, isConnected, startLocalStream]);
+    let cleanup: (() => void) | undefined;
+
+    const initializeMultiplayer = async () => {
+      if (contactId && gameSessionId && !isMultiplayerMode) {
+        try {
+          const room = await connectToRoom({
+            name: gameSessionId,
+            audio: true,
+            video: true
+          });
+
+          cleanup = () => {
+            room.disconnect();
+          };
+        } catch (err) {
+          console.error("Could not connect to game room:", err);
+        }
+      }
+    };
+
+    initializeMultiplayer();
+
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
+  }, [contactId, gameSessionId, isMultiplayerMode]);
 
   // Check for winner or draw
   useEffect(() => {
@@ -95,7 +109,6 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
     isDraw,
     scores,
     isMultiplayerMode,
-    isConnected,
     handleSquareClick,
     handleResetGame,
     setIsMultiplayerMode

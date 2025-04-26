@@ -1,19 +1,16 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import { startBroadcast } from '@/services/twilio/twilioBroadcast';
 
-// Placeholder for actual stream service that would be implemented with a real backend
 const streamService = {
   startStream: async (data: any) => {
     console.log('Starting stream with data:', data);
-    // This would actually call your backend API
     return { streamId: uuidv4() };
   },
   stopStream: async (streamId: string) => {
     console.log('Stopping stream:', streamId);
-    // This would actually call your backend API
     return { success: true };
   },
 };
@@ -38,7 +35,6 @@ export function useBroadcast(creatorId: string, creatorName: string) {
   const [broadcastDuration, setBroadcastDuration] = useState('00:00:00');
   const localStreamRef = useRef<MediaStream | null>(null);
   
-  // Update duration timer when broadcasting
   useEffect(() => {
     if (isLive && !timerRef.current) {
       startTimeRef.current = new Date();
@@ -69,7 +65,6 @@ export function useBroadcast(creatorId: string, creatorName: string) {
     };
   }, [isLive]);
   
-  // Handle microphone toggle
   const toggleMic = () => {
     if (localStreamRef.current) {
       const audioTracks = localStreamRef.current.getAudioTracks();
@@ -86,7 +81,6 @@ export function useBroadcast(creatorId: string, creatorName: string) {
     }
   };
   
-  // Handle video toggle
   const toggleVideo = () => {
     if (localStreamRef.current) {
       const videoTracks = localStreamRef.current.getVideoTracks();
@@ -103,7 +97,6 @@ export function useBroadcast(creatorId: string, creatorName: string) {
     }
   };
   
-  // Start broadcasting
   const startBroadcastHandler = async () => {
     if (!title) {
       toast({
@@ -117,7 +110,6 @@ export function useBroadcast(creatorId: string, creatorName: string) {
       setIsLoading(true);
       setError(null);
       
-      // Initialize camera and microphone
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: true, 
         video: {
@@ -130,15 +122,14 @@ export function useBroadcast(creatorId: string, creatorName: string) {
       
       localStreamRef.current = stream;
       
-      // Create stream in the backend
-      const { streamId: newStreamId } = await streamService.startStream({
+      const { streamId: newStreamId } = await startBroadcast({
         creatorId,
         title,
         description,
         category,
         tags,
         isSubscriberOnly,
-        quality: 'standard'  // Fixed to use valid enum value
+        quality: 'standard'
       });
       
       setStreamId(newStreamId);
@@ -149,7 +140,6 @@ export function useBroadcast(creatorId: string, creatorName: string) {
         description: 'You are now live.',
       });
       
-      // Mock viewer count increase
       const viewerCountInterval = setInterval(() => {
         setViewerCount(prev => {
           const increase = Math.floor(Math.random() * 3);
@@ -171,17 +161,14 @@ export function useBroadcast(creatorId: string, creatorName: string) {
     }
   };
   
-  // Stop broadcasting
   const stopBroadcastHandler = async () => {
     try {
       setIsLoading(true);
       
-      // Stop the stream in the backend
       if (streamId) {
         await streamService.stopStream(streamId);
       }
       
-      // Clean up media resources
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => track.stop());
         localStreamRef.current = null;

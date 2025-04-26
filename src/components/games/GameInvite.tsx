@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,7 +57,6 @@ const GameInvite = ({ currentGameId, currentGameName }: GameInviteProps) => {
       setIsLoading(true);
       setInvitedIds(prev => new Set(prev).add(match.id));
       
-      // Create a unique game session ID
       const gameSessionId = `game-${currentGameId}-${Date.now()}`;
       
       toast({
@@ -66,7 +64,6 @@ const GameInvite = ({ currentGameId, currentGameName }: GameInviteProps) => {
         description: `${match.name} has been invited to join your game.`
       });
       
-      // Navigate to the appropriate game with multiplayer params
       if (currentGameId) {
         navigate(`/games/${currentGameId}`, { 
           state: { 
