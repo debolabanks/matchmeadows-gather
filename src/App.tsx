@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
+import * as soundService from "@/services/soundService";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CallProvider } from "@/contexts/CallContext";
@@ -39,19 +40,12 @@ function App() {
     statusBarMeta.content = 'black-translucent';
     document.head.appendChild(statusBarMeta);
 
-    // Preload sounds safely using dynamic import
-    const preloadSounds = async () => {
-      try {
-        const soundModule = await import('@/services/soundService');
-        if (typeof soundModule.preloadSounds === 'function') {
-          soundModule.preloadSounds();
-        }
-      } catch (error) {
-        console.error("Error preloading sounds:", error);
-      }
-    };
-    
-    preloadSounds();
+    // Preload sounds directly using the imported function
+    try {
+      soundService.preloadSounds();
+    } catch (error) {
+      console.error("Error preloading sounds:", error);
+    }
     
     // Set timer to hide splash screen
     const timer = setTimeout(() => {

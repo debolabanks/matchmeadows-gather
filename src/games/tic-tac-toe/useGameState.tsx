@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { connectToRoom } from "@/services/twilio";
@@ -9,6 +10,7 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
   const [isDraw, setIsDraw] = useState(false);
   const [scores, setScores] = useState({ X: 0, O: 0 });
   const [isMultiplayerMode, setIsMultiplayerMode] = useState(Boolean(contactId));
+  const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
 
   // Initialize connection when in multiplayer mode
@@ -16,7 +18,7 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
     let cleanup: (() => void) | undefined;
 
     const initializeMultiplayer = async () => {
-      if (contactId && gameSessionId && !isMultiplayerMode) {
+      if (contactId && gameSessionId) {
         try {
           const room = await connectToRoom({
             name: gameSessionId,
@@ -24,23 +26,33 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
             video: true
           });
 
+          setIsConnected(true);
+          
           cleanup = () => {
             room.disconnect();
+            setIsConnected(false);
           };
         } catch (err) {
           console.error("Could not connect to game room:", err);
+          toast({
+            title: "Connection failed",
+            description: "Could not connect to multiplayer room",
+            variant: "destructive"
+          });
         }
       }
     };
 
-    initializeMultiplayer();
+    if (isMultiplayerMode) {
+      initializeMultiplayer();
+    }
 
     return () => {
       if (cleanup) {
         cleanup();
       }
     };
-  }, [contactId, gameSessionId, isMultiplayerMode]);
+  }, [contactId, gameSessionId, isMultiplayerMode, toast]);
 
   // Check for winner or draw
   useEffect(() => {
@@ -109,6 +121,7 @@ export const useGameState = (initialBoard = Array(9).fill(null), contactId?: str
     isDraw,
     scores,
     isMultiplayerMode,
+    isConnected,
     handleSquareClick,
     handleResetGame,
     setIsMultiplayerMode

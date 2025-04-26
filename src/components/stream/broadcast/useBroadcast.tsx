@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
-import { startBroadcast } from '@/services/twilio/twilioBroadcast';
+import { connectToRoom } from '@/services/twilio';
 
 const streamService = {
   startStream: async (data: any) => {
@@ -14,6 +14,16 @@ const streamService = {
     return { success: true };
   },
 };
+
+interface BroadcastParams {
+  creatorId: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  isSubscriberOnly: boolean;
+  quality: 'low' | 'standard' | 'high';
+}
 
 export function useBroadcast(creatorId: string, creatorName: string) {
   const [title, setTitle] = useState('');
@@ -122,14 +132,24 @@ export function useBroadcast(creatorId: string, creatorName: string) {
       
       localStreamRef.current = stream;
       
-      const { streamId: newStreamId } = await startBroadcast({
+      const roomName = `broadcast-${creatorId}-${Date.now()}`;
+      
+      const room = await connectToRoom({
+        name: roomName,
+        audio: true,
+        video: true,
+        isPresenter: true,
+        quality: 'standard'
+      });
+      
+      const { streamId: newStreamId } = await streamService.startStream({
         creatorId,
         title,
         description,
         category,
         tags,
         isSubscriberOnly,
-        quality: 'standard'
+        roomName
       });
       
       setStreamId(newStreamId);
