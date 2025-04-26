@@ -1,4 +1,3 @@
-
 // Sound effect utility for the application
 
 // Cache sounds for better performance
