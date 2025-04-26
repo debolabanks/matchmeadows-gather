@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from "react";
 import { CallSession } from "@/types/message";
 import { v4 as uuidv4 } from "uuid";
@@ -6,7 +5,6 @@ import { connectToRoom } from "@/services/twilio";
 import { Room, LocalTrack } from "twilio-video";
 import { useToast } from "@/hooks/use-toast";
 import { playIncomingCallSound, stopAllSounds } from "@/services/soundService";
-import webRTCService from "@/services/webrtc/webRTCService";
 import { useAuth } from "@/hooks/useAuth";
 
 interface CallState {
@@ -31,13 +29,6 @@ export const useCall = () => {
   const twilioRoom = useRef<Room | null>(null);
   const localTracks = useRef<LocalTrack[]>([]);
 
-  // Initialize WebRTC service
-  useEffect(() => {
-    if (user?.id) {
-      webRTCService.initialize(user.id);
-    }
-  }, [user?.id]);
-  
   // Start a call with someone
   const startCall = useCallback(async (
     contactId: string, 
@@ -46,7 +37,6 @@ export const useCall = () => {
     type: "video" | "voice"
   ) => {
     try {
-      // Set up local state to indicate we're in a call
       const newCallSession: CallSession = {
         id: uuidv4(),
         type: type,
@@ -59,83 +49,28 @@ export const useCall = () => {
         ...prev,
         activeCall: newCallSession,
       }));
+
+      // Create a room using Twilio
+      const room = await connectToRoom({
+        name: `call-${newCallSession.id}`,
+        audio: true,
+        video: type === "video"
+      });
       
-      // Try to use WebRTC first for better performance and reliability
-      try {
-        await webRTCService.startLocalStream({ 
-          audio: true, 
-          video: type === "video" 
-        });
-        
-        await webRTCService.call(contactId);
-        
-        // Create a "room" using our webRTC implementation
-        const room = await connectToRoom({
-          name: `call-${newCallSession.id}`,
-          audio: true,
-          video: type === "video",
-          useWebRTC: true
-        });
-        
-        twilioRoom.current = room;
-        
-        // Update call status to connected
-        setState(prev => ({
-          ...prev,
-          activeCall: {
-            ...prev.activeCall!,
-            status: "connected"
-          }
-        }));
-        
-        toast({
-          title: `${type === "video" ? "Video" : "Voice"} call started`,
-          description: `Connected with ${contactName}`,
-        });
-        
-      } catch (webrtcError) {
-        console.error("WebRTC failed, falling back to Twilio:", webrtcError);
-        
-        // Fall back to Twilio if WebRTC fails
-        const constraints = {
-          audio: true,
-          video: type === "video",
-        };
-        
-        const tracks = [];
-        
-        if (constraints.audio) {
-          const audioTrack = await navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => stream.getAudioTracks()[0]);
-          tracks.push(audioTrack);
+      twilioRoom.current = room;
+      
+      setState(prev => ({
+        ...prev,
+        activeCall: {
+          ...prev.activeCall!,
+          status: "connected"
         }
-        
-        if (constraints.video) {
-          const videoTrack = await navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => stream.getVideoTracks()[0]);
-          tracks.push(videoTrack);
-        }
-        
-        localTracks.current = tracks as unknown as LocalTrack[];
-        
-        const room = await connectToRoom({
-          name: `call-${newCallSession.id}`,
-          audio: constraints.audio,
-          video: constraints.video,
-          useWebRTC: false
-        });
-        
-        twilioRoom.current = room;
-        
-        // Update call status to connected
-        setState(prev => ({
-          ...prev,
-          activeCall: {
-            ...prev.activeCall!,
-            status: "connected"
-          }
-        }));
-      }
+      }));
+      
+      toast({
+        title: `${type === "video" ? "Video" : "Voice"} call started`,
+        description: `Connected with ${contactName}`,
+      });
       
     } catch (error) {
       console.error("Failed to start call:", error);
@@ -151,8 +86,8 @@ export const useCall = () => {
         activeCall: null,
       }));
     }
-  }, [toast, user?.id]);
-  
+  }, [toast]);
+
   // End the current call
   const endCall = useCallback(() => {
     stopAllSounds();
@@ -171,10 +106,6 @@ export const useCall = () => {
       }
     });
     localTracks.current = [];
-    
-    // Also clean up WebRTC connections
-    webRTCService.stopLocalStream();
-    webRTCService.hangup();
     
     setState(prev => {
       // Only update if we have an active call to prevent unnecessary rerenders
