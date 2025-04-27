@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -14,15 +13,16 @@ import ProfileFilters from "./components/ProfileFilters";
 import ProfileDisplay from "./components/ProfileDisplay";
 import SwipeStatus from "./components/SwipeStatus";
 import NoProfilesFound from "./components/NoProfilesFound";
-import { sampleProfiles } from "./data/sampleProfiles";
+import { useRealtimeProfiles } from "@/hooks/useRealtimeProfiles";
 import { formatDistanceToNow } from "date-fns";
 import { checkSubscription } from "@/services/stripeService";
 
 const Discover = () => {
   const { user, useSwipe, getSwipesRemaining } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredProfiles, setFilteredProfiles] = useState(sampleProfiles);
-  const [currentProfiles, setCurrentProfiles] = useState(sampleProfiles);
+  const { profiles: allProfiles, isLoading } = useRealtimeProfiles();
+  const [filteredProfiles, setFilteredProfiles] = useState(allProfiles);
+  const [currentProfiles, setCurrentProfiles] = useState(allProfiles);
   const [matches, setMatches] = useState<string[]>([]);
   const [rejected, setRejected] = useState<string[]>([]);
   const [swipesRemaining, setSwipesRemaining] = useState(20);
@@ -67,7 +67,7 @@ const Discover = () => {
     fetchSubscriptionStatus();
   }, [user]);
   
-  const boostedProfiles = sampleProfiles.map(profile => {
+  const boostedProfiles = allProfiles.map(profile => {
     const isBoosted = Math.random() > 0.8;
     if (isBoosted) {
       const boostExpiry = new Date();
@@ -83,31 +83,29 @@ const Discover = () => {
   });
   
   useEffect(() => {
-    console.log("Preferences updated:", preferences);
-    
-    let filtered = filterProfilesByPreferences(
-      boostedProfiles,
-      preferences,
-      user?.profile?.coordinates
-    );
-    
-    filtered = filtered.filter(
-      profile => !matches.includes(profile.id) && !rejected.includes(profile.id)
-    );
-    
-    if (user?.profile?.interests) {
-      filtered = rankProfilesByCompatibility(
-        filtered, 
-        user.profile.interests,
-        { profile: { subscriptionStatus: isSubscribed ? "active" : "none" } }
+    if (!isLoading) {
+      let filtered = filterProfilesByPreferences(
+        boostedProfiles,
+        preferences,
+        user?.profile?.coordinates
       );
+      
+      filtered = filtered.filter(
+        profile => !matches.includes(profile.id) && !rejected.includes(profile.id)
+      );
+      
+      if (user?.profile?.interests) {
+        filtered = rankProfilesByCompatibility(
+          filtered, 
+          user.profile.interests,
+          { profile: { subscriptionStatus: isSubscribed ? "active" : "none" } }
+        );
+      }
+      
+      setFilteredProfiles(filtered);
+      setCurrentProfiles(filtered);
     }
-    
-    setFilteredProfiles(filtered);
-    setCurrentProfiles(filtered);
-
-    // Remove toast notifications from here - we'll only show them when preferences are changed
-  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed, boostedProfiles]);
+  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed, allProfiles, isLoading, boostedProfiles]);
   
   useEffect(() => {
     if (user && user.swipes?.resetAt && !isSubscribed) {
@@ -150,7 +148,7 @@ const Discover = () => {
     
     if (isMatch) {
       setMatches(prev => [...prev, id]);
-      const matchedProfile = sampleProfiles.find(profile => profile.id === id);
+      const matchedProfile = allProfiles.find(profile => profile.id === id);
       
       toast({
         title: "It's a match! 💕",
@@ -222,12 +220,12 @@ const Discover = () => {
   useEffect(() => {
     if (currentProfiles.length === 0) {
       const timer = setTimeout(() => {
-        setCurrentProfiles(filteredProfiles.length > 0 ? filteredProfiles : sampleProfiles);
+        setCurrentProfiles(filteredProfiles.length > 0 ? filteredProfiles : allProfiles);
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [currentProfiles, filteredProfiles]);
+  }, [currentProfiles, filteredProfiles, allProfiles]);
   
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">

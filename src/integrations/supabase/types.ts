@@ -9,14 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      matches: {
+        Row: {
+          compatibility_percentage: number | null
+          created_at: string | null
+          has_unread_message: boolean | null
+          id: string
+          matched_at: string | null
+          matched_user_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          compatibility_percentage?: number | null
+          created_at?: string | null
+          has_unread_message?: boolean | null
+          id?: string
+          matched_at?: string | null
+          matched_user_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          compatibility_percentage?: number | null
+          created_at?: string | null
+          has_unread_message?: boolean | null
+          id?: string
+          matched_at?: string | null
+          matched_user_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          match_id: string | null
+          recipient_id: string
+          sender_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          match_id?: string | null
+          recipient_id: string
+          sender_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          match_id?: string | null
+          recipient_id?: string
+          sender_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          display_name: string | null
           full_name: string | null
           id: string
+          interests: string[] | null
+          last_seen: string | null
           location: string | null
+          status: string | null
           updated_at: string | null
           username: string | null
         }
@@ -24,9 +102,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          display_name?: string | null
           full_name?: string | null
           id: string
+          interests?: string[] | null
+          last_seen?: string | null
           location?: string | null
+          status?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -34,9 +116,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          display_name?: string | null
           full_name?: string | null
           id?: string
+          interests?: string[] | null
+          last_seen?: string | null
           location?: string | null
+          status?: string | null
           updated_at?: string | null
           username?: string | null
         }
