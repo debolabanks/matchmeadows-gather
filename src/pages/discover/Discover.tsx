@@ -17,6 +17,22 @@ import { useRealtimeProfiles } from "@/hooks/useRealtimeProfiles";
 import { formatDistanceToNow } from "date-fns";
 import { checkSubscription } from "@/services/stripeService";
 
+type UserProfileWithId = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  age: number;
+  distance: string;
+  location: string;
+  bio: string;
+  interests: string[];
+  lastActive: string;
+  photos: string[];
+  boosted: boolean;
+  boostExpiry: string;
+  compatibility: number;
+};
+
 const Discover = () => {
   const { user, useSwipe, getSwipesRemaining } = useAuth();
   const [showFilters, setShowFilters] = useState(false);

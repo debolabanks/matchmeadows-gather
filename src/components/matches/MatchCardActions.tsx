@@ -7,7 +7,7 @@ import { Match } from "@/types/match";
 
 interface MatchCardActionsProps {
   match: Match;
-  onBlockUser?: (id: string, name: string) => void;
+  onBlockUser?: (matchId: string, name: string) => void;
 }
 
 const MatchCardActions = ({ match, onBlockUser }: MatchCardActionsProps) => {

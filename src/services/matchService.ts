@@ -27,10 +27,11 @@ export const getMatches = async (userId: string) => {
   const formattedMatches: Match[] = data.map(match => {
     const matchedUserProfile = profilesData?.find(profile => profile.id === match.matched_user_id) || {};
     
-    const fullName = matchedUserProfile.full_name || '';
-    const username = matchedUserProfile.username || '';
-    const avatarUrl = matchedUserProfile.avatar_url || '/placeholder.svg';
-    const lastSeen = matchedUserProfile.last_seen || match.updated_at || '';
+    // Safely access potentially undefined properties
+    const fullName = matchedUserProfile?.full_name || '';
+    const username = matchedUserProfile?.username || '';
+    const avatarUrl = matchedUserProfile?.avatar_url || '/placeholder.svg';
+    const lastSeen = matchedUserProfile?.last_seen || match.updated_at || '';
     
     return {
       id: match.id,

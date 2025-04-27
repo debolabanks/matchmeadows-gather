@@ -1,3 +1,4 @@
+
 import { User, UserProfile } from "@/types/user";
 
 // This adds sample users for development purposes
@@ -36,7 +37,6 @@ export const mockUsers: User[] = [
     id: "1",
     name: "Alex Johnson",
     email: "alex@example.com",
-    password: "password123", // Obviously not secure, just for demo
     provider: "email",
     verified: false,
     profile: {

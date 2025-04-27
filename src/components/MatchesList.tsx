@@ -12,9 +12,9 @@ interface MatchesListProps {
 const MatchesList = ({ matches: initialMatches }: MatchesListProps) => {
   const [matches, setMatches] = useState(initialMatches);
 
-  const handleBlockUser = (id: string, name: string) => {
+  const handleBlockUser = (matchId: string, name: string) => {
     // Remove the match from the list
-    setMatches(matches.filter(match => match.id !== id));
+    setMatches(matches.filter(match => match.id !== matchId));
     
     toast({
       title: "User Blocked",

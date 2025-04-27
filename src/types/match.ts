@@ -8,7 +8,7 @@ export interface Match {
   lastActive: string;
   matchDate: string;
   hasUnread?: boolean;
-  hasUnreadMessage?: boolean;
+  hasUnreadMessage: boolean;
   compatibilityScore: number;
   aiCompatibility?: {
     score: number;
