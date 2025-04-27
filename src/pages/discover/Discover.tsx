@@ -22,7 +22,7 @@ type UserProfileWithId = {
   name: string;
   imageUrl: string;
   age: number;
-  distance: string;
+  distance: number;
   location: string;
   bio: string;
   interests: string[];
@@ -252,15 +252,15 @@ const Discover = () => {
       name: profile.name || 'Anonymous',
       imageUrl: profile.photos?.[0] || '/placeholder.svg',
       age: profile.age || 25,
-      distance: 5, // Default distance if not available
+      distance: profile.distance || 5,
       location: profile.location || 'Nearby',
       bio: profile.bio || '',
       interests: profile.interests || [],
       lastActive: profile.lastActive || new Date().toISOString(),
       photos: profile.photos || [],
-      boosted: (profile as any).boosted || false,
-      boostExpiry: (profile as any).boostExpiry || null,
-      compatibility: Math.floor(Math.random() * 100) // Example random compatibility score
+      boosted: profile.boosted || false,
+      boostExpiry: profile.boostExpiry || null,
+      compatibility: profile.compatibility || Math.floor(Math.random() * 100)
     };
   };
 

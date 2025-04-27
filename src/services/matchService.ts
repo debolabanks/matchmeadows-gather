@@ -1,6 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Match } from '@/types/match';
+import { Database } from '@/integrations/supabase/types';
+
+type ProfileType = Database['public']['Tables']['profiles']['Row'];
 
 export const getMatches = async (userId: string) => {
   const { data, error } = await supabase
@@ -25,21 +28,18 @@ export const getMatches = async (userId: string) => {
   
   // Convert database matches to our app's Match format
   const formattedMatches: Match[] = data.map(match => {
-    const matchedUserProfile = profilesData?.find(profile => profile.id === match.matched_user_id) || {};
-    
-    // Safely access potentially undefined properties
-    const fullName = matchedUserProfile?.full_name || '';
-    const username = matchedUserProfile?.username || '';
-    const avatarUrl = matchedUserProfile?.avatar_url || '/placeholder.svg';
-    const lastSeen = matchedUserProfile?.last_seen || match.updated_at || '';
+    // Find the matched profile or use a default empty object with the correct type
+    const matchedUserProfile = profilesData?.find(
+      profile => profile.id === match.matched_user_id
+    ) as ProfileType | undefined || {};
     
     return {
       id: match.id,
       userId: match.user_id,
       matchedUserId: match.matched_user_id,
-      name: fullName || username || 'Anonymous',
-      imageUrl: avatarUrl,
-      lastActive: lastSeen,
+      name: matchedUserProfile.full_name || matchedUserProfile.username || 'Anonymous',
+      imageUrl: matchedUserProfile.avatar_url || '/placeholder.svg',
+      lastActive: matchedUserProfile.last_seen || match.updated_at || '',
       matchDate: match.matched_at || '',
       hasUnread: !!match.has_unread_message,
       hasUnreadMessage: !!match.has_unread_message,
