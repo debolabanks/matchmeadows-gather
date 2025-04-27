@@ -1,3 +1,4 @@
+
 // Extend existing types to match our updated profile structure
 export interface UserProfile {
   bio?: string;
@@ -30,6 +31,8 @@ export interface UserProfile {
   compatibility?: number;
   boosted?: boolean;
   boostExpiry?: string | null;
+  trialStartDate?: string;
+  trialEndDate?: string;
 }
 
 export interface User {

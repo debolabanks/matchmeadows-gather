@@ -22,6 +22,8 @@ const Discover = () => {
   const [matches, setMatches] = useState<string[]>([]);
   const [rejected, setRejected] = useState<string[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [inFreeTrial, setInFreeTrial] = useState(false);
+  const [freeTrialEndsAt, setFreeTrialEndsAt] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<MatchCriteria>({
     minAge: 18,
     maxAge: 50,
@@ -30,12 +32,31 @@ const Discover = () => {
     interests: user?.profile?.interests || []
   });
 
-  const { swipesRemaining, setSwipesRemaining, handleSwipe } = useSwipeHandling(isSubscribed);
+  const { swipesRemaining, setSwipesRemaining, handleSwipe } = useSwipeHandling(isSubscribed || inFreeTrial);
 
   useEffect(() => {
     if (user) {
-      setIsSubscribed(user.profile?.subscriptionStatus === "active");
-      setSwipesRemaining(20);
+      // Check subscription status
+      const isUserSubscribed = user.profile?.subscriptionStatus === "active";
+      setIsSubscribed(isUserSubscribed);
+      
+      // Check free trial status
+      const trialStartDate = user.profile?.trialStartDate;
+      if (trialStartDate) {
+        const trialStart = new Date(trialStartDate);
+        const trialEnd = new Date(trialStart.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
+        const now = new Date();
+        
+        if (now < trialEnd) {
+          setInFreeTrial(true);
+          setFreeTrialEndsAt(trialEnd.toISOString());
+        } else {
+          setInFreeTrial(false);
+          setFreeTrialEndsAt(null);
+        }
+      }
+      
+      setSwipesRemaining(isUserSubscribed || inFreeTrial ? Infinity : 20);
     }
   }, [user]);
 
@@ -59,7 +80,9 @@ const Discover = () => {
       let filtered = filterProfilesByPreferences(
         allProfiles,
         preferences,
-        user?.profile?.coordinates
+        user?.profile?.coordinates ? 
+          { latitude: user.profile.coordinates.lat, longitude: user.profile.coordinates.lng } : 
+          undefined
       );
       
       filtered = filtered.filter(
@@ -137,6 +160,8 @@ const Discover = () => {
         user={user}
         isSubscribed={isSubscribed}
         swipesRemaining={swipesRemaining}
+        inFreeTrial={inFreeTrial}
+        freeTrialEndsAt={freeTrialEndsAt}
       />
       
       {showFilters && (
@@ -156,7 +181,7 @@ const Discover = () => {
           handleLike={handleLike}
           handleDislike={handleDislike}
           preferences={preferences}
-          isPremium={isSubscribed}
+          isPremium={isSubscribed || inFreeTrial}
         />
       )}
     </div>

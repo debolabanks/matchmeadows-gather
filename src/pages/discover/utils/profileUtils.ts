@@ -12,7 +12,6 @@ export const convertProfileToCardProps = (profile: UserProfileWithId): Omit<Prof
     location: profile.location || 'Nearby',
     bio: profile.bio || '',
     interests: profile.interests || [],
-    lastActive: profile.lastActive || new Date().toISOString(),
     photos: profile.photos || [],
     boosted: profile.boosted || false,
     boostExpiry: profile.boostExpiry || null,

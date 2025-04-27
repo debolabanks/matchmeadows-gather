@@ -28,7 +28,9 @@ serve(async (req) => {
           error: "Missing authorization header",
           isSubscribed: false, 
           plan: null, 
-          expiresAt: null 
+          expiresAt: null,
+          inFreeTrial: false,
+          freeTrialEndDate: null 
         }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -45,7 +47,9 @@ serve(async (req) => {
           error: "Unauthorized", 
           isSubscribed: false, 
           plan: null, 
-          expiresAt: null 
+          expiresAt: null,
+          inFreeTrial: false,
+          freeTrialEndDate: null 
         }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -53,15 +57,38 @@ serve(async (req) => {
     
     console.log("User authenticated:", user.id);
     
+    // Get user profile to check for free trial
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('trialStartDate')
+      .eq('id', user.id)
+      .single();
+    
+    let inFreeTrial = false;
+    let freeTrialEndDate = null;
+    
+    if (profile?.trialStartDate) {
+      const trialStartDate = new Date(profile.trialStartDate);
+      const trialEndDate = new Date(trialStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const now = new Date();
+      
+      if (now < trialEndDate) {
+        inFreeTrial = true;
+        freeTrialEndDate = trialEndDate.toISOString();
+      }
+    }
+    
     // Query the database to check subscription status
     // TODO: Replace this with actual subscription checking logic
-    // For now, just return a mock response
+    // For now, just return a mock response including free trial info
     
     return new Response(
       JSON.stringify({
         isSubscribed: false, 
         plan: null, 
-        expiresAt: null
+        expiresAt: null,
+        inFreeTrial,
+        freeTrialEndDate
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -73,7 +100,9 @@ serve(async (req) => {
         error: error.message,
         isSubscribed: false, 
         plan: null, 
-        expiresAt: null 
+        expiresAt: null,
+        inFreeTrial: false,
+        freeTrialEndDate: null 
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -3,13 +3,13 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-export const useSwipeHandling = (isSubscribed: boolean) => {
+export const useSwipeHandling = (hasUnlimitedSwipes: boolean) => {
   const { useSwipe, getSwipesRemaining } = useAuth();
   const [swipesRemaining, setSwipesRemaining] = useState(20);
   const { toast } = useToast();
 
   const handleSwipe = async (isLike: boolean, id: string, name?: string) => {
-    if (!isSubscribed) {
+    if (!hasUnlimitedSwipes) {
       const result = await useSwipe();
       
       if (!result.success) {

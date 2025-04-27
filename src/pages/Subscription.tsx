@@ -18,11 +18,14 @@ const Subscription = () => {
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("subscription");
   const [isLoading, setIsLoading] = useState(true);
+  const [isInFreeTrial, setIsInFreeTrial] = useState(false);
+  const [freeTrialEndDate, setFreeTrialEndDate] = useState<Date | null>(null);
 
   useEffect(() => {
     const success = searchParams.get("success");
     const canceled = searchParams.get("canceled");
     const plan = searchParams.get("plan");
+    const trial = searchParams.get("trial");
 
     if (success === "true" && plan) {
       toast({
@@ -34,6 +37,9 @@ const Subscription = () => {
         title: "Subscription Canceled",
         description: "Your subscription process was canceled.",
       });
+    } else if (trial === "start" && user) {
+      // Activate free trial
+      startFreeTrial();
     }
     
     // Check current subscription status
@@ -43,6 +49,18 @@ const Subscription = () => {
         const { isSubscribed, plan } = await checkSubscription();
         setIsSubscribed(isSubscribed);
         setSubscriptionPlan(plan);
+
+        // Check trial status
+        if (user?.profile?.trialStartDate) {
+          const trialStart = new Date(user.profile.trialStartDate);
+          const trialEnd = new Date(trialStart.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+          const now = new Date();
+          
+          if (now < trialEnd) {
+            setIsInFreeTrial(true);
+            setFreeTrialEndDate(trialEnd);
+          }
+        }
       } catch (error) {
         console.error("Error checking subscription:", error);
       } finally {
@@ -56,6 +74,35 @@ const Subscription = () => {
       setIsLoading(false);
     }
   }, [user, searchParams, toast, updateProfile]);
+
+  // Function to start free trial
+  const startFreeTrial = async () => {
+    if (!user) return;
+    
+    const now = new Date().toISOString();
+    
+    try {
+      await updateProfile({
+        trialStartDate: now
+      });
+      
+      toast({
+        title: "Free Trial Activated",
+        description: "Your 7-day free trial has been activated. Enjoy all premium features!",
+      });
+      
+      setIsInFreeTrial(true);
+      const trialEnd = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000);
+      setFreeTrialEndDate(trialEnd);
+    } catch (error) {
+      console.error("Error activating free trial:", error);
+      toast({
+        title: "Error",
+        description: "Failed to activate your free trial. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Check if boost params are present and show toast
   useEffect(() => {
@@ -97,6 +144,18 @@ const Subscription = () => {
           </p>
         </div>
         
+        {isInFreeTrial && !isSubscribed && (
+          <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg mb-10 text-center">
+            <h2 className="text-xl font-semibold mb-2">🎁 Free Trial Active</h2>
+            <p className="mb-3">
+              You're currently enjoying a 7-day free trial with access to all premium features!
+            </p>
+            <p className="text-sm text-amber-700">
+              Trial ends on {freeTrialEndDate?.toLocaleDateString()} at {freeTrialEndDate?.toLocaleTimeString()}
+            </p>
+          </div>
+        )}
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
             <TabsTrigger value="subscription" className="whitespace-nowrap px-1">Subscription</TabsTrigger>
@@ -118,8 +177,36 @@ const Subscription = () => {
                   Manage Subscription
                 </Button>
               </Card>
+            ) : !isInFreeTrial ? (
+              <div className="space-y-8">
+                <Card className="p-8 text-center bg-primary/5 border-primary/20">
+                  <h2 className="text-2xl font-bold mb-4">Try Premium Free for 7 Days</h2>
+                  <p className="mb-6">
+                    Get unlimited swipes, Go Live streaming, and all premium features free for 7 days.
+                    No payment method required!
+                  </p>
+                  <Button onClick={startFreeTrial}>
+                    Start Free Trial
+                  </Button>
+                </Card>
+                <div className="text-center">
+                  <h3 className="text-lg font-medium mb-4">Or choose a plan below</h3>
+                  <SubscriptionPlans />
+                </div>
+              </div>
             ) : (
-              <SubscriptionPlans />
+              <div>
+                <Card className="p-8 text-center mb-6">
+                  <h2 className="text-2xl font-bold mb-4">Your Free Trial is Active!</h2>
+                  <p className="mb-4">
+                    You're currently enjoying all premium features. Your trial will end on {freeTrialEndDate?.toLocaleDateString()}.
+                  </p>
+                  <p className="mb-6">
+                    Subscribe now to continue enjoying premium features after your trial ends.
+                  </p>
+                </Card>
+                <SubscriptionPlans />
+              </div>
             )}
           </TabsContent>
           
@@ -177,6 +264,6 @@ const Subscription = () => {
       </div>
     </div>
   );
-}
+};
 
 export default Subscription;

@@ -8,13 +8,21 @@ interface SubscriptionStatusProps {
   user: User | null;
   isSubscribed: boolean;
   swipesRemaining: number;
+  inFreeTrial?: boolean;
+  freeTrialEndsAt?: string | null;
 }
 
-const SubscriptionStatus = ({ user, isSubscribed, swipesRemaining }: SubscriptionStatusProps) => {
+const SubscriptionStatus = ({ 
+  user, 
+  isSubscribed, 
+  swipesRemaining, 
+  inFreeTrial = false,
+  freeTrialEndsAt = null 
+}: SubscriptionStatusProps) => {
   const [remainingTime, setRemainingTime] = useState<string>("");
 
   useEffect(() => {
-    if (user && user.swipes?.resetAt && !isSubscribed) {
+    if (user && user.swipes?.resetAt && !isSubscribed && !inFreeTrial) {
       const resetTime = new Date(user.swipes.resetAt);
       
       const updateTimer = () => {
@@ -31,13 +39,15 @@ const SubscriptionStatus = ({ user, isSubscribed, swipesRemaining }: Subscriptio
       
       return () => clearInterval(interval);
     }
-  }, [user, isSubscribed]);
+  }, [user, isSubscribed, inFreeTrial]);
 
   return (
     <SwipeStatus 
       swipesRemaining={swipesRemaining}
       remainingTime={remainingTime}
       isPremium={isSubscribed}
+      inFreeTrial={inFreeTrial}
+      freeTrialEndsAt={freeTrialEndsAt}
     />
   );
 };

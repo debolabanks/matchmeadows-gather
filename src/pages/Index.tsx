@@ -1,5 +1,5 @@
 
-import { ArrowRight, Heart } from "lucide-react";
+import { ArrowRight, Heart, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import AdBanner from "@/components/AdBanner";
@@ -11,6 +11,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isPremium = user?.profile?.subscriptionStatus === "active";
+  const inFreeTrial = user?.profile?.trialStartDate ? 
+    new Date() < new Date(new Date(user.profile.trialStartDate).getTime() + 7 * 24 * 60 * 60 * 1000) : 
+    false;
 
   const handleStartMatching = () => {
     if (isAuthenticated) {
@@ -22,6 +25,19 @@ const Index = () => {
         variant: "default",
       });
       navigate("/sign-in", { state: { returnTo: "/discover" } });
+    }
+  };
+  
+  const handleFreeTrial = () => {
+    if (isAuthenticated) {
+      navigate("/subscription?trial=start");
+    } else {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to activate your free trial",
+        variant: "default",
+      });
+      navigate("/sign-in", { state: { returnTo: "/subscription?trial=start" } });
     }
   };
 
@@ -56,7 +72,32 @@ const Index = () => {
           </div>
         </section>
         
-        {!isPremium && (
+        {/* Free Trial Banner (show if authenticated, not premium, and not in trial) */}
+        {isAuthenticated && !isPremium && !inFreeTrial && (
+          <div className="container mx-auto px-4 py-6">
+            <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg">
+              <div className="flex flex-col md:flex-row items-center justify-between">
+                <div className="flex items-center mb-4 md:mb-0">
+                  <div className="bg-amber-100 p-3 rounded-full mr-4">
+                    <Gift className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">Try Premium Free for 7 Days</h3>
+                    <p className="text-amber-800">Get unlimited swipes and access to all premium features.</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleFreeTrial}
+                  className="bg-amber-500 hover:bg-amber-600"
+                >
+                  Start Free Trial
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {!isPremium && !inFreeTrial && (
           <div className="container mx-auto px-4 py-4">
             <AdBanner variant="large" adSlot="3456789012" />
           </div>
@@ -111,7 +152,7 @@ const Index = () => {
           </div>
         </section>
         
-        {!isPremium && (
+        {!isPremium && !inFreeTrial && (
           <div className="container mx-auto px-4 py-4">
             <AdBanner variant="small" adSlot="6789012345" />
           </div>
