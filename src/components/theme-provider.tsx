@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { ThemeProviderProps } from "next-themes";
+import { ThemeProviderProps } from "next-themes"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   // Create a local state to track if the component is mounted
