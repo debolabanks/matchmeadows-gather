@@ -1,18 +1,37 @@
+import { User, UserProfile } from "@/types/user";
 
-import { UserProfile } from "@/types/user";
-
-// Mock user data for demo purposes
-export type MockUser = {
-  id: string;
-  name: string;
-  email: string;
-  password?: string;
-  provider: "email";
-  profile?: UserProfile;
-  verified?: boolean;
-};
-
-export const MOCK_USERS: MockUser[] = [
+// This adds sample users for development purposes
+export const mockUsers: User[] = [
+  {
+    id: "user-1",
+    name: "John Doe",
+    email: "john@example.com",
+    verified: true,
+    provider: "email",
+    profile: {
+      bio: "I love hiking and photography.",
+      location: "San Francisco, CA",
+      photos: [
+        "https://images.unsplash.com/photo-1560250097-0b93528c311a",
+        "https://images.unsplash.com/photo-1562124638-724e13052daf"
+      ],
+      interests: ["hiking", "photography", "travel"],
+      premium: true,
+      lastActive: new Date().toISOString(),
+      status: "online",
+      age: 32,
+      gender: "male",
+      verificationStatus: "verified",
+      coordinates: {
+        lat: 37.7749,
+        lng: -122.4194
+      }
+    },
+    swipes: {
+      remaining: 10,
+      lastReset: new Date().toISOString()
+    }
+  },
   {
     id: "1",
     name: "Alex Johnson",
@@ -35,3 +54,8 @@ export const MOCK_USERS: MockUser[] = [
     }
   }
 ];
+
+// A function to get a mock user by ID
+export const getMockUserById = (id: string): User | undefined => {
+  return mockUsers.find(user => user.id === id);
+};

@@ -8,6 +8,13 @@ export interface Match {
   lastActive: string;
   matchDate: string;
   hasUnread?: boolean;
-  hasUnreadMessage?: boolean; // Add this property to fix the type error
+  hasUnreadMessage?: boolean;
   compatibilityScore: number;
+  aiCompatibility?: {
+    score: number;
+    strengths?: string[];
+    weaknesses?: string[];
+    suggestion?: string;
+  };
+  score?: number; // For backward compatibility
 }

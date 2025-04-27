@@ -21,7 +21,8 @@ export const useSwipes = () => {
       swipes: {
         remaining: DEFAULT_SWIPES,
         lastReset: new Date().toISOString(),
-        count: DEFAULT_SWIPES // Add count for backward compatibility
+        count: DEFAULT_SWIPES, // Add count for backward compatibility
+        resetAt: new Date(new Date().getTime() + SWIPE_RESET_HOURS * 60 * 60 * 1000).toISOString() // Add resetAt for backward compatibility
       }
     };
   };
@@ -54,7 +55,7 @@ export const useSwipes = () => {
     }
 
     // Ensure backward compatibility by adding count and resetAt if they don't exist
-    if (user.swipes && typeof user.swipes.count === 'undefined') {
+    if (user.swipes && (typeof user.swipes.count === 'undefined' || typeof user.swipes.resetAt === 'undefined')) {
       return {
         ...user,
         swipes: {
@@ -88,7 +89,7 @@ export const useSwipes = () => {
       swipes: {
         ...updatedUser.swipes,
         remaining: updatedUser.swipes.remaining - 1,
-        count: (updatedUser.swipes.count || updatedUser.swipes.remaining) - 1
+        count: updatedUser.swipes.count ? updatedUser.swipes.count - 1 : updatedUser.swipes.remaining - 1
       }
     };
     

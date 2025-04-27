@@ -1,171 +1,102 @@
 
-import { useState } from "react";
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
-import { Match } from "@/types/match";
-import { 
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Gamepad2, Users2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Match } from "@/types/match"; 
 
 interface GameInviteProps {
-  currentGameId?: string;
-  currentGameName?: string;
+  gameType: "tic-tac-toe" | "rock-paper-scissors" | "word-guess";
+  onAccept?: () => void;
+  onDecline?: () => void;
+  sender?: Match;
 }
 
-const GameInvite = ({ currentGameId, currentGameName }: GameInviteProps) => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
+const GameInvite = ({ gameType, onAccept, onDecline, sender }: GameInviteProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [matches, setMatches] = useState<Match[]>([
-    {
-      id: "1",
-      name: "Sophie Chen",
-      imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80",
+  const navigate = useNavigate();
+  
+  const handleAccept = () => {
+    setIsLoading(true);
+    if (onAccept) onAccept();
+    setTimeout(() => {
+      navigate(`/games/${gameType}`);
+    }, 1000);
+  };
+  
+  // Demo matches for previewing different states
+  const mockMatches = {
+    recent: {
+      id: "match-1",
+      userId: "user-1",
+      matchedUserId: "user-2",
+      name: "Sophia Martinez",
+      imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
       lastActive: new Date().toISOString(),
       matchDate: new Date().toISOString(),
       hasUnreadMessage: false,
+      compatibilityScore: 85
     },
-    {
-      id: "2",
-      name: "James Wilson",
-      imageUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80",
+    unseen: {
+      id: "match-2",
+      userId: "user-1",
+      matchedUserId: "user-3",
+      name: "David Chen",
+      imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
       lastActive: new Date().toISOString(),
       matchDate: new Date().toISOString(),
       hasUnreadMessage: true,
+      compatibilityScore: 90
     },
-    {
-      id: "3",
-      name: "Olivia Martinez",
-      imageUrl: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?ixlib=rb-1.2.1&auto=format&fit=crop&w=250&q=80",
-      lastActive: new Date().toISOString(),
-      matchDate: new Date().toISOString(),
+    older: {
+      id: "match-3",
+      userId: "user-1",
+      matchedUserId: "user-4",
+      name: "Emma Wilson",
+      imageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+      lastActive: new Date(Date.now() - 86400000).toISOString(),
+      matchDate: new Date(Date.now() - 86400000).toISOString(),
       hasUnreadMessage: false,
-    }
-  ]);
-  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
-
-  const handleInvite = async (match: Match) => {
-    try {
-      setIsLoading(true);
-      setInvitedIds(prev => new Set(prev).add(match.id));
-      
-      const gameSessionId = `game-${currentGameId}-${Date.now()}`;
-      
-      toast({
-        title: "Invitation sent",
-        description: `${match.name} has been invited to join your game.`
-      });
-      
-      if (currentGameId) {
-        navigate(`/games/${currentGameId}`, { 
-          state: { 
-            contactId: match.id,
-            contactName: match.name,
-            multiplayer: true,
-            gameSessionId
-          } 
-        });
-      }
-    } catch (error) {
-      console.error("Error sending game invitation:", error);
-      toast({
-        title: "Invitation failed",
-        description: "Could not send the game invitation. Please try again.",
-        variant: "destructive"
-      });
-      
-      setInvitedIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(match.id);
-        return newSet;
-      });
-    } finally {
-      setIsLoading(false);
+      compatibilityScore: 75
     }
   };
-
+  
+  // Use provided sender or fallback to a mock match
+  const matchData = sender || mockMatches.recent;
+  
+  const gameNames = {
+    "tic-tac-toe": "Tic-Tac-Toe",
+    "rock-paper-scissors": "Rock Paper Scissors",
+    "word-guess": "Word Guess Challenge"
+  };
+  
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="gap-1"
-        >
-          <Users2 className="h-4 w-4" />
-          Invite to play
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            Invite a Friend to Play
-            {currentGameName && <span className="text-muted-foreground text-sm font-normal">({currentGameName})</span>}
-          </SheetTitle>
-          <SheetDescription>
-            Invite your matches to play this game together in real-time.
-          </SheetDescription>
-        </SheetHeader>
-        
-        <div className="mt-6">
-          <h4 className="text-sm font-medium mb-2">Your Matches</h4>
-          
-          <ScrollArea className="h-[300px]">
-            {matches.length > 0 ? (
-              <div className="space-y-2">
-                {matches.map(match => (
-                  <div 
-                    key={match.id}
-                    className="flex items-center justify-between p-2 rounded-md hover:bg-accent"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={match.imageUrl} alt={match.name} />
-                        <AvatarFallback>{match.name.substring(0, 2)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{match.name}</p>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      size="sm"
-                      variant={invitedIds.has(match.id) ? "secondary" : "default"}
-                      onClick={() => handleInvite(match)}
-                      disabled={isLoading || invitedIds.has(match.id)}
-                    >
-                      {invitedIds.has(match.id) ? "Invited" : "Invite"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center p-4 text-muted-foreground">
-                <p>No matches found</p>
-                <Button 
-                  variant="link" 
-                  size="sm" 
-                  onClick={() => navigate("/discover")}
-                  className="mt-2"
-                >
-                  Go to Discover
-                </Button>
-              </div>
-            )}
-          </ScrollArea>
+    <Card className="max-w-md mx-auto">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-center">Game Invitation</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center space-y-4">
+        <Avatar className="h-20 w-20">
+          <AvatarImage src={matchData.imageUrl} alt={matchData.name} />
+          <AvatarFallback>{matchData.name[0]}</AvatarFallback>
+        </Avatar>
+        <div className="text-center space-y-2">
+          <p className="font-medium text-lg">{matchData.name}</p>
+          <p className="text-muted-foreground">
+            wants to play <span className="font-semibold">{gameNames[gameType]}</span> with you!
+          </p>
         </div>
-      </SheetContent>
-    </Sheet>
+      </CardContent>
+      <CardFooter className="flex justify-center space-x-3">
+        <Button variant="outline" onClick={onDecline} disabled={isLoading}>
+          Decline
+        </Button>
+        <Button onClick={handleAccept} disabled={isLoading}>
+          {isLoading ? "Loading..." : "Accept"}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 
