@@ -7,21 +7,33 @@ import { useNavigate } from "react-router-dom";
 import { Match } from "@/types/match"; 
 
 interface GameInviteProps {
-  gameType: "tic-tac-toe" | "rock-paper-scissors" | "word-guess";
+  gameType?: "tic-tac-toe" | "rock-paper-scissors" | "word-guess";
+  currentGameId?: string;
+  currentGameName?: string;
   onAccept?: () => void;
   onDecline?: () => void;
   sender?: Match;
 }
 
-const GameInvite = ({ gameType, onAccept, onDecline, sender }: GameInviteProps) => {
+const GameInvite = ({ 
+  gameType, 
+  currentGameId, 
+  currentGameName,
+  onAccept, 
+  onDecline, 
+  sender 
+}: GameInviteProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  
+  // Use currentGameId if provided, otherwise use gameType
+  const gameTypeToUse = currentGameId || gameType || "tic-tac-toe";
   
   const handleAccept = () => {
     setIsLoading(true);
     if (onAccept) onAccept();
     setTimeout(() => {
-      navigate(`/games/${gameType}`);
+      navigate(`/games/${gameTypeToUse}`);
     }, 1000);
   };
   
@@ -71,6 +83,9 @@ const GameInvite = ({ gameType, onAccept, onDecline, sender }: GameInviteProps) 
     "word-guess": "Word Guess Challenge"
   };
   
+  // Use currentGameName if provided, otherwise use gameNames lookup
+  const gameNameToDisplay = currentGameName || gameNames[gameTypeToUse as keyof typeof gameNames] || "Game";
+  
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader className="pb-2">
@@ -84,7 +99,7 @@ const GameInvite = ({ gameType, onAccept, onDecline, sender }: GameInviteProps) 
         <div className="text-center space-y-2">
           <p className="font-medium text-lg">{matchData.name}</p>
           <p className="text-muted-foreground">
-            wants to play <span className="font-semibold">{gameNames[gameType]}</span> with you!
+            wants to play <span className="font-semibold">{gameNameToDisplay}</span> with you!
           </p>
         </div>
       </CardContent>

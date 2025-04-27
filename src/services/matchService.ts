@@ -27,14 +27,19 @@ export const getMatches = async (userId: string) => {
   const formattedMatches: Match[] = data.map(match => {
     const matchedUserProfile = profilesData?.find(profile => profile.id === match.matched_user_id) || {};
     
+    const fullName = matchedUserProfile.full_name || '';
+    const username = matchedUserProfile.username || '';
+    const avatarUrl = matchedUserProfile.avatar_url || '/placeholder.svg';
+    const lastSeen = matchedUserProfile.last_seen || match.updated_at || '';
+    
     return {
       id: match.id,
       userId: match.user_id,
       matchedUserId: match.matched_user_id,
-      name: matchedUserProfile.full_name || matchedUserProfile.username || 'Anonymous',
-      imageUrl: matchedUserProfile.avatar_url || '/placeholder.svg',
-      lastActive: matchedUserProfile.last_seen || match.updated_at,
-      matchDate: match.matched_at,
+      name: fullName || username || 'Anonymous',
+      imageUrl: avatarUrl,
+      lastActive: lastSeen,
+      matchDate: match.matched_at || '',
       hasUnread: !!match.has_unread_message,
       hasUnreadMessage: !!match.has_unread_message,
       compatibilityScore: match.compatibility_percentage || 0

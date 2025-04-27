@@ -46,8 +46,8 @@ export const mockUsers: User[] = [
       bio: "Coffee enthusiast, hiking lover, and software engineer.",
       interests: ["Hiking", "Coffee", "Coding", "Reading"],
       coordinates: {
-        latitude: 37.7749,
-        longitude: -122.4194
+        lat: 37.7749,
+        lng: -122.4194
       },
       verificationStatus: "unverified",
       locationPrivacy: "public"

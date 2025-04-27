@@ -15,6 +15,15 @@ export interface Match {
     strengths?: string[];
     weaknesses?: string[];
     suggestion?: string;
+    insights?: string[];
+    commonInterests?: string[];
+    compatibilityReasons?: string[];
   };
-  score?: number; // For backward compatibility
+  score?: number | {
+    level: number;
+    points: number;
+    streak: number;
+    badges: any[];
+  }; // For backward compatibility
+  compatibilityPercentage?: number; // For backward compatibility
 }

@@ -87,7 +87,10 @@ const Discover = () => {
       let filtered = filterProfilesByPreferences(
         boostedProfiles,
         preferences,
-        user?.profile?.coordinates
+        user?.profile?.coordinates ? {
+          latitude: user.profile.coordinates.lat,
+          longitude: user.profile.coordinates.lng
+        } : undefined
       );
       
       filtered = filtered.filter(
@@ -234,6 +237,7 @@ const Discover = () => {
       imageUrl: profile.photos?.[0] || '/placeholder.svg',
       age: profile.age || 25,
       distance: 5, // Default distance if not available
+      location: profile.location || 'Nearby',
       bio: profile.bio || '',
       interests: profile.interests || [],
       lastActive: profile.lastActive || new Date().toISOString(),

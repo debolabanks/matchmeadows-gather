@@ -33,7 +33,7 @@ const MatchesList = ({ matches: initialMatches }: MatchesListProps) => {
       {matches.map((match) => (
         <MatchCard 
           key={match.id} 
-          match={match} 
+          match={match}
           onBlockUser={handleBlockUser} 
         />
       ))}

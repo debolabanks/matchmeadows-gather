@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfileWithId } from '@/types/user';
@@ -71,10 +70,10 @@ export const useRealtimeProfiles = () => {
   const convertToProfileWithId = (dbProfile: any): UserProfileWithId => {
     return {
       id: dbProfile.id,
+      name: dbProfile.full_name || dbProfile.username || 'Anonymous',
       bio: dbProfile.bio || '',
       location: dbProfile.location || '',
       photos: dbProfile.avatar_url ? [dbProfile.avatar_url] : [],
-      name: dbProfile.full_name || dbProfile.username || 'Anonymous',
       lastActive: dbProfile.last_seen || new Date().toISOString(),
       interests: dbProfile.interests || [],
       status: dbProfile.status || 'offline',

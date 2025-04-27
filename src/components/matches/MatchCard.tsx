@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -14,22 +13,20 @@ interface MatchCardProps {
   match: Match;
   onChatClick?: (matchId: string) => void;
   onVideoClick?: (matchId: string) => void;
+  onBlockUser?: (matchId: string) => void;
 }
 
-const MatchCard = ({ match, onChatClick, onVideoClick }: MatchCardProps) => {
+const MatchCard = ({ match, onChatClick, onVideoClick, onBlockUser }: MatchCardProps) => {
   const [showActions, setShowActions] = useState(false);
   
-  // Format the match date to "x days/hours ago" format
   const formattedMatchDate = formatDistanceToNow(parseISO(match.matchDate), { 
     addSuffix: true 
   });
   
-  // Format the last active time
   const formattedLastActive = formatDistanceToNow(parseISO(match.lastActive), {
     addSuffix: true
   });
 
-  // User compatibility insights based on score
   const getCompatibilityInsights = () => {
     const score = match.compatibilityScore || 0;
     
@@ -53,7 +50,6 @@ const MatchCard = ({ match, onChatClick, onVideoClick }: MatchCardProps) => {
         </div>
       );
     } else {
-      // Fallback without AI insights
       if (score >= 90) {
         return (
           <div className="text-sm text-muted-foreground mt-2">
@@ -104,7 +100,6 @@ const MatchCard = ({ match, onChatClick, onVideoClick }: MatchCardProps) => {
     }
   };
 
-  // Get compatibility score color
   const getScoreColor = () => {
     const score = match.compatibilityScore || 0;
     if (score >= 80) return "text-green-600";
@@ -182,7 +177,7 @@ const MatchCard = ({ match, onChatClick, onVideoClick }: MatchCardProps) => {
       
       {showActions && (
         <div className="absolute top-2 right-2">
-          <MatchCardActions matchId={match.id} matchName={match.name} />
+          <MatchCardActions match={match} onBlockUser={onBlockUser} />
         </div>
       )}
     </Card>
