@@ -1,66 +1,33 @@
 
+// Extend existing types to match our updated profile structure
+export interface UserProfile {
+  bio?: string;
+  location?: string;
+  photos?: string[];
+  interests?: string[];
+  verificationStatus?: string;
+  premium?: boolean;
+  lastActive?: string;
+  status?: string;
+  createdAt?: string;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  provider?: string;
+  phone?: string;
+  verified?: boolean;
+  provider: string;
   profile?: UserProfile;
   swipes?: {
-    count: number;
-    lastReset?: string;
-    resetAt?: string; // Added this for Discover.tsx
+    remaining: number;
+    lastReset: string;
   };
-  verified?: boolean; // Added for verification checks
 }
 
-export interface UserProfile {
-  bio?: string;
-  location?: string;
-  interests?: string[];
-  preferences?: {
-    gender?: string;
-    ageRange?: [number, number];
-    distance?: number;
-  };
-  photos?: string[];
-  verified?: boolean;
-  subscriptionStatus?: "free" | "active" | "expired";
-  
-  // Added fields for verification components
-  verificationStatus?: "unverified" | "pending" | "verified";
-  phoneVerified?: boolean;
-  phoneNumber?: string;
-  faceVerified?: boolean;
-  faceVerificationDate?: string;
-  
-  // Added profile settings
-  age?: number;
-  gender?: string;
-  locationPrivacy?: "public" | "friends" | "private";
-  language?: string;
-  privacySettings?: {
-    showActivity?: boolean;
-    showDistance?: boolean;
-    showOnlineStatus?: boolean;
-    profileVisibility?: string;
-  };
-  
-  // Added for discover functionality
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
-  
-  // Additional user settings
-  termsAccepted?: boolean;
-}
-
-export interface Report {
+// Add a new interface that includes ID for use with Supabase
+export interface UserProfileWithId extends UserProfile {
   id: string;
-  userId: string;
-  targetId?: string;
-  content: string;
-  type: string;
-  status: "pending" | "resolved" | "rejected";
-  createdAt: string;
+  name: string;
 }

@@ -16,7 +16,25 @@ export const getMatches = async (userId: string) => {
     .order('matched_at', { ascending: false });
 
   if (error) throw error;
-  return data as Match[];
+  
+  // Convert database matches to our app's Match format
+  const formattedMatches: Match[] = data.map(match => {
+    const matchedUserProfile = match.matched_user?.profiles?.[0] || {};
+    
+    return {
+      id: match.id,
+      userId: match.user_id,
+      matchedUserId: match.matched_user_id,
+      name: matchedUserProfile.full_name || matchedUserProfile.username || 'Anonymous',
+      imageUrl: matchedUserProfile.avatar_url || '/placeholder.svg',
+      lastActive: matchedUserProfile.last_seen || match.updated_at,
+      matchDate: match.matched_at,
+      hasUnread: !!match.has_unread_message,
+      compatibilityScore: match.compatibility_percentage || 0
+    };
+  });
+  
+  return formattedMatches;
 };
 
 export const subscribeToMatches = (
