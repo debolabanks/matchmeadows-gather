@@ -1,4 +1,3 @@
-
 // Extend existing types to match our updated profile structure
 export interface UserProfile {
   bio?: string;
@@ -27,6 +26,10 @@ export interface UserProfile {
     profileVisibility: 'public' | 'matches-only' | 'private';
   };
   termsAccepted?: boolean;
+  distance?: number;
+  compatibility?: number;
+  boosted?: boolean;
+  boostExpiry?: string | null;
 }
 
 export interface User {
@@ -49,4 +52,8 @@ export interface User {
 export interface UserProfileWithId extends UserProfile {
   id: string;
   name: string;
+  distance?: number;
+  compatibility?: number;
+  boosted?: boolean;
+  boostExpiry?: string | null;
 }

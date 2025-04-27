@@ -47,7 +47,7 @@ const Matches = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         matches={matches}
-        aiRecommendations={aiRecommendations}
+        aiRecommendations={aiRecommendations as Match[]}
       />
     </div>
   );
