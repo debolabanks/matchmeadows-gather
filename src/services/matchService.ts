@@ -31,7 +31,7 @@ export const getMatches = async (userId: string) => {
     // Find the matched profile or use a default empty object with the correct type
     const matchedUserProfile = profilesData?.find(
       profile => profile.id === match.matched_user_id
-    ) as ProfileType | undefined || {};
+    ) as ProfileType | undefined || {} as ProfileType;
     
     return {
       id: match.id,

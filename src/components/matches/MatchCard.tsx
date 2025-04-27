@@ -13,7 +13,7 @@ interface MatchCardProps {
   match: Match;
   onChatClick?: (matchId: string) => void;
   onVideoClick?: (matchId: string) => void;
-  onBlockUser?: (matchId: string) => void;
+  onBlockUser?: (matchId: string, name: string) => void;
 }
 
 const MatchCard = ({ match, onChatClick, onVideoClick, onBlockUser }: MatchCardProps) => {

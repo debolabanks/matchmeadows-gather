@@ -16,22 +16,7 @@ import NoProfilesFound from "./components/NoProfilesFound";
 import { useRealtimeProfiles } from "@/hooks/useRealtimeProfiles";
 import { formatDistanceToNow } from "date-fns";
 import { checkSubscription } from "@/services/stripeService";
-
-type UserProfileWithId = {
-  id: string;
-  name: string;
-  imageUrl: string;
-  age: number;
-  distance: number;
-  location: string;
-  bio: string;
-  interests: string[];
-  lastActive: string;
-  photos: string[];
-  boosted: boolean;
-  boostExpiry: string;
-  compatibility: number;
-};
+import { UserProfileWithId } from "@/types/user";
 
 const Discover = () => {
   const { user, useSwipe, getSwipesRemaining } = useAuth();
@@ -252,7 +237,7 @@ const Discover = () => {
       name: profile.name || 'Anonymous',
       imageUrl: profile.photos?.[0] || '/placeholder.svg',
       age: profile.age || 25,
-      distance: profile.distance || 5,
+      distance: String(profile.distance || 5),
       location: profile.location || 'Nearby',
       bio: profile.bio || '',
       interests: profile.interests || [],
