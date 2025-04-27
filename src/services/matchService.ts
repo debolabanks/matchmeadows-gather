@@ -7,19 +7,25 @@ export const getMatches = async (userId: string) => {
     .from('matches')
     .select(`
       *,
-      matched_user:matched_user_id(
-        id,
-        profiles!inner(*)
-      )
+      matched_user:matched_user_id(id)
     `)
     .eq('user_id', userId)
     .order('matched_at', { ascending: false });
 
   if (error) throw error;
   
+  // Get profiles for matched users
+  const matchedUserIds = data.map(match => match.matched_user_id);
+  const { data: profilesData, error: profilesError } = await supabase
+    .from('profiles')
+    .select('*')
+    .in('id', matchedUserIds);
+  
+  if (profilesError) throw profilesError;
+  
   // Convert database matches to our app's Match format
   const formattedMatches: Match[] = data.map(match => {
-    const matchedUserProfile = match.matched_user?.profiles?.[0] || {};
+    const matchedUserProfile = profilesData?.find(profile => profile.id === match.matched_user_id) || {};
     
     return {
       id: match.id,
@@ -30,6 +36,7 @@ export const getMatches = async (userId: string) => {
       lastActive: matchedUserProfile.last_seen || match.updated_at,
       matchDate: match.matched_at,
       hasUnread: !!match.has_unread_message,
+      hasUnreadMessage: !!match.has_unread_message,
       compatibilityScore: match.compatibility_percentage || 0
     };
   });

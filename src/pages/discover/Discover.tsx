@@ -227,6 +227,25 @@ const Discover = () => {
     }
   }, [currentProfiles, filteredProfiles, allProfiles]);
   
+  const convertProfileToCardProps = (profile: UserProfileWithId) => {
+    return {
+      id: profile.id,
+      name: profile.name || 'Anonymous',
+      imageUrl: profile.photos?.[0] || '/placeholder.svg',
+      age: profile.age || 25,
+      distance: 5, // Default distance if not available
+      bio: profile.bio || '',
+      interests: profile.interests || [],
+      lastActive: profile.lastActive || new Date().toISOString(),
+      photos: profile.photos || [],
+      boosted: (profile as any).boosted || false,
+      boostExpiry: (profile as any).boostExpiry || null,
+      compatibility: Math.floor(Math.random() * 100) // Example random compatibility score
+    };
+  };
+
+  const profilesWithCardProps = currentProfiles.map(convertProfileToCardProps);
+
   return (
     <div className="container mx-auto px-4 py-8 pt-20 md:pt-24 pb-24">
       <div className="flex justify-between items-center mb-8">
@@ -269,7 +288,7 @@ const Discover = () => {
         <NoProfilesFound onShowFilters={() => setShowFilters(true)} />
       ) : (
         <ProfileDisplay 
-          currentProfiles={currentProfiles}
+          currentProfiles={profilesWithCardProps}
           handleLike={handleLike}
           handleDislike={handleDislike}
           preferences={preferences}

@@ -1,22 +1,13 @@
 
-import { MatchScore } from "@/utils/gamification";
-
 export interface Match {
   id: string;
+  userId: string;
+  matchedUserId: string;
   name: string;
   imageUrl: string;
   lastActive: string;
   matchDate: string;
-  hasUnreadMessage: boolean;
-  score?: MatchScore;
-  compatibilityPercentage?: number;
-  aiCompatibility?: {
-    score: number;
-    insights: string[];
-    commonInterests: string[];
-    compatibilityReasons: string[];
-    personalizedScore?: number;
-    crossAppInsights?: string[];
-    recommendedActivities?: string[];
-  };
+  hasUnread?: boolean;
+  hasUnreadMessage?: boolean; // Add this property to fix the type error
+  compatibilityScore: number;
 }

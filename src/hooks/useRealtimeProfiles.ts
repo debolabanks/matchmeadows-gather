@@ -1,14 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { UserProfile } from '@/types/user';
+import { UserProfileWithId } from '@/types/user';
 import { useToast } from '@/hooks/use-toast';
-import { Database } from '@/integrations/supabase/types';
-
-type ProfileWithId = UserProfile & { id: string };
 
 export const useRealtimeProfiles = () => {
-  const [profiles, setProfiles] = useState<ProfileWithId[]>([]);
+  const [profiles, setProfiles] = useState<UserProfileWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -71,7 +68,7 @@ export const useRealtimeProfiles = () => {
   };
 
   // Helper function to convert Supabase profile to our app's UserProfile format with ID
-  const convertToProfileWithId = (dbProfile: any): ProfileWithId => {
+  const convertToProfileWithId = (dbProfile: any): UserProfileWithId => {
     return {
       id: dbProfile.id,
       bio: dbProfile.bio || '',

@@ -19,8 +19,9 @@ export const useSwipes = () => {
     return {
       ...user,
       swipes: {
-        count: DEFAULT_SWIPES,
-        lastReset: new Date().toISOString()
+        remaining: DEFAULT_SWIPES,
+        lastReset: new Date().toISOString(),
+        count: DEFAULT_SWIPES // Add count for backward compatibility
       }
     };
   };
@@ -44,8 +45,22 @@ export const useSwipes = () => {
       return {
         ...user,
         swipes: {
-          count: DEFAULT_SWIPES,
-          lastReset: now.toISOString()
+          remaining: DEFAULT_SWIPES,
+          lastReset: now.toISOString(),
+          count: DEFAULT_SWIPES, // Add count for backward compatibility
+          resetAt: new Date(now.getTime() + SWIPE_RESET_HOURS * 60 * 60 * 1000).toISOString() // Add resetAt for backward compatibility
+        }
+      };
+    }
+
+    // Ensure backward compatibility by adding count and resetAt if they don't exist
+    if (user.swipes && typeof user.swipes.count === 'undefined') {
+      return {
+        ...user,
+        swipes: {
+          ...user.swipes,
+          count: user.swipes.remaining,
+          resetAt: new Date(lastReset.getTime() + SWIPE_RESET_HOURS * 60 * 60 * 1000).toISOString()
         }
       };
     }
@@ -63,7 +78,7 @@ export const useSwipes = () => {
     const updatedUser = checkAndResetSwipes(user);
     
     // If no swipes left, return failure
-    if (!updatedUser.swipes || updatedUser.swipes.count <= 0) {
+    if (!updatedUser.swipes || updatedUser.swipes.remaining <= 0) {
       return { success: false, updatedUser };
     }
     
@@ -72,7 +87,8 @@ export const useSwipes = () => {
       ...updatedUser,
       swipes: {
         ...updatedUser.swipes,
-        count: updatedUser.swipes.count - 1
+        remaining: updatedUser.swipes.remaining - 1,
+        count: (updatedUser.swipes.count || updatedUser.swipes.remaining) - 1
       }
     };
     
@@ -86,7 +102,7 @@ export const useSwipes = () => {
     if (!user || !user.swipes) return 0;
     
     const updatedUser = checkAndResetSwipes(user);
-    return updatedUser.swipes.count;
+    return updatedUser.swipes.remaining;
   };
 
   return {
