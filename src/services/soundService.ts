@@ -1,7 +1,14 @@
+
 // Sound effect utility for the application
 
 // Cache sounds for better performance
 const soundCache: Record<string, HTMLAudioElement> = {};
+
+// Default audio paths
+const AUDIO_PATHS = {
+  NEW_MESSAGE: '/assets/new-message.mp3',
+  INCOMING_CALL: '/assets/incoming-call.mp3'
+};
 
 /**
  * Preload commonly used sounds to improve responsiveness
@@ -10,20 +17,29 @@ const soundCache: Record<string, HTMLAudioElement> = {};
 export const preloadSounds = (): void => {
   try {
     const commonSounds = [
-      '/assets/new-message.mp3',
-      '/assets/incoming-call.mp3'
+      AUDIO_PATHS.NEW_MESSAGE,
+      AUDIO_PATHS.INCOMING_CALL
     ];
     
     commonSounds.forEach(soundPath => {
       try {
-        const audio = new Audio(soundPath);
+        // Create audio element but don't try to load it if it might fail
+        const audio = new Audio();
+        
+        // Add error handler before setting src to prevent unhandled errors
+        audio.onerror = (e) => {
+          console.warn(`Could not load sound: ${soundPath}`, e);
+        };
+        
+        // Now set the source
+        audio.src = soundPath;
         soundCache[soundPath] = audio;
         
-        // Load the audio file but don't play it
+        // Attempt to load but catch errors
         audio.load();
-        console.log(`Preloaded sound: ${soundPath}`);
+        console.log(`Attempting to preload sound: ${soundPath}`);
       } catch (error) {
-        console.warn(`Failed to preload sound: ${soundPath}`, error);
+        console.warn(`Failed to initialize sound: ${soundPath}`, error);
       }
     });
   } catch (error) {
@@ -35,14 +51,14 @@ export const preloadSounds = (): void => {
  * Play a new message notification sound
  */
 export const playNewMessageSound = (): HTMLAudioElement | null => {
-  return playSound('/assets/new-message.mp3');
+  return playSound(AUDIO_PATHS.NEW_MESSAGE);
 };
 
 /**
  * Play an incoming call notification sound
  */
 export const playIncomingCallSound = (): HTMLAudioElement | null => {
-  return playSound('/assets/incoming-call.mp3', true);
+  return playSound(AUDIO_PATHS.INCOMING_CALL, true);
 };
 
 /**
@@ -55,7 +71,15 @@ const playSound = (soundPath: string, loop: boolean = false): HTMLAudioElement |
     
     // Create and cache if doesn't exist
     if (!sound) {
-      sound = new Audio(soundPath);
+      sound = new Audio();
+      sound.src = soundPath;
+      
+      // Add error handler to prevent uncaught errors
+      sound.onerror = () => {
+        console.warn(`Failed to play sound: ${soundPath}`);
+        return null;
+      };
+      
       soundCache[soundPath] = sound;
     }
     
@@ -63,7 +87,7 @@ const playSound = (soundPath: string, loop: boolean = false): HTMLAudioElement |
     sound.loop = loop;
     sound.currentTime = 0;
     
-    // Play the sound
+    // Play the sound with error handling
     sound.play().catch(err => {
       console.warn('Failed to play sound:', err);
     });
@@ -96,11 +120,23 @@ export const stopAllSounds = (): void => {
   });
 };
 
+/**
+ * Check if audio is currently available/enabled in the browser
+ */
+export const isAudioAvailable = (): boolean => {
+  try {
+    return typeof Audio !== 'undefined';
+  } catch {
+    return false;
+  }
+};
+
 // Export default for easier importing
 export default {
   preloadSounds,
   playNewMessageSound,
   playIncomingCallSound,
   stopSound,
-  stopAllSounds
+  stopAllSounds,
+  isAudioAvailable
 };

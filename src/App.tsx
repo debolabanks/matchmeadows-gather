@@ -40,12 +40,17 @@ function App() {
     statusBarMeta.content = 'black-translucent';
     document.head.appendChild(statusBarMeta);
 
-    // Preload sounds directly using the imported function
-    try {
-      soundService.preloadSounds();
-    } catch (error) {
-      console.error("Error preloading sounds:", error);
-    }
+    // Safely preload sounds - wrap in try/catch and use timeout
+    // to avoid blocking app initialization if there's an audio problem
+    setTimeout(() => {
+      try {
+        if (soundService.isAudioAvailable()) {
+          soundService.preloadSounds();
+        }
+      } catch (error) {
+        console.error("Error preloading sounds:", error);
+      }
+    }, 1000);
     
     // Set timer to hide splash screen
     const timer = setTimeout(() => {
