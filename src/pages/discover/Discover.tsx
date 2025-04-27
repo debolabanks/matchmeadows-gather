@@ -1,35 +1,27 @@
+
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Filter, ChevronUp, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  MatchCriteria, 
-  filterProfilesByPreferences, 
-  rankProfilesByCompatibility 
-} from "@/utils/matchingAlgorithm";
+import { checkSubscription } from "@/services/stripeService";
+import { MatchCriteria, filterProfilesByPreferences, rankProfilesByCompatibility } from "@/utils/matchingAlgorithm";
 import ProfileFilters from "./components/ProfileFilters";
 import ProfileDisplay from "./components/ProfileDisplay";
-import SwipeStatus from "./components/SwipeStatus";
 import NoProfilesFound from "./components/NoProfilesFound";
 import { useRealtimeProfiles } from "@/hooks/useRealtimeProfiles";
-import { formatDistanceToNow } from "date-fns";
-import { checkSubscription } from "@/services/stripeService";
-import { UserProfileWithId } from "@/types/user";
+import SubscriptionStatus from "./components/SubscriptionStatus";
+import { useSwipeHandling } from "./hooks/useSwipeHandling";
+import { convertProfileToCardProps } from "./utils/profileUtils";
 
 const Discover = () => {
-  const { user, useSwipe, getSwipesRemaining } = useAuth();
+  const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const { profiles: allProfiles, isLoading } = useRealtimeProfiles();
   const [filteredProfiles, setFilteredProfiles] = useState(allProfiles);
   const [currentProfiles, setCurrentProfiles] = useState(allProfiles);
   const [matches, setMatches] = useState<string[]>([]);
   const [rejected, setRejected] = useState<string[]>([]);
-  const [swipesRemaining, setSwipesRemaining] = useState(20);
-  const [remainingTime, setRemainingTime] = useState<string>("");
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<MatchCriteria>({
     minAge: 18,
     maxAge: 50,
@@ -37,28 +29,22 @@ const Discover = () => {
     maxDistance: 50,
     interests: user?.profile?.interests || []
   });
-  const { toast } = useToast();
-  
+
+  const { swipesRemaining, setSwipesRemaining, handleSwipe } = useSwipeHandling(isSubscribed);
+
   useEffect(() => {
     if (user) {
       setIsSubscribed(user.profile?.subscriptionStatus === "active");
-      
-      const remaining = getSwipesRemaining();
-      setSwipesRemaining(remaining);
+      setSwipesRemaining(20);
     }
-  }, [user, getSwipesRemaining]);
-  
+  }, [user]);
+
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       if (user) {
         try {
-          const { isSubscribed, plan } = await checkSubscription();
-          if (!isSubscribed && user.profile?.subscriptionStatus !== "active") {
-            setIsSubscribed(isSubscribed);
-            setSubscriptionPlan(plan);
-          } else if (user.profile?.subscriptionStatus === "active") {
-            setIsSubscribed(true);
-          }
+          const { isSubscribed: subscribed } = await checkSubscription();
+          setIsSubscribed(subscribed || user.profile?.subscriptionStatus === "active");
         } catch (error) {
           console.error("Error checking subscription:", error);
         }
@@ -67,31 +53,13 @@ const Discover = () => {
     
     fetchSubscriptionStatus();
   }, [user]);
-  
-  const boostedProfiles = allProfiles.map(profile => {
-    const isBoosted = Math.random() > 0.8;
-    if (isBoosted) {
-      const boostExpiry = new Date();
-      boostExpiry.setHours(boostExpiry.getHours() + Math.floor(Math.random() * 24) + 1);
-      
-      return {
-        ...profile,
-        boosted: true,
-        boostExpiry: boostExpiry.toISOString()
-      };
-    }
-    return profile;
-  });
-  
+
   useEffect(() => {
     if (!isLoading) {
       let filtered = filterProfilesByPreferences(
-        boostedProfiles,
+        allProfiles,
         preferences,
-        user?.profile?.coordinates ? {
-          latitude: user.profile.coordinates.lat,
-          longitude: user.profile.coordinates.lng
-        } : undefined
+        user?.profile?.coordinates
       );
       
       filtered = filtered.filter(
@@ -109,118 +77,8 @@ const Discover = () => {
       setFilteredProfiles(filtered);
       setCurrentProfiles(filtered);
     }
-  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed, allProfiles, isLoading, boostedProfiles]);
-  
-  useEffect(() => {
-    if (user && user.swipes?.resetAt && !isSubscribed) {
-      const resetTime = new Date(user.swipes.resetAt);
-      
-      const updateTimer = () => {
-        const now = new Date();
-        if (now >= resetTime) {
-          setSwipesRemaining(20);
-          setRemainingTime("");
-        } else {
-          setRemainingTime(formatDistanceToNow(resetTime, { addSuffix: true }));
-        }
-      };
-      
-      updateTimer();
-      const interval = setInterval(updateTimer, 60000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [user, isSubscribed]);
-  
-  const handleLike = async (id: string) => {
-    if (!isSubscribed) {
-      const result = await useSwipe();
-      
-      if (!result.success) {
-        toast({
-          title: "Swipe limit reached",
-          description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setSwipesRemaining(getSwipesRemaining());
-    }
-    
-    const isMatch = Math.random() < 0.2;
-    
-    if (isMatch) {
-      setMatches(prev => [...prev, id]);
-      const matchedProfile = allProfiles.find(profile => profile.id === id);
-      
-      toast({
-        title: "It's a match! 💕",
-        description: `You and ${matchedProfile?.name} liked each other.`,
-        variant: "default",
-      });
-    }
-    
-    setCurrentProfiles(prev => prev.filter(profile => profile.id !== id));
-  };
-  
-  const handleDislike = async (id: string) => {
-    if (!isSubscribed) {
-      const result = await useSwipe();
-      
-      if (!result.success) {
-        toast({
-          title: "Swipe limit reached",
-          description: "You've used all your daily swipes. Upgrade to Premium for unlimited swipes!",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setSwipesRemaining(getSwipesRemaining());
-    }
-    
-    setRejected(prev => [...prev, id]);
-    
-    setCurrentProfiles(prev => prev.filter(profile => profile.id !== id));
-  };
-  
-  const handlePreferencesChange = (newPreferences: Partial<MatchCriteria>) => {
-    const hasChanged = Object.keys(newPreferences).some(
-      key => preferences[key as keyof MatchCriteria] !== newPreferences[key as keyof MatchCriteria]
-    );
+  }, [preferences, matches, rejected, user?.profile?.interests, user?.profile?.coordinates, isSubscribed, allProfiles, isLoading]);
 
-    if (hasChanged) {
-      console.log("Updating preferences:", newPreferences);
-      setPreferences(prev => ({ ...prev, ...newPreferences }));
-      
-      // Add toast notification here, only when preferences have changed
-      toast({
-        title: "Preferences updated",
-        description: "Finding new matches based on your preferences",
-        variant: "default"
-      });
-      
-      // We'll show the results toast after filtering in a setTimeout to allow the filter to complete
-      setTimeout(() => {
-        const filteredCount = filteredProfiles.length;
-        if (filteredCount === 0) {
-          toast({
-            title: "No matches found",
-            description: "Try adjusting your preferences to see more profiles",
-            variant: "default"
-          });
-        } else {
-          toast({
-            title: "Matches found",
-            description: `Found ${filteredCount} potential matches`,
-            variant: "default"
-          });
-        }
-      }, 500);
-    }
-  };
-  
   useEffect(() => {
     if (currentProfiles.length === 0) {
       const timer = setTimeout(() => {
@@ -230,23 +88,26 @@ const Discover = () => {
       return () => clearTimeout(timer);
     }
   }, [currentProfiles, filteredProfiles, allProfiles]);
-  
-  const convertProfileToCardProps = (profile: UserProfileWithId) => {
-    return {
-      id: profile.id,
-      name: profile.name || 'Anonymous',
-      imageUrl: profile.photos?.[0] || '/placeholder.svg',
-      age: profile.age || 25,
-      distance: String(profile.distance || 5),
-      location: profile.location || 'Nearby',
-      bio: profile.bio || '',
-      interests: profile.interests || [],
-      lastActive: profile.lastActive || new Date().toISOString(),
-      photos: profile.photos || [],
-      boosted: profile.boosted || false,
-      boostExpiry: profile.boostExpiry || null,
-      compatibility: profile.compatibility || Math.floor(Math.random() * 100)
-    };
+
+  const handleLike = async (id: string) => {
+    const profile = currentProfiles.find(p => p.id === id);
+    const success = await handleSwipe(true, id, profile?.name);
+    if (success) {
+      setMatches(prev => [...prev, id]);
+      setCurrentProfiles(prev => prev.filter(profile => profile.id !== id));
+    }
+  };
+
+  const handleDislike = async (id: string) => {
+    const success = await handleSwipe(false, id);
+    if (success) {
+      setRejected(prev => [...prev, id]);
+      setCurrentProfiles(prev => prev.filter(profile => profile.id !== id));
+    }
+  };
+
+  const handlePreferencesChange = (newPreferences: Partial<MatchCriteria>) => {
+    setPreferences(prev => ({ ...prev, ...newPreferences }));
   };
 
   const profilesWithCardProps = currentProfiles.map(convertProfileToCardProps);
@@ -272,13 +133,11 @@ const Discover = () => {
         </Button>
       </div>
       
-      {!isSubscribed && (
-        <SwipeStatus 
-          swipesRemaining={swipesRemaining}
-          remainingTime={remainingTime}
-          isPremium={isSubscribed}
-        />
-      )}
+      <SubscriptionStatus 
+        user={user}
+        isSubscribed={isSubscribed}
+        swipesRemaining={swipesRemaining}
+      />
       
       {showFilters && (
         <div className="mb-8 animate-in fade-in slide-in-from-top-5 duration-300">
