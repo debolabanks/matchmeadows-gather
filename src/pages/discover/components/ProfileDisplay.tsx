@@ -1,7 +1,4 @@
-
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import ProfileCard from "@/components/ProfileCard";
 import { MatchCriteria } from "@/utils/matchingAlgorithm";

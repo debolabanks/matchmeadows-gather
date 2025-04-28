@@ -77,7 +77,15 @@ export const useRealtimeProfiles = () => {
       lastActive: dbProfile.last_seen || new Date().toISOString(),
       interests: dbProfile.interests || [],
       status: dbProfile.status || 'offline',
-      createdAt: dbProfile.created_at
+      createdAt: dbProfile.created_at,
+      distance: dbProfile.distance || Math.floor(Math.random() * 25) + 1, // Random distance 1-25 miles if not provided
+      compatibility: dbProfile.compatibility || Math.floor(Math.random() * 100), // Random compatibility 0-100% if not provided
+      boosted: dbProfile.boosted || false,
+      boostExpiry: dbProfile.boost_expiry || null,
+      age: dbProfile.age || Math.floor(Math.random() * 20) + 21, // Random age 21-40 if not provided
+      gender: dbProfile.gender,
+      language: dbProfile.language,
+      faceVerified: dbProfile.face_verified || false
     };
   };
 

@@ -26,6 +26,9 @@ export interface ProfileCardProps {
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
   isMatched?: boolean;
+  boosted?: boolean;
+  boostExpiry?: string | null;
+  compatibility?: number;
 }
 
 const ProfileCard = ({
