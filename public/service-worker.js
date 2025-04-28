@@ -1,3 +1,4 @@
+
 // Service Worker for MatchMeadows PWA
 
 const CACHE_NAME = 'matchmeadows-cache-v1';
@@ -8,13 +9,25 @@ const ASSETS_TO_CACHE = [
   '/offline.html',
   '/assets/new-message.mp3',
   '/assets/incoming-call.mp3',
+  '/assets/correct.mp3',
+  '/assets/wrong.mp3',
+  '/assets/win.mp3',
+  '/assets/lose.mp3',
+  '/assets/draw.mp3',
+  '/assets/start.mp3',
+  '/assets/click.mp3',
   '/manifest.json',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 // Install event - cache core assets
 self.addEventListener('install', event => {
   console.log('Service Worker: Installing');
+  
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
   
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -28,6 +41,9 @@ self.addEventListener('install', event => {
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
   console.log('Service Worker: Activating');
+  
+  // Take control of all clients as soon as it's activated
+  event.waitUntil(clients.claim());
   
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -45,6 +61,39 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', event => {
+  // Special handling for asset files
+  if (event.request.url.includes('/assets/')) {
+    event.respondWith(
+      caches.match(event.request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          
+          return fetch(event.request)
+            .then(networkResponse => {
+              // Clone the response before using it
+              let responseToCache = networkResponse.clone();
+              
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, responseToCache);
+                });
+                
+              return networkResponse;
+            })
+            .catch(() => {
+              console.error('Failed to fetch asset:', event.request.url);
+              // If it's an audio file we might return a silent audio file as fallback
+              if (event.request.url.match(/\.(mp3|wav|ogg)$/)) {
+                return new Response(null, { status: 404 });
+              }
+            });
+        })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(cachedResponse => {

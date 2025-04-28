@@ -40,6 +40,19 @@ function App() {
     statusBarMeta.content = 'black-translucent';
     document.head.appendChild(statusBarMeta);
 
+    // Register service worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.info('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+
     // Safely preload sounds - wrap in try/catch and use timeout
     // to avoid blocking app initialization if there's an audio problem
     setTimeout(() => {

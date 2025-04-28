@@ -4,7 +4,7 @@
 // Cache sounds for better performance
 const soundCache: Record<string, HTMLAudioElement> = {};
 
-// Default audio paths
+// Default audio paths - using absolute paths to ensure they're found
 const AUDIO_PATHS = {
   NEW_MESSAGE: '/assets/new-message.mp3',
   INCOMING_CALL: '/assets/incoming-call.mp3'
@@ -16,6 +16,7 @@ const AUDIO_PATHS = {
  */
 export const preloadSounds = (): void => {
   try {
+    console.log("Preloading sound effects...");
     const commonSounds = [
       AUDIO_PATHS.NEW_MESSAGE,
       AUDIO_PATHS.INCOMING_CALL
@@ -66,17 +67,18 @@ export const playIncomingCallSound = (): HTMLAudioElement | null => {
  */
 const playSound = (soundPath: string, loop: boolean = false): HTMLAudioElement | null => {
   try {
+    console.log(`Attempting to play sound: ${soundPath}`);
+    
     // Try to get from cache first
     let sound = soundCache[soundPath];
     
     // Create and cache if doesn't exist
     if (!sound) {
-      sound = new Audio();
-      sound.src = soundPath;
+      sound = new Audio(soundPath);
       
       // Add error handler to prevent uncaught errors
-      sound.onerror = () => {
-        console.warn(`Failed to play sound: ${soundPath}`);
+      sound.onerror = (e) => {
+        console.warn(`Failed to play sound: ${soundPath}`, e);
         return null;
       };
       
