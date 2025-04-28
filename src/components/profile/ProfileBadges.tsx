@@ -54,6 +54,15 @@ const ProfileBadges = ({ compatibility = 0, matchPoints = 0, badges = [] }: Prof
     return "text-red-500";
   };
 
+  // Get progress bar color based on compatibility score
+  const getProgressBarClassName = (score: number) => {
+    if (score >= 80) return "bg-green-500";
+    if (score >= 60) return "bg-emerald-500";
+    if (score >= 40) return "bg-amber-500";
+    if (score >= 20) return "bg-orange-500";
+    return "bg-red-500";
+  };
+
   return (
     <div className="space-y-2">
       {/* Compatibility score */}
@@ -67,14 +76,7 @@ const ProfileBadges = ({ compatibility = 0, matchPoints = 0, badges = [] }: Prof
                 </div>
                 <Progress 
                   value={animatedCompatibility} 
-                  className="h-2 w-20" 
-                  indicatorClassName={`${
-                    compatibility >= 80 ? "bg-green-500" : 
-                    compatibility >= 60 ? "bg-emerald-500" : 
-                    compatibility >= 40 ? "bg-amber-500" : 
-                    compatibility >= 20 ? "bg-orange-500" : 
-                    "bg-red-500"
-                  }`}
+                  className={`h-2 w-20 ${getProgressBarClassName(compatibility)}`}
                 />
               </div>
             </TooltipTrigger>

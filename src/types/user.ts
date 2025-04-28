@@ -1,62 +1,24 @@
-
-// Extend existing types to match our updated profile structure
+// Update the UserProfile type to include matchPoints and badges properties
 export interface UserProfile {
-  bio?: string;
-  location?: string;
-  photos?: string[];
-  interests?: string[];
-  verificationStatus?: 'verified' | 'pending' | 'unverified';
-  premium?: boolean;
-  lastActive?: string;
-  status?: string;
-  createdAt?: string;
+  id: string;
+  name: string;
+  email?: string;
+  photoURL?: string;
   age?: number;
   gender?: string;
-  phoneNumber?: string;
-  phoneVerified?: boolean;
-  faceVerified?: boolean;
-  faceVerificationDate?: string;
-  subscriptionStatus?: 'active' | 'inactive' | 'none';
-  coordinates?: { lat: number; lng: number };
-  locationPrivacy?: 'public' | 'friends' | 'private';
-  language?: string;
-  privacySettings?: {
-    showActivity: boolean;
-    showDistance: boolean; 
-    showOnlineStatus: boolean;
-    profileVisibility: 'public' | 'matches-only' | 'private';
-  };
-  termsAccepted?: boolean;
-  distance?: number;
-  compatibility?: number;
-  boosted?: boolean;
-  boostExpiry?: string | null;
-  trialStartDate?: string;
-  trialEndDate?: string;
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  verified?: boolean;
-  provider: string;
-  profile?: UserProfile;
-  swipes?: {
-    remaining: number;
-    lastReset: string;
-    count?: number; // Adding for backward compatibility
-    resetAt?: string; // Adding for backward compatibility
-  };
-}
-
-// Add a new interface that includes ID for use with Supabase
-export interface UserProfileWithId extends UserProfile {
-  id: string;
-  name: string;
-  distance?: number;
-  compatibility?: number;
-  boosted?: boolean;
-  boostExpiry?: string | null;
+  location?: string;
+  bio?: string;
+  interests?: string[];
+  photos?: string[];
+  isVerified?: boolean;
+  isOnline?: boolean;
+  isPremium?: boolean;
+  freeTrialStartDate?: string | null;
+  matchPoints?: number;
+  badges?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+  }>;
 }
