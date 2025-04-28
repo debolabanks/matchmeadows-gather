@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,11 +37,9 @@ const Subscription = () => {
         description: "Your subscription process was canceled.",
       });
     } else if (trial === "start" && user) {
-      // Activate free trial
       startFreeTrial();
     }
     
-    // Check current subscription status
     const fetchSubscriptionStatus = async () => {
       try {
         setIsLoading(true);
@@ -50,10 +47,9 @@ const Subscription = () => {
         setIsSubscribed(isSubscribed);
         setSubscriptionPlan(plan);
 
-        // Check trial status
         if (user?.profile?.trialStartDate) {
           const trialStart = new Date(user.profile.trialStartDate);
-          const trialEnd = new Date(trialStart.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+          const trialEnd = new Date(trialStart.getTime() + 7 * 24 * 60 * 60 * 1000);
           const now = new Date();
           
           if (now < trialEnd) {
@@ -75,7 +71,6 @@ const Subscription = () => {
     }
   }, [user, searchParams, toast, updateProfile]);
 
-  // Function to start free trial
   const startFreeTrial = async () => {
     if (!user) return;
     
@@ -83,7 +78,7 @@ const Subscription = () => {
     
     try {
       await updateProfile({
-        trialStartDate: now
+        freeTrialStartDate: now
       });
       
       toast({
@@ -104,7 +99,6 @@ const Subscription = () => {
     }
   };
 
-  // Check if boost params are present and show toast
   useEffect(() => {
     const boostSuccess = searchParams.get("boost_success");
     const boostCanceled = searchParams.get("boost_canceled");
