@@ -1,11 +1,13 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageSquare, Star, Users, Clock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 // Creator type definition
 export interface Creator {
@@ -27,6 +29,49 @@ interface CreatorCardProps {
 }
 
 const CreatorCard = ({ creator }: CreatorCardProps) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to like this creator",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Creator liked",
+      description: `You have liked ${creator.name}'s profile`,
+    });
+  };
+  
+  const handleMessage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to message this creator",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    navigate(`/messages?creatorId=${creator.id}`);
+  };
+  
+  const handleViewProfile = () => {
+    navigate(`/profile/${creator.id}`);
+  };
+
   return (
     <Card key={creator.id} className="overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader className="p-0">
@@ -94,16 +139,24 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
           variant="default" 
           size="sm" 
           className="flex-1"
-          asChild
+          onClick={handleViewProfile}
         >
-          <Link to={`/creators/${creator.id}`}>
-            View Profile
-          </Link>
+          View Profile
         </Button>
-        <Button variant="outline" size="icon" className="rounded-full">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="rounded-full"
+          onClick={handleLike}
+        >
           <Heart className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="icon" className="rounded-full">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="rounded-full"
+          onClick={handleMessage}
+        >
           <MessageSquare className="h-4 w-4" />
         </Button>
       </CardFooter>

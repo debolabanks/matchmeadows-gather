@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import InterestSelector from "@/components/InterestSelector";
+import SettingsNavigation from "@/components/settings/SettingsNavigation";
+import ProfileBadges from "@/components/profile/ProfileBadges";
+
+const availableInterests = [
+  "Hiking", "Coffee", "Coding", "Reading", "Photography", "Travel", "Music", 
+  "Movies", "Cooking", "Art", "Dancing", "Yoga", "Gaming", "Sports", "Fashion",
+  "Writing", "Gardening", "Pets", "DIY", "Technology", "Food", "Wine", "Fitness",
+  "History", "Languages", "Science", "Politics", "Philosophy", "Volunteering", "Outdoors"
+];
 
 const userData = {
   name: "Alex Johnson",
@@ -62,6 +73,7 @@ const userData = {
 const Profile = () => {
   const { user, updateProfile, requestVerification } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [activeSettingsSection, setActiveSettingsSection] = useState<string | null>(null);
   
   const [name, setName] = useState(user?.name || userData.name);
   const [age, setAge] = useState<number | undefined>(user?.profile?.age || userData.age);
@@ -70,6 +82,7 @@ const Profile = () => {
   const [bio, setBio] = useState(user?.profile?.bio || userData.bio);
   const [locationPrivacy, setLocationPrivacy] = useState(user?.profile?.locationPrivacy || "public");
   const [language, setLanguage] = useState<string>(user?.profile?.language || "en");
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(user?.profile?.interests || userData.interests);
   
   const [privacySettings, setPrivacySettings] = useState<PrivacySettingsType>({
     showActivity: user?.profile?.privacySettings?.showActivity ?? true,
@@ -85,7 +98,7 @@ const Profile = () => {
       !!gender, 
       !!location, 
       !!bio, 
-      !!(user?.profile?.interests?.length || userData.interests.length),
+      !!(selectedInterests.length),
       !!(user?.profile?.photos?.length || userData.photos.length),
       !!user?.profile?.verificationStatus
     ];
@@ -105,6 +118,7 @@ const Profile = () => {
         bio,
         locationPrivacy: locationPrivacy as any,
         language: language as any,
+        interests: selectedInterests,
         privacySettings: privacySettings as any
       };
       
@@ -245,6 +259,17 @@ const Profile = () => {
                 </CardHeader>
                 
                 <CardContent className="text-center">
+                  <div className="mb-6">
+                    <ProfileBadges
+                      compatibility={user?.profile?.compatibility || 78}
+                      matchPoints={user?.profile?.matchPoints || 240}
+                      badges={user?.profile?.badges || [
+                        { id: 'chatty', name: 'Chatty', description: 'Exchanged 50+ messages', icon: '💬' },
+                        { id: 'responsive', name: 'Responsive', description: 'Responds to 90% of messages', icon: '⚡' }
+                      ]}
+                    />
+                  </div>
+                  
                   <div className="grid grid-cols-3 gap-1 mb-6">
                     <div className="p-3">
                       <div className="text-2xl font-bold text-love-600">{userData.stats.matches}</div>
@@ -319,6 +344,16 @@ const Profile = () => {
                           placeholder="Tell others about yourself..."
                         />
                       </div>
+                      
+                      <div>
+                        <Label htmlFor="interests">Interests</Label>
+                        <InterestSelector
+                          interests={availableInterests}
+                          selectedInterests={selectedInterests}
+                          onChange={setSelectedInterests}
+                          maxSelections={10}
+                        />
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -351,7 +386,7 @@ const Profile = () => {
                   <div>
                     <h3 className="font-semibold mb-3">Interests</h3>
                     <div className="flex flex-wrap gap-2">
-                      {userData.interests.map((interest) => (
+                      {selectedInterests.map((interest) => (
                         <Badge key={interest} variant="secondary">
                           {interest}
                         </Badge>
@@ -443,97 +478,11 @@ const Profile = () => {
                 <CardTitle>Account Settings</CardTitle>
               </CardHeader>
               
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <LanguagePreferences 
-                    value={language as any}
-                    onChange={(value) => setLanguage(value)}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                  <div>
-                    <h3 className="font-medium">Notification Preferences</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Manage how we contact you
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                  <div>
-                    <h3 className="font-medium">Dating Preferences</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Set your distance, age range, and more
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                  <div>
-                    <h3 className="font-medium">Account Information</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Update your email and password
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                  <div>
-                    <h3 className="font-medium">Blocked Users</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Manage users you've blocked
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
-                  <div>
-                    <h3 className="font-medium">Safety & Support</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Get help with safety concerns
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ReportDialog 
-                      reportType="profile" 
-                      targetId="user123" // This would be the actual user ID in a real app
-                      targetName="User" 
-                    >
-                      <Button variant="outline" size="sm" className="gap-1 h-8">
-                        <Flag className="h-3 w-3" />
-                        Report Issue
-                      </Button>
-                    </ReportDialog>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors text-destructive">
-                  <div>
-                    <h3 className="font-medium">Delete Account</h3>
-                    <p className="text-sm opacity-80">
-                      Permanently delete your account and data
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 opacity-80 group-hover:opacity-100 transition-colors" />
-                </div>
+              <CardContent>
+                <SettingsNavigation
+                  activeSection={activeSettingsSection || undefined}
+                  onNavigate={setActiveSettingsSection}
+                />
               </CardContent>
             </Card>
           </TabsContent>
