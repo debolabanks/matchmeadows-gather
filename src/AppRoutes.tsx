@@ -18,7 +18,6 @@ import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import MobileNav from "@/components/MobileNav";
 import LiveStreamPage from "@/pages/LiveStreamPage";
 import BroadcastPage from "@/pages/BroadcastPage";
 import TermsOfUse from "@/pages/TermsOfUse";
@@ -65,7 +64,6 @@ const AppRoutes = () => {
             </Routes>
           </div>
         </div>
-        <MobileNav />
         <Footer />
       </div>
     </div>
