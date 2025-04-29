@@ -3,11 +3,10 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/sonner";
-import { preloadSounds, isAudioAvailable } from "@/services/soundService";
+import * as soundService from "@/services/soundService";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CallProvider } from "@/contexts/CallContext";
-import SplashScreen from "@/components/SplashScreen";
 import AppRoutes from "@/AppRoutes";
 
 // Create a query client with default options
@@ -22,7 +21,6 @@ const queryClient = new QueryClient({
 
 function App() {
   const [isMounted, setIsMounted] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     // Set mounted state
@@ -63,15 +61,9 @@ function App() {
         console.error("Error preloading sounds:", error);
       }
     }, 1000);
-    
-    // Set timer to hide splash screen
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 3000);
 
     // Clean up function
     return () => {
-      clearTimeout(timer);
       try {
         document.head.removeChild(viewportMeta);
         document.head.removeChild(statusBarMeta);
@@ -84,11 +76,6 @@ function App() {
   // Don't render anything until mounted
   if (!isMounted) {
     return null;
-  }
-
-  // Show splash screen if needed
-  if (showSplash) {
-    return <SplashScreen />;
   }
 
   // Return the app with providers in the correct order
