@@ -31,13 +31,14 @@ interface CreatorCardProps {
 const CreatorCard = ({ creator }: CreatorCardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated, devModeEnabled } = useAuth();
   
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!user) {
+    // Allow liking without login in development mode
+    if (!isAuthenticated && !devModeEnabled) {
       toast({
         title: "Authentication required",
         description: "Please sign in to like this creator",
@@ -56,7 +57,8 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!user) {
+    // Allow messaging without login in development mode
+    if (!isAuthenticated && !devModeEnabled) {
       toast({
         title: "Authentication required",
         description: "Please sign in to message this creator",

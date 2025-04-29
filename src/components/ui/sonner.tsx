@@ -3,19 +3,13 @@
 
 import * as React from "react"
 import { Toaster as Sonner } from "sonner"
-import { useTheme } from "next-themes"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
-  
-  // Default to light theme if theme is not yet available
-  const resolvedTheme = theme === 'system' ? 'light' : theme || 'light';
-
   return (
     <Sonner
-      theme={resolvedTheme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       toastOptions={{
         classNames: {

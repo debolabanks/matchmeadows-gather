@@ -56,6 +56,16 @@ const Index = () => {
               <p className="text-xl md:text-2xl text-love-800 mb-8">
                 Join MatchMeadows today and discover meaningful connections with like-minded people.
               </p>
+              
+              {/* Add the couple image here below the heading */}
+              <div className="mb-8 max-w-md mx-auto">
+                <img 
+                  src="/lovable-uploads/8749e6f1-e275-4fb8-9f22-46fed6f0643f.png" 
+                  alt="Happy couple smiling" 
+                  className="w-full h-auto rounded-xl shadow-lg"
+                />
+              </div>
+              
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
                   size="lg" 

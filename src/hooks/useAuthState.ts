@@ -18,6 +18,21 @@ export const useAuthState = () => {
     
     let mounted = true;
 
+    // Check for stored user in localStorage first for faster loading
+    const storedUser = localStorage.getItem("matchmeadows_user");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && mounted) {
+          setUser(parsedUser);
+          console.log("AuthProvider - Loaded user from localStorage");
+        }
+      } catch (error) {
+        console.error("Failed to parse stored user:", error);
+        localStorage.removeItem("matchmeadows_user");
+      }
+    }
+
     // Set up the Supabase auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -29,6 +44,9 @@ export const useAuthState = () => {
         if (session && validateSession(session)) {
           try {
             console.log("AuthProvider - User authenticated, fetching profile");
+            
+            // Store token in localStorage for persistence
+            localStorage.setItem("matchmeadows_token", session.access_token);
             
             // Handle profile data or fallback to user metadata
             let profile: Profile | null = null;
@@ -79,6 +97,7 @@ export const useAuthState = () => {
           if (mounted) {
             setUser(null);
             localStorage.removeItem("matchmeadows_user");
+            localStorage.removeItem("matchmeadows_token");
             setIsLoading(false);
           }
         }
@@ -89,6 +108,7 @@ export const useAuthState = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && validateSession(session) && mounted) {
         console.log("Found existing session");
+        // Session token is already handled in the auth state change handler
       } else if (mounted) {
         setUser(null);
         setIsLoading(false);

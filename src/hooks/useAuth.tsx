@@ -15,12 +15,41 @@ export const useAuth = () => {
     const checkAuthState = async () => {
       try {
         console.log("Checking auth state...");
+        
+        // First check for token in localStorage
+        const storedToken = localStorage.getItem("matchmeadows_token");
+        if (storedToken) {
+          console.log("Found stored token, attempting to restore session");
+          
+          try {
+            // Set the stored access token in Supabase
+            const { error } = await supabase.auth.setSession({
+              access_token: storedToken,
+              refresh_token: '',  // We don't store refresh token for security
+            });
+            
+            if (error) {
+              console.warn("Failed to restore session from stored token:", error.message);
+              localStorage.removeItem("matchmeadows_token");
+              localStorage.removeItem("matchmeadows_user");
+              return false;
+            }
+          } catch (tokenError) {
+            console.error("Error restoring session:", tokenError);
+            localStorage.removeItem("matchmeadows_token");
+            localStorage.removeItem("matchmeadows_user");
+            return false;
+          }
+        }
+        
+        // Now check current session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session || !validateSession(session)) {
           console.warn("Invalid or expired session detected");
           if (mounted) {
             localStorage.removeItem("matchmeadows_user");
+            localStorage.removeItem("matchmeadows_token");
           }
           return false;
         }
@@ -77,9 +106,18 @@ export const useAuth = () => {
       async (event, session) => {
         console.log("Auth state changed:", event, !!session);
         
+        if (event === 'SIGNED_OUT') {
+          if (mounted) {
+            localStorage.removeItem("matchmeadows_user");
+            localStorage.removeItem("matchmeadows_token");
+          }
+          return;
+        }
+        
         if (!session || !validateSession(session)) {
           if (mounted) {
             localStorage.removeItem("matchmeadows_user");
+            localStorage.removeItem("matchmeadows_token");
           }
           return;
         }
@@ -87,6 +125,9 @@ export const useAuth = () => {
         // On successful auth event, fetch profile
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session.user) {
           console.log("User authenticated event detected:", event);
+          // Save token to localStorage for persistence
+          localStorage.setItem("matchmeadows_token", session.access_token);
+          
           try {
             const { data: profile, error: profileError } = await supabase
               .from('profiles')

@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
 import * as soundService from "@/services/soundService";
 
@@ -98,12 +97,10 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <ThemeProvider defaultTheme="light" attribute="class">
-              <CallProvider>
-                <AppRoutes />
-                <Toaster />
-              </CallProvider>
-            </ThemeProvider>
+            <CallProvider>
+              <AppRoutes />
+              <Toaster />
+            </CallProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>

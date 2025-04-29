@@ -20,7 +20,7 @@ const Creators = () => {
   const [sortOption, setSortOption] = useState("popular");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, devModeEnabled } = useAuth();
   const navigate = useNavigate();
   
   // Handle sorting creators
@@ -69,6 +69,13 @@ const Creators = () => {
   };
   
   const handleGoLive = () => {
+    // Check if dev mode is enabled OR user is authenticated
+    if (devModeEnabled) {
+      // Allow going live without login in development mode
+      navigate("/broadcast");
+      return;
+    }
+    
     if (!isAuthenticated) {
       toast({
         title: "Sign in required",
@@ -82,7 +89,7 @@ const Creators = () => {
     // Check if user is premium (in a real app)
     const isPremium = user?.profile?.subscriptionStatus === 'active';
     
-    if (!isPremium) {
+    if (!isPremium && !devModeEnabled) {
       toast({
         title: "Premium required",
         description: "You need a premium subscription to go live",
