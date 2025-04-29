@@ -133,12 +133,4 @@ export const isAudioAvailable = (): boolean => {
   }
 };
 
-// Export default for easier importing
-export default {
-  preloadSounds,
-  playNewMessageSound,
-  playIncomingCallSound,
-  stopSound,
-  stopAllSounds,
-  isAudioAvailable
-};
+
