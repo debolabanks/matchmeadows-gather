@@ -1,98 +1,94 @@
 
-import React, { useState, useEffect } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "./components/ui/sonner";
-import * as soundService from "@/services/soundService";
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CallProvider } from "@/contexts/CallContext";
-import AppRoutes from "@/AppRoutes";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import MobileNav from "./components/MobileNav";
+import Discover from "./pages/Discover";
+import Matches from "./pages/Matches";
+import Messages from "./pages/Messages";
+import Profile from "./pages/Profile";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ProtectedRoute from "./components/ProtectedRoute";
+import StreamsDiscovery from "./pages/StreamsDiscovery";
+import StreamPage from "./pages/StreamPage";
+import CreatorChannel from "./pages/CreatorChannel";
 
-// Create a query client with default options
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30000,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-function App() {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    // Set mounted state
-    setIsMounted(true);
-    
-    // Add meta tags for mobile
-    const viewportMeta = document.createElement('meta');
-    viewportMeta.name = 'viewport';
-    viewportMeta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-    document.head.appendChild(viewportMeta);
-    
-    const statusBarMeta = document.createElement('meta');
-    statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
-    statusBarMeta.content = 'black-translucent';
-    document.head.appendChild(statusBarMeta);
-
-    // Register service worker for PWA functionality
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.info('Service Worker registered with scope:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Service Worker registration failed:', error);
-          });
-      });
-    }
-
-    // Safely preload sounds - wrap in try/catch and use timeout
-    // to avoid blocking app initialization if there's an audio problem
-    setTimeout(() => {
-      try {
-        if (soundService.isAudioAvailable()) {
-          soundService.preloadSounds();
-        }
-      } catch (error) {
-        console.error("Error preloading sounds:", error);
-      }
-    }, 1000);
-
-    // Clean up function
-    return () => {
-      try {
-        document.head.removeChild(viewportMeta);
-        document.head.removeChild(statusBarMeta);
-      } catch (error) {
-        console.error("Error cleaning up meta tags:", error);
-      }
-    };
-  }, []);
-
-  // Don't render anything until mounted
-  if (!isMounted) {
-    return null;
-  }
-
-  // Return the app with providers in the correct order
-  return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <CallProvider>
-              <AppRoutes />
-              <Toaster />
-            </CallProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </React.StrictMode>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
+        <CallProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/sign-in" element={<SignIn />} />
+                  <Route path="/sign-up" element={<SignUp />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/discover" element={
+                    <ProtectedRoute>
+                      <Discover />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/matches" element={
+                    <ProtectedRoute>
+                      <Matches />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/messages" element={
+                    <ProtectedRoute>
+                      <Messages />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/streams" element={
+                    <ProtectedRoute>
+                      <StreamsDiscovery />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/streams/:streamId" element={
+                    <ProtectedRoute>
+                      <StreamPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/creators/:creatorId" element={
+                    <ProtectedRoute>
+                      <CreatorChannel />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <Footer />
+              <MobileNav />
+            </div>
+          </BrowserRouter>
+        </CallProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

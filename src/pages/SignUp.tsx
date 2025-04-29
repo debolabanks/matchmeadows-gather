@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -15,69 +15,49 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const { signUp, isAuthenticated } = useAuth();
+  const { signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/discover");
-    }
-  }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
-    const sessionErrorMsg = sessionStorage.getItem("auth_error_message");
-    if (sessionErrorMsg) {
-      setErrorMessage(sessionErrorMsg);
-      sessionStorage.removeItem("auth_error_message");
-    }
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    setIsSubmitting(true);
-    setError("");
+    if (!name || !email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLoading(true);
     
     try {
-      if (!name || !email || !password) {
-        setError("All fields are required");
-        return;
-      }
-      
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
-      
-      if (password.length < 8) {
-        setError("Password must be at least 8 characters");
-        return;
-      }
-      
-      await signUp(email, password, { name });
-      
-      if (!isAuthenticated) {
-        toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account before signing in.",
-        });
-        navigate("/sign-in");
-      } else {
-        navigate("/verification");
-      }
+      await signUp(email, password, name);
+      toast({
+        title: "Account created!",
+        description: "Welcome to MatchMeadows!"
+      });
+      navigate("/discover");
     } catch (error) {
-      console.error("Signup error:", error);
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("An error occurred during sign up");
-      }
+      console.error("Sign up error:", error);
+      toast({
+        title: "Sign up failed",
+        description: "An error occurred during registration",
+        variant: "destructive"
+      });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -96,14 +76,8 @@ const SignUp = () => {
           </CardDescription>
         </CardHeader>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSignUp}>
           <CardContent className="space-y-4">
-            {errorMessage && (
-              <Alert variant="destructive" className="text-sm">
-                <AlertDescription>{errorMessage}</AlertDescription>
-              </Alert>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -149,7 +123,7 @@ const SignUp = () => {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-3">
-            <Button type="submit" className="w-full" disabled={loading || isSubmitting}>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
             <div className="text-center text-sm">

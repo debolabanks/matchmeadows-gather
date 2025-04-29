@@ -1,13 +1,12 @@
-
 import { useState, useEffect } from "react";
-import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Stream } from "@/types/stream";
 import StreamList from "@/components/stream/StreamList";
 import { useToast } from "@/hooks/use-toast";
-import { Video, Calendar, User, Bell, BellOff, Lock } from "lucide-react";
+import { Video, Calendar, User, Bell, BellOff } from "lucide-react";
 import CreatorBroadcast from "@/components/stream/CreatorBroadcast";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -95,7 +94,6 @@ const CreatorChannel = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
-  const navigate = useNavigate();
   
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -114,8 +112,7 @@ const CreatorChannel = () => {
           const creatorStreams = MOCK_STREAMS.filter(s => s.creatorId === creatorId);
           setStreams(creatorStreams);
           
-          const hashedId = creatorId?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0;
-          setIsSubscribed(hashedId % 2 === 0);
+          setIsSubscribed(Math.random() > 0.5);
         }
         
         setLoading(false);
@@ -144,8 +141,7 @@ const CreatorChannel = () => {
     });
   };
   
-  const isCreatorUser = user && creator && (user.id === creator.id || 
-    (creatorId === "creator2" && user.id === "2"));
+  const isCreatorUser = user && creator && user.id === creator.id;
   
   if (loading) {
     return (
@@ -170,45 +166,21 @@ const CreatorChannel = () => {
     );
   }
   
-  const handleGoLive = () => {
-    // Check if user has premium subscription
-    if (user && user.profile?.subscriptionStatus !== "active") {
-      toast({
-        title: "Premium Required",
-        description: "The Go Live feature is only available for premium subscribers. Upgrade now!",
-        variant: "destructive",
-      });
-      navigate("/subscription");
-      return;
-    }
-    
-    setActiveTab("broadcast");
-    navigate(`/creators/${creatorId}?tab=broadcast`, { replace: true });
-  };
-  
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
         <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden">
-          <img src={creator?.image} alt={creator?.name} className="w-full h-full object-cover" />
+          <img src={creator.image} alt={creator.name} className="w-full h-full object-cover" />
         </div>
         
         <div className="flex-1">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-            <h1 className="text-3xl font-bold">{creator?.name}</h1>
+            <h1 className="text-3xl font-bold">{creator.name}</h1>
             
             <div className="flex flex-wrap gap-2">
               {isCreatorUser ? (
-                <Button onClick={handleGoLive} className={user?.profile?.subscriptionStatus === "active" ? "animate-pulse" : ""}>
-                  {user?.profile?.subscriptionStatus === "active" ? (
-                    <>
-                      <Video className="h-4 w-4 mr-2" /> Go Live
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="h-4 w-4 mr-2" /> Premium Only
-                    </>
-                  )}
+                <Button onClick={() => setActiveTab("broadcast")}>
+                  <Video className="h-4 w-4 mr-2" /> Go Live
                 </Button>
               ) : (
                 <Button 
@@ -231,20 +203,20 @@ const CreatorChannel = () => {
           
           <div className="flex gap-4 text-sm mb-4">
             <div>
-              <span className="font-bold">{creator?.subscribers.toLocaleString()}</span> subscribers
+              <span className="font-bold">{creator.subscribers.toLocaleString()}</span> subscribers
             </div>
             <div>
               <span className="font-bold">{streams.length}</span> streams
             </div>
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
-              Joined {new Date(creator?.joinedDate || "").toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}
+              Joined {new Date(creator.joinedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}
             </div>
           </div>
           
-          <p className="text-muted-foreground">{creator?.bio}</p>
+          <p className="text-muted-foreground">{creator.bio}</p>
           
-          {creator?.socialLinks && Object.keys(creator.socialLinks).length > 0 && (
+          {creator.socialLinks && Object.keys(creator.socialLinks).length > 0 && (
             <div className="flex gap-2 mt-2">
               {Object.entries(creator.socialLinks).map(([platform, handle]) => (
                 <Button key={platform} variant="outline" size="sm" className="h-8 text-xs">
@@ -263,12 +235,7 @@ const CreatorChannel = () => {
           <TabsTrigger value="streams">Streams</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
           {isCreatorUser && (
-            <TabsTrigger value="broadcast" className="relative">
-              <span>Broadcast</span>
-              {user?.profile?.subscriptionStatus !== "active" && (
-                <span className="absolute top-0 right-0 h-2 w-2 bg-amber-500 rounded-full"></span>
-              )}
-            </TabsTrigger>
+            <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
           )}
         </TabsList>
         
@@ -286,14 +253,6 @@ const CreatorChannel = () => {
               streams={streams.filter(stream => stream.status === "scheduled")} 
               title="Upcoming Streams" 
               description="Scheduled broadcasts"
-            />
-          )}
-          
-          {streams.filter(stream => stream.status === "ended").length > 0 && (
-            <StreamList 
-              streams={streams.filter(stream => stream.status === "ended")} 
-              title="Past Broadcasts" 
-              description="Watch previous streams"
             />
           )}
           
@@ -340,24 +299,10 @@ const CreatorChannel = () => {
         
         {isCreatorUser && (
           <TabsContent value="broadcast">
-            {user?.profile?.subscriptionStatus === "active" ? (
-              <CreatorBroadcast 
-                creatorId={creator?.id || ""} 
-                creatorName={creator?.name || ""}
-              />
-            ) : (
-              <div className="text-center py-12">
-                <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Premium Feature</h3>
-                <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-                  The Go Live streaming feature is only available for premium subscribers.
-                  Upgrade now to start broadcasting to your audience!
-                </p>
-                <Button asChild>
-                  <Link to="/subscription">Upgrade to Premium</Link>
-                </Button>
-              </div>
-            )}
+            <CreatorBroadcast 
+              creatorId={creator.id} 
+              creatorName={creator.name}
+            />
           </TabsContent>
         )}
       </Tabs>

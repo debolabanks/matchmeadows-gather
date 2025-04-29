@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,36 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
-import { UserProfile } from "@/types/user";
+import { UserProfile } from "@/contexts/authTypes";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { LocationPrivacy } from "@/components/LocationPrivacy";
 import { LanguagePreferences } from "@/components/LanguagePreferences";
 import { PrivacySettings, PrivacySettingsType } from "@/components/PrivacySettings";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Flag, Ban, ShieldAlert } from "lucide-react";
-import ReportDialog from "@/components/ReportDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import InterestSelector from "@/components/InterestSelector";
-import SettingsNavigation from "@/components/settings/SettingsNavigation";
-import ProfileBadges from "@/components/profile/ProfileBadges";
-
-const availableInterests = [
-  "Hiking", "Coffee", "Coding", "Reading", "Photography", "Travel", "Music", 
-  "Movies", "Cooking", "Art", "Dancing", "Yoga", "Gaming", "Sports", "Fashion",
-  "Writing", "Gardening", "Pets", "DIY", "Technology", "Food", "Wine", "Fitness",
-  "History", "Languages", "Science", "Politics", "Philosophy", "Volunteering", "Outdoors"
-];
 
 const userData = {
   name: "Alex Johnson",
@@ -73,7 +49,6 @@ const userData = {
 const Profile = () => {
   const { user, updateProfile, requestVerification } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [activeSettingsSection, setActiveSettingsSection] = useState<string | null>(null);
   
   const [name, setName] = useState(user?.name || userData.name);
   const [age, setAge] = useState<number | undefined>(user?.profile?.age || userData.age);
@@ -82,13 +57,12 @@ const Profile = () => {
   const [bio, setBio] = useState(user?.profile?.bio || userData.bio);
   const [locationPrivacy, setLocationPrivacy] = useState(user?.profile?.locationPrivacy || "public");
   const [language, setLanguage] = useState<string>(user?.profile?.language || "en");
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(user?.profile?.interests || userData.interests);
   
   const [privacySettings, setPrivacySettings] = useState<PrivacySettingsType>({
     showActivity: user?.profile?.privacySettings?.showActivity ?? true,
     showDistance: user?.profile?.privacySettings?.showDistance ?? true,
     showOnlineStatus: user?.profile?.privacySettings?.showOnlineStatus ?? true,
-    profileVisibility: (user?.profile?.privacySettings?.profileVisibility as "public" | "matches-only" | "private") ?? "public"
+    profileVisibility: user?.profile?.privacySettings?.profileVisibility ?? "public"
   });
   
   const calculateCompletionPercentage = () => {
@@ -98,7 +72,7 @@ const Profile = () => {
       !!gender, 
       !!location, 
       !!bio, 
-      !!(selectedInterests.length),
+      !!(user?.profile?.interests?.length || userData.interests.length),
       !!(user?.profile?.photos?.length || userData.photos.length),
       !!user?.profile?.verificationStatus
     ];
@@ -118,7 +92,6 @@ const Profile = () => {
         bio,
         locationPrivacy: locationPrivacy as any,
         language: language as any,
-        interests: selectedInterests,
         privacySettings: privacySettings as any
       };
       
@@ -160,14 +133,6 @@ const Profile = () => {
 
   const handlePrivacySettingsChange = (settings: Partial<PrivacySettingsType>) => {
     setPrivacySettings(prev => ({ ...prev, ...settings }));
-  };
-
-  const handleBlockUser = (userId: string, userName: string) => {
-    toast({
-      title: "User Blocked",
-      description: `You have blocked ${userName}. They will no longer be able to contact you.`,
-    });
-    // In a real implementation, this would call an API to block the user
   };
 
   return (
@@ -259,17 +224,6 @@ const Profile = () => {
                 </CardHeader>
                 
                 <CardContent className="text-center">
-                  <div className="mb-6">
-                    <ProfileBadges
-                      compatibility={user?.profile?.compatibility || 78}
-                      matchPoints={user?.profile?.matchPoints || 240}
-                      badges={user?.profile?.badges || [
-                        { id: 'chatty', name: 'Chatty', description: 'Exchanged 50+ messages', icon: '💬' },
-                        { id: 'responsive', name: 'Responsive', description: 'Responds to 90% of messages', icon: '⚡' }
-                      ]}
-                    />
-                  </div>
-                  
                   <div className="grid grid-cols-3 gap-1 mb-6">
                     <div className="p-3">
                       <div className="text-2xl font-bold text-love-600">{userData.stats.matches}</div>
@@ -344,16 +298,6 @@ const Profile = () => {
                           placeholder="Tell others about yourself..."
                         />
                       </div>
-                      
-                      <div>
-                        <Label htmlFor="interests">Interests</Label>
-                        <InterestSelector
-                          interests={availableInterests}
-                          selectedInterests={selectedInterests}
-                          onChange={setSelectedInterests}
-                          maxSelections={10}
-                        />
-                      </div>
                     </div>
                   ) : (
                     <>
@@ -386,7 +330,7 @@ const Profile = () => {
                   <div>
                     <h3 className="font-semibold mb-3">Interests</h3>
                     <div className="flex flex-wrap gap-2">
-                      {selectedInterests.map((interest) => (
+                      {userData.interests.map((interest) => (
                         <Badge key={interest} variant="secondary">
                           {interest}
                         </Badge>
@@ -478,11 +422,61 @@ const Profile = () => {
                 <CardTitle>Account Settings</CardTitle>
               </CardHeader>
               
-              <CardContent>
-                <SettingsNavigation
-                  activeSection={activeSettingsSection || undefined}
-                  onNavigate={setActiveSettingsSection}
-                />
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <LanguagePreferences 
+                    value={language as any}
+                    onChange={(value) => setLanguage(value)}
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
+                  <div>
+                    <h3 className="font-medium">Notification Preferences</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Manage how we contact you
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+                
+                <Separator />
+                
+                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
+                  <div>
+                    <h3 className="font-medium">Dating Preferences</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Set your distance, age range, and more
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+                
+                <Separator />
+                
+                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors">
+                  <div>
+                    <h3 className="font-medium">Account Information</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Update your email and password
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+                
+                <Separator />
+                
+                <div className="flex justify-between items-center py-2 group cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors text-destructive">
+                  <div>
+                    <h3 className="font-medium">Delete Account</h3>
+                    <p className="text-sm opacity-80">
+                      Permanently delete your account and data
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 opacity-80 group-hover:opacity-100 transition-colors" />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

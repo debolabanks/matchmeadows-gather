@@ -1,194 +1,246 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { CallSession } from "@/types/message";
-import { v4 as uuidv4 } from "uuid";
-import { connectToRoom } from "@/services/twilio";
-import { Room, LocalTrack } from "twilio-video";
-import { useToast } from "@/hooks/use-toast";
-import { playIncomingCallSound, stopAllSounds } from "@/services/soundService";
-import { useAuth } from "@/hooks/useAuth";
 
-interface CallState {
+import { useState, useRef, useCallback } from "react";
+import { CallSession } from "@/types/message";
+import { connectToRoom, createLocalAudioTrack, createLocalVideoTrack } from "@/services/twilioService";
+import Video, { LocalTrack, LocalAudioTrack, LocalVideoTrack, Room } from "twilio-video";
+
+type CallType = "video" | "voice";
+
+interface UseCallReturn {
   activeCall: CallSession | null;
   incomingCall: {
     from: {
       id: string;
       name: string;
-      image: string;
+      imageUrl: string;
     };
-    type: "video" | "voice";
+    type: CallType;
   } | null;
+  startCall: (contactId: string, contactName: string, contactImage: string, type: CallType) => void;
+  endCall: () => void;
+  acceptIncomingCall: () => void;
+  rejectIncomingCall: () => void;
+  simulateIncomingCall: (fromId: string, fromName: string, fromImage: string, type: CallType) => void;
+  twilioRoom: Room | null;
+  localTracks: LocalTrack[];
 }
 
-export const useCall = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [state, setState] = useState<CallState>({
-    activeCall: null,
-    incomingCall: null,
-  });
-  const twilioRoom = useRef<Room | null>(null);
-  const localTracks = useRef<LocalTrack[]>([]);
+export const useCall = (): UseCallReturn => {
+  const [activeCall, setActiveCall] = useState<CallSession | null>(null);
+  const [incomingCall, setIncomingCall] = useState<UseCallReturn["incomingCall"]>(null);
+  const [twilioRoom, setTwilioRoom] = useState<Room | null>(null);
+  const [localTracks, setLocalTracks] = useState<LocalTrack[]>([]);
+  
+  const timerRef = useRef<number | null>(null);
 
-  // Start a call with someone
-  const startCall = useCallback(async (
-    contactId: string, 
-    contactName: string, 
-    contactImage: string,
-    type: "video" | "voice"
-  ) => {
+  // Cleanup function for when call ends
+  const cleanupResources = useCallback(() => {
+    // Stop all local tracks with proper type checking
+    localTracks.forEach(track => {
+      if (track instanceof LocalAudioTrack || track instanceof LocalVideoTrack) {
+        track.stop();
+      } else if ('stop' in track && typeof track.stop === 'function') {
+        track.stop();
+      }
+    });
+    setLocalTracks([]);
+    
+    // Disconnect from Twilio room if active
+    if (twilioRoom) {
+      twilioRoom.disconnect();
+      setTwilioRoom(null);
+    }
+    
+    // Clear any active timers
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [localTracks, twilioRoom]);
+
+  // Start a new outgoing call
+  const startCall = useCallback(async (contactId: string, contactName: string, contactImage: string, type: CallType) => {
+    // End any existing call first
+    if (activeCall) {
+      endCall();
+    }
+    
+    // Create a new call session
+    const newCall: CallSession = {
+      id: `call-${Date.now()}`,
+      type,
+      participants: ["currentUser", contactId],
+      startTime: new Date().toISOString(),
+      status: "connecting",
+    };
+    
+    setActiveCall(newCall);
+    
     try {
-      const newCallSession: CallSession = {
-        id: uuidv4(),
-        type: type,
-        participants: [contactId, "currentUser"],
+      // Connect to Twilio room
+      const room = await connectToRoom({
+        name: `room-${contactId}-${Date.now()}`,
+        audio: true,
+        video: type === "video",
+      });
+      
+      setTwilioRoom(room);
+      
+      // Get local tracks from room
+      const tracks = Array.from(room.localParticipant.tracks.values())
+        .map(publication => publication.track)
+        .filter(track => track !== null) as LocalTrack[];
+      
+      setLocalTracks(tracks);
+      
+      // Update call status
+      setActiveCall(prev => prev ? {
+        ...prev,
+        status: "connected"
+      } : null);
+      
+      console.log(`Started ${type} call with ${contactName} using Twilio`);
+    } catch (error) {
+      console.error("Failed to start call:", error);
+      
+      // Update call status to reflect error
+      setActiveCall(prev => prev ? {
+        ...prev,
+        status: "ended",
+        endTime: new Date().toISOString()
+      } : null);
+      
+      // Clean up anyway
+      cleanupResources();
+    }
+  }, [activeCall, cleanupResources]);
+
+  // End the current call
+  const endCall = useCallback(() => {
+    if (activeCall) {
+      // Update call status and set end time
+      const endedCall: CallSession = {
+        ...activeCall,
+        status: "ended",
+        endTime: new Date().toISOString(),
+        duration: activeCall.startTime ? 
+          Math.floor((Date.now() - new Date(activeCall.startTime).getTime()) / 1000) : 
+          0
+      };
+      
+      // In a real app, you would save the call to history here
+      console.log("Call ended:", endedCall);
+      
+      // Clean up resources
+      cleanupResources();
+      
+      // Clear the active call
+      setActiveCall(null);
+    }
+  }, [activeCall, cleanupResources]);
+
+  // Simulate receiving an incoming call (for demo purposes)
+  const simulateIncomingCall = useCallback((fromId: string, fromName: string, fromImage: string, type: CallType) => {
+    if (!activeCall) {
+      setIncomingCall({
+        from: {
+          id: fromId,
+          name: fromName,
+          imageUrl: fromImage
+        },
+        type
+      });
+      
+      // Auto-reject after 30 seconds if not answered
+      timerRef.current = window.setTimeout(() => {
+        setIncomingCall(prev => {
+          if (prev && prev.from.id === fromId) {
+            return null;
+          }
+          return prev;
+        });
+      }, 30000);
+    }
+  }, [activeCall]);
+
+  // Accept an incoming call
+  const acceptIncomingCall = useCallback(async () => {
+    if (incomingCall) {
+      const newCall: CallSession = {
+        id: `call-${Date.now()}`,
+        type: incomingCall.type,
+        participants: ["currentUser", incomingCall.from.id],
         startTime: new Date().toISOString(),
         status: "connecting",
       };
       
-      setState(prev => ({
-        ...prev,
-        activeCall: newCallSession,
-      }));
-
-      // Create a room using Twilio
-      const room = await connectToRoom({
-        name: `call-${newCallSession.id}`,
-        audio: true,
-        video: type === "video"
-      });
+      setActiveCall(newCall);
+      setIncomingCall(null);
       
-      twilioRoom.current = room;
-      
-      setState(prev => ({
-        ...prev,
-        activeCall: {
-          ...prev.activeCall!,
-          status: "connected"
-        }
-      }));
-      
-      toast({
-        title: `${type === "video" ? "Video" : "Voice"} call started`,
-        description: `Connected with ${contactName}`,
-      });
-      
-    } catch (error) {
-      console.error("Failed to start call:", error);
-      
-      toast({
-        title: "Call failed",
-        description: "Could not establish connection",
-        variant: "destructive",
-      });
-      
-      setState(prev => ({
-        ...prev,
-        activeCall: null,
-      }));
-    }
-  }, [toast]);
-
-  // End the current call
-  const endCall = useCallback(() => {
-    stopAllSounds();
-    
-    // Disconnect from Twilio room if it exists
-    if (twilioRoom.current) {
-      twilioRoom.current.disconnect();
-      twilioRoom.current = null;
-    }
-    
-    // Stop all local tracks
-    localTracks.current.forEach(track => {
-      // Fixed: Use the correct method to stop tracks
-      if (track.kind !== 'data') {
-        track.disable();
-      }
-    });
-    localTracks.current = [];
-    
-    setState(prev => {
-      // Only update if we have an active call to prevent unnecessary rerenders
-      if (prev.activeCall) {
-        return {
+      // Connect to Twilio room
+      try {
+        const room = await connectToRoom({
+          name: `room-${incomingCall.from.id}-${Date.now()}`,
+          audio: true,
+          video: incomingCall.type === "video",
+        });
+        
+        setTwilioRoom(room);
+        
+        // Get local tracks from room
+        const tracks = Array.from(room.localParticipant.tracks.values())
+          .map(publication => publication.track)
+          .filter(track => track !== null) as LocalTrack[];
+        
+        setLocalTracks(tracks);
+        
+        // Update call status
+        setActiveCall(prev => prev ? {
           ...prev,
-          activeCall: null,
-          incomingCall: null,
-        };
+          status: "connected"
+        } : null);
+        
+        console.log(`Accepted ${incomingCall.type} call from ${incomingCall.from.name} using Twilio`);
+      } catch (error) {
+        console.error("Failed to accept call:", error);
+        
+        // Update call status to reflect error
+        setActiveCall(prev => prev ? {
+          ...prev,
+          status: "ended",
+          endTime: new Date().toISOString()
+        } : null);
+        
+        // Clean up anyway
+        cleanupResources();
       }
-      return prev;
-    });
-    
-  }, []);
-  
-  // Simulate an incoming call for testing
-  const simulateIncomingCall = useCallback((
-    fromId: string, 
-    fromName: string, 
-    fromImage: string,
-    type: "video" | "voice"
-  ) => {
-    playIncomingCallSound();
-    
-    setState(prev => ({
-      ...prev,
-      incomingCall: {
-        from: {
-          id: fromId,
-          name: fromName,
-          image: fromImage,
-        },
-        type,
-      },
-    }));
-  }, []);
-  
-  // Accept an incoming call
-  const acceptIncomingCall = useCallback(() => {
-    if (!state.incomingCall) return;
-    
-    stopAllSounds();
-    
-    const { from, type } = state.incomingCall;
-    
-    // Create new call session
-    const newCallSession: CallSession = {
-      id: uuidv4(),
-      type: type,
-      participants: [from.id, "currentUser"],
-      startTime: new Date().toISOString(),
-      status: "connected",
-    };
-    
-    setState(prev => ({
-      ...prev,
-      activeCall: newCallSession,
-      incomingCall: null,
-    }));
-    
-    // Actually start the call
-    startCall(from.id, from.name, from.image, type);
-  }, [state.incomingCall, startCall]);
-  
+    }
+  }, [incomingCall, cleanupResources]);
+
   // Reject an incoming call
   const rejectIncomingCall = useCallback(() => {
-    stopAllSounds();
-    
-    setState(prev => ({
-      ...prev,
-      incomingCall: null,
-    }));
-  }, []);
-  
+    if (incomingCall) {
+      // In a real app, you would notify the caller
+      console.log(`Rejected call from ${incomingCall.from.name}`);
+      
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      
+      setIncomingCall(null);
+    }
+  }, [incomingCall]);
+
   return {
-    activeCall: state.activeCall,
-    incomingCall: state.incomingCall,
-    twilioRoom: twilioRoom.current,
-    localTracks: localTracks.current,
+    activeCall,
+    incomingCall,
     startCall,
     endCall,
-    simulateIncomingCall,
     acceptIncomingCall,
     rejectIncomingCall,
+    simulateIncomingCall,
+    twilioRoom,
+    localTracks
   };
 };
