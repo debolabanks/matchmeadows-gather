@@ -72,8 +72,12 @@ function App() {
     // Clean up function
     return () => {
       try {
-        document.head.removeChild(viewportMeta);
-        document.head.removeChild(statusBarMeta);
+        if (document.head.contains(viewportMeta)) {
+          document.head.removeChild(viewportMeta);
+        }
+        if (document.head.contains(statusBarMeta)) {
+          document.head.removeChild(statusBarMeta);
+        }
       } catch (error) {
         console.error("Error cleaning up meta tags:", error);
       }
