@@ -43,13 +43,6 @@ function App() {
         navigator.serviceWorker.register('/service-worker.js')
           .then(registration => {
             console.info('Service Worker registered with scope:', registration.scope);
-            
-            // Force update the service worker to apply new cache rules
-            registration.update().then(() => {
-              console.info('Service Worker updated');
-            }).catch(err => {
-              console.error('Service Worker update failed:', err);
-            });
           })
           .catch(error => {
             console.error('Service Worker registration failed:', error);

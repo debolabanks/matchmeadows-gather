@@ -1,3 +1,4 @@
+
 // Service Worker for MatchMeadows PWA
 
 const CACHE_NAME = 'matchmeadows-cache-v1';
@@ -18,8 +19,7 @@ const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/favicon.ico',
   '/icon-192.png',
-  '/icon-512.png',
-  '/lovable-uploads/8749e6f1-e275-4fb8-9f22-46fed6f0643f.png'
+  '/icon-512.png'
 ];
 
 // Install event - cache core assets
@@ -34,11 +34,6 @@ self.addEventListener('install', event => {
       .then(cache => {
         console.log('Service Worker: Caching core assets');
         return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .catch(error => {
-        console.error('Service Worker: Caching failed', error);
-        // Continue installation even if caching fails
-        return Promise.resolve();
       })
   );
 });
@@ -66,8 +61,8 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', event => {
-  // Special handling for asset files or uploaded images
-  if (event.request.url.includes('/assets/') || event.request.url.includes('/lovable-uploads/')) {
+  // Special handling for asset files
+  if (event.request.url.includes('/assets/')) {
     event.respondWith(
       caches.match(event.request)
         .then(cachedResponse => {
