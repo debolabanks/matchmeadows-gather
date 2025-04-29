@@ -26,23 +26,16 @@ function App() {
     // Set mounted state
     setIsMounted(true);
     
-    let viewportMeta = document.querySelector('meta[name="viewport"]');
-    let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    // Add meta tags for mobile
+    const viewportMeta = document.createElement('meta');
+    viewportMeta.name = 'viewport';
+    viewportMeta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    document.head.appendChild(viewportMeta);
     
-    // Create meta tags if they don't exist
-    if (!viewportMeta) {
-      viewportMeta = document.createElement('meta');
-      viewportMeta.name = 'viewport';
-      viewportMeta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-      document.head.appendChild(viewportMeta);
-    }
-    
-    if (!statusBarMeta) {
-      statusBarMeta = document.createElement('meta');
-      statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
-      statusBarMeta.content = 'black-translucent';
-      document.head.appendChild(statusBarMeta);
-    }
+    const statusBarMeta = document.createElement('meta');
+    statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+    statusBarMeta.content = 'black-translucent';
+    document.head.appendChild(statusBarMeta);
 
     // Register service worker for PWA functionality
     if ('serviceWorker' in navigator) {
@@ -76,7 +69,15 @@ function App() {
       }
     }, 1000);
 
-    // No need to clean up the meta tags since we're checking if they exist first
+    // Clean up function
+    return () => {
+      try {
+        document.head.removeChild(viewportMeta);
+        document.head.removeChild(statusBarMeta);
+      } catch (error) {
+        console.error("Error cleaning up meta tags:", error);
+      }
+    };
   }, []);
 
   // Don't render anything until mounted
