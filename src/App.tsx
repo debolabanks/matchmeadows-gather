@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/sonner";
-import * as soundService from "@/services/soundService";
+import soundService from "@/services/soundService";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CallProvider } from "@/contexts/CallContext";
