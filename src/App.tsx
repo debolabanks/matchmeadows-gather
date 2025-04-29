@@ -26,22 +26,21 @@ function App() {
     // Set mounted state
     setIsMounted(true);
     
-    // Check if meta tags exist and create them if needed
     let viewportMeta = document.querySelector('meta[name="viewport"]');
     let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     
     // Create meta tags if they don't exist
     if (!viewportMeta) {
       viewportMeta = document.createElement('meta');
-      viewportMeta.setAttribute('name', 'viewport');
-      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+      viewportMeta.name = 'viewport';
+      viewportMeta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
       document.head.appendChild(viewportMeta);
     }
     
     if (!statusBarMeta) {
       statusBarMeta = document.createElement('meta');
-      statusBarMeta.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
-      statusBarMeta.setAttribute('content', 'black-translucent');
+      statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+      statusBarMeta.content = 'black-translucent';
       document.head.appendChild(statusBarMeta);
     }
 
