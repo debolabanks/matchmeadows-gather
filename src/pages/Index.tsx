@@ -1,9 +1,46 @@
 
-import { ArrowRight, Heart } from "lucide-react";
+import { ArrowRight, Heart, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import AdBanner from "@/components/AdBanner";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const isPremium = user?.profile?.subscriptionStatus === "active";
+  const inFreeTrial = user?.profile?.trialStartDate ? 
+    new Date() < new Date(new Date(user.profile.trialStartDate).getTime() + 7 * 24 * 60 * 60 * 1000) : 
+    false;
+
+  const handleStartMatching = () => {
+    if (isAuthenticated) {
+      navigate("/discover");
+    } else {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to start matching",
+        variant: "default",
+      });
+      navigate("/sign-in", { state: { returnTo: "/discover" } });
+    }
+  };
+  
+  const handleFreeTrial = () => {
+    if (isAuthenticated) {
+      navigate("/subscription?trial=start");
+    } else {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to activate your free trial",
+        variant: "default",
+      });
+      navigate("/sign-in", { state: { returnTo: "/subscription?trial=start" } });
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
@@ -19,9 +56,23 @@ const Index = () => {
               <p className="text-xl md:text-2xl text-love-800 mb-8">
                 Join MatchMeadows today and discover meaningful connections with like-minded people.
               </p>
+              
+              {/* Add the couple image here below the heading */}
+              <div className="mb-8 max-w-md mx-auto">
+                <img 
+                  src="/lovable-uploads/8749e6f1-e275-4fb8-9f22-46fed6f0643f.png" 
+                  alt="Happy couple smiling" 
+                  className="w-full h-auto rounded-xl shadow-lg"
+                />
+              </div>
+              
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg" className="text-base">
-                  <Link to="/discover">Start Matching</Link>
+                <Button 
+                  size="lg" 
+                  className="text-base"
+                  onClick={handleStartMatching}
+                >
+                  Start Matching
                 </Button>
                 <Button asChild variant="outline" size="lg" className="text-base">
                   <Link to="/about">Learn More</Link>
@@ -30,6 +81,37 @@ const Index = () => {
             </div>
           </div>
         </section>
+        
+        {/* Free Trial Banner (show if authenticated, not premium, and not in trial) */}
+        {isAuthenticated && !isPremium && !inFreeTrial && (
+          <div className="container mx-auto px-4 py-6">
+            <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg">
+              <div className="flex flex-col md:flex-row items-center justify-between">
+                <div className="flex items-center mb-4 md:mb-0">
+                  <div className="bg-amber-100 p-3 rounded-full mr-4">
+                    <Gift className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">Try Premium Free for 7 Days</h3>
+                    <p className="text-amber-800">Get unlimited swipes and access to all premium features.</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleFreeTrial}
+                  className="bg-amber-500 hover:bg-amber-600"
+                >
+                  Start Free Trial
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {!isPremium && !inFreeTrial && (
+          <div className="container mx-auto px-4 py-4">
+            <AdBanner variant="large" adSlot="3456789012" />
+          </div>
+        )}
         
         {/* Features Section */}
         <section className="py-16 md:py-24">
@@ -80,6 +162,12 @@ const Index = () => {
           </div>
         </section>
         
+        {!isPremium && !inFreeTrial && (
+          <div className="container mx-auto px-4 py-4">
+            <AdBanner variant="small" adSlot="6789012345" />
+          </div>
+        )}
+        
         {/* CTA Section */}
         <section className="bg-love-500 py-16">
           <div className="container mx-auto px-4 text-center">
@@ -89,10 +177,15 @@ const Index = () => {
             <p className="text-xl text-white opacity-90 mb-8 max-w-2xl mx-auto">
               Join thousands of singles who have found meaningful relationships on MatchMeadows.
             </p>
-            <Button asChild size="lg" variant="secondary" className="text-love-500">
-              <Link to="/discover" className="flex items-center gap-2">
+            <Button 
+              size="lg" 
+              variant="secondary" 
+              className="text-love-500"
+              onClick={handleStartMatching}
+            >
+              <span className="flex items-center gap-2">
                 Get Started <ArrowRight className="h-4 w-4" />
-              </Link>
+              </span>
             </Button>
           </div>
         </section>
